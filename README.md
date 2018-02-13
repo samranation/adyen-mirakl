@@ -3,11 +3,14 @@ This application was generated using JHipster 4.14.0, you can find documentation
 
 ## Development
 
-Please add environment variables for `MIRAKL_SDK_USER` and `MIRAKL_SDK_PASSWORD` e.g.
+Please add environment variables for `MIRAKL_SDK_USER`, `MIRAKL_SDK_PASSWORD`, `MIRAKL_ENV_URL`, `MIRAKL_API_OPERATOR_KEY` and `MIRAKL_API_FRONT_KEY` e.g.
 update `~/.bashrc` with:
 ```
 export MIRAKL_SDK_USER=<user>
 export MIRAKL_SDK_PASSWORD=<pass>
+export MIRAKL_ENV_URL=<miraklEnvUrl>
+export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
+export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 ```
 And run `source ~/.bashrc`
 

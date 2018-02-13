@@ -106,3 +106,7 @@ jhipster:
 # ===================================================================
 
 application:
+
+miraklOperator:
+    miraklEnvUrl: ${MIRAKL_ENV_URL}
+    miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
