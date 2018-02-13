@@ -151,6 +151,13 @@ configurations {
 repositories {
     mavenLocal()
     jcenter()
+    maven {
+        credentials {
+            username "$System.env.MIRAKL_SDK_USER"
+            password "$System.env.MIRAKL_SDK_PASSWORD"
+        }
+        url "https://artifactory.mirakl.net/artifactory/mirakl-ext-repo/"
+    }
 }
 
 dependencies {
@@ -227,6 +234,10 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+
+    compile "com.adyen:adyen-java-api-library:1.3.0"
+    compile "com.mirakl:mmp-sdk-front:3.25.12"
+    compile "com.mirakl:mmp-sdk-operator:3.25.12"
 }
 
 task cleanResources(type: Delete) {
