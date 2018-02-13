@@ -3,6 +3,16 @@ This application was generated using JHipster 4.14.0, you can find documentation
 
 ## Development
 
+Please add environment variables for `MIRAKL_SDK_USER` and `MIRAKL_SDK_PASSWORD` e.g.
+update `~/.bashrc` with:
+```
+export MIRAKL_SDK_USER=<user>
+export MIRAKL_SDK_PASSWORD=<pass>
+```
+And run `source ~/.bashrc`
+
+
+
 To start your application in the dev profile, simply run:
 
     ./gradlew
