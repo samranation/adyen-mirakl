@@ -10,5 +10,5 @@ Feature: Custom field validation
         Then the sellers legal entity will be displayed as <legalEntity>
         Examples:
             | legalEntity | seller             |
-            | Individual  | Richards Shop      |
+            | Individual  | Cottons Shop       |
             | Business    | Samras Supermarket |

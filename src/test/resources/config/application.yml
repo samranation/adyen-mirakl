@@ -108,6 +108,11 @@ jhipster:
 
 application:
 
+shops:
+    shopIds:
+        Cottons Shop: 2000
+        Samras Supermarket: 2001
+
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
