@@ -19,5 +19,4 @@ public class MiraklOperatorConfiguration extends MiraklProperties {
     public MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient(){
         return new MiraklMarketplacePlatformOperatorApiClient(getMiraklEnvUrl(), miraklOperatorCredential());
     }
-
 }
