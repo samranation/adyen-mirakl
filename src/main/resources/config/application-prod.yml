@@ -140,8 +140,3 @@ jhipster:
 
 application:
 
-adyenConfig:
-    userName: ${ADYEN_USER_NAME}
-    password: ${ADYEN_PASS}
-    environment: LIVE
-    appName: ${ADYEN_APP_NAME}

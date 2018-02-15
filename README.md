@@ -12,6 +12,15 @@ export MIRAKL_ENV_URL=<miraklEnvUrl>
 export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 ```
+
+Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_APP_NAME`. Note `ADYEN_ENV` is an enum and must be either `TEST` or `LIVE` 
+```
+export ADYEN_USER_NAME=<user>
+export ADYEN_PASS=<pass>
+export ADYEN_ENV=<miraklEnvUrl>
+export ADYEN_APP_NAME=<miraklApiOperatorKey>
+```
+
 And run `source ~/.bashrc`
 
 

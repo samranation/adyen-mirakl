@@ -115,5 +115,5 @@ miraklOperator:
 adyenConfig:
     userName: ${ADYEN_USER_NAME}
     password: ${ADYEN_PASS}
-    environment: TEST
+    environment: ${ADYEN_ENV}
     appName: ${ADYEN_APP_NAME}

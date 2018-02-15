@@ -6,9 +6,11 @@ import com.adyen.enums.Environment;
 import com.adyen.service.Notification;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 @ConfigurationProperties(prefix = "adyenConfig", ignoreUnknownFields = false)
-public abstract class AbstractAdyenConfiguration {
+public class AdyenConfiguration {
 
     private String userName;
     private String password;
