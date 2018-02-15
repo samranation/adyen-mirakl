@@ -11,8 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.config.MiraklFrontApiClientFactory;
 import com.adyen.mirakl.startup.StartupValidator;
+import com.adyen.model.Name;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.ShareholderContact;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
+import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import static org.junit.Assert.assertEquals;
 
@@ -25,10 +28,6 @@ import static org.junit.Assert.assertEquals;
 @SpringBootTest(classes = AdyenMiraklConnectorApp.class)
 @Transactional
 public class ShopServiceIntTest {
-
-    @Autowired
-    private MiraklFrontApiClientFactory miraklFrontApiClientFactory;
-
     @Autowired
     private ShopService shopService;
 
@@ -40,9 +39,25 @@ public class ShopServiceIntTest {
         additionalField.setCode(String.valueOf(StartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
         additionalField.setValue("BUSINESS");
 
+        MiraklContactInformation contactInformation = new MiraklContactInformation();
+        contactInformation.setEmail("email");
+        contactInformation.setFirstname("firstName");
+        contactInformation.setLastname("lastName");
+        contactInformation.setCivility("Mrs");
+        shop.setContactInformation(contactInformation);
+
         additionalFields.add(additionalField);
         shop.setAdditionalFieldValues(additionalFields);
+        shop.setId("id");
         CreateAccountHolderRequest request = shopService.createAccountHolderRequestFromShop(shop);
+
+        assertEquals("id", request.getAccountHolderCode());
         assertEquals(CreateAccountHolderRequest.LegalEntityEnum.BUSINESS, request.getLegalEntity());
+        assertEquals(1, request.getAccountHolderDetails().getBusinessDetails().getShareholders().size());
+        ShareholderContact shareholderContact = request.getAccountHolderDetails().getBusinessDetails().getShareholders().get(0);
+        assertEquals("email", shareholderContact.getEmail());
+        assertEquals("firstName", shareholderContact.getName().getFirstName());
+        assertEquals("lastName", shareholderContact.getName().getLastName());
+        assertEquals(Name.GenderEnum.FEMALE, shareholderContact.getName().getGender());
     }
 }
