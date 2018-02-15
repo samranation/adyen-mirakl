@@ -17,8 +17,8 @@ Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_APP_NA
 ```
 export ADYEN_USER_NAME=<user>
 export ADYEN_PASS=<pass>
-export ADYEN_ENV=<miraklEnvUrl>
-export ADYEN_APP_NAME=<miraklApiOperatorKey>
+export ADYEN_ENV=<TEST|LIVE>
+export ADYEN_APP_NAME=<adyenAppName>
 ```
 
 And run `source ~/.bashrc`
