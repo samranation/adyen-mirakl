@@ -119,3 +119,9 @@ miraklOperator:
 miraklFront:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_FRONT_KEY}
+
+adyenConfig:
+    userName: ${ADYEN_USER_NAME}
+    password: ${ADYEN_PASS}
+    environment: TEST
+    appName: ${ADYEN_APP_NAME}
