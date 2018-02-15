@@ -110,3 +110,10 @@ application:
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
+
+
+adyenConfig:
+    userName: ${ADYEN_USER_NAME}
+    password: ${ADYEN_PASS}
+    environment: ${ADYEN_ENV}
+    appName: ${ADYEN_APP_NAME}
