@@ -125,3 +125,4 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: ${ADYEN_APP_NAME}
+    endpoint: ${ADYEN_ENDPOINT}

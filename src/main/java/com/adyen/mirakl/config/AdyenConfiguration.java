@@ -16,6 +16,7 @@ public class AdyenConfiguration {
     private String password;
     private Environment environment;
     private String appName;
+    private String endpoint;
 
     public String getUserName() {
         return userName;
@@ -49,6 +50,14 @@ public class AdyenConfiguration {
         this.appName = appName;
     }
 
+    public String getEndpoint() {
+        return endpoint;
+    }
+
+    public void setEndpoint(final String endpoint) {
+        this.endpoint = endpoint;
+    }
+
     @Bean
     public Config adyenConfig(){
         final Config config = new Config();
@@ -56,6 +65,7 @@ public class AdyenConfiguration {
         config.setPassword(password);
         config.setEnvironment(environment);
         config.setApplicationName(appName);
+        config.setMarketPayEndpoint(endpoint);
         return config;
     }
 
