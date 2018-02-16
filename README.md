@@ -13,12 +13,11 @@ export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 ```
 
-Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV` and `ADYEN_ENDPOINT`. 
+Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS` and `ADYEN_ENV`. 
 ```
 export ADYEN_USER_NAME=<user>
 export ADYEN_PASS=<pass>
 export ADYEN_ENV=<TEST|LIVE>
-export ADYEN_ENDPOINT=<adyenEndpoint> e.g. https://cal-test.adyen.com/cal/services
 ```
 
 And run `source ~/.bashrc`
