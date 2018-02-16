@@ -1,16 +1,14 @@
 package com.adyen.mirakl.service;
 
-import com.adyen.mirakl.config.CacheConfiguration;
+import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.Authority;
 import com.adyen.mirakl.domain.User;
 import com.adyen.mirakl.repository.AuthorityRepository;
-import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.repository.UserRepository;
 import com.adyen.mirakl.security.AuthoritiesConstants;
 import com.adyen.mirakl.security.SecurityUtils;
-import com.adyen.mirakl.service.util.RandomUtil;
 import com.adyen.mirakl.service.dto.UserDTO;
-
+import com.adyen.mirakl.service.util.RandomUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -23,7 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
