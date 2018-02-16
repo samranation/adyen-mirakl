@@ -117,4 +117,3 @@ adyenConfig:
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
     appName: adyen-mirakl-connector
-    endpoint: ${ADYEN_ENDPOINT}
