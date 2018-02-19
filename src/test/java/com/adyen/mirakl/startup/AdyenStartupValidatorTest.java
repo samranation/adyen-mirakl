@@ -1,9 +1,6 @@
 package com.adyen.mirakl.startup;
 
-import com.adyen.model.marketpay.notification.GetNotificationConfigurationListResponse;
-import com.adyen.model.marketpay.notification.NotificationConfigurationDetails;
-import com.adyen.model.marketpay.notification.UpdateNotificationConfigurationRequest;
-import com.adyen.model.marketpay.notification.UpdateNotificationConfigurationResponse;
+import com.adyen.model.marketpay.notification.*;
 import com.adyen.service.Notification;
 import com.google.common.collect.ImmutableList;
 import org.assertj.core.api.Assertions;
@@ -36,29 +33,36 @@ public class AdyenStartupValidatorTest {
     @Mock
     private GetNotificationConfigurationListResponse getNotificationConfigurationListResponseMock;
     @Mock
-    private UpdateNotificationConfigurationResponse updateNotificationConfigurationResponse1, updateNotificationConfigurationResponse2, updateNotificationConfigurationResponse3;
+    private UpdateNotificationConfigurationResponse updateNotificationConfigurationResponse1, updateNotificationConfigurationResponse2;
+    @Mock
+    private CreateNotificationConfigurationResponse createNotificationConfigurationResponseMock1, createNotificationConfigurationResponseMock2;
     @Captor
     private ArgumentCaptor<UpdateNotificationConfigurationRequest> updateNotificationConfigurationRequestCaptor;
+    @Captor
+    private ArgumentCaptor<CreateNotificationConfigurationRequest> createNotificationConfigurationRequestCaptor;
 
     @Before
     public void setUp(){
         final NotificationConfigurationDetails notificationConfigurationDetail1 = new NotificationConfigurationDetails();
-        notificationConfigurationDetail1.setDescription("description1");
+        notificationConfigurationDetail1.setNotifyURL("notifyUrl1");
         final NotificationConfigurationDetails notificationConfigurationDetail2 = new NotificationConfigurationDetails();
-        notificationConfigurationDetail2.setDescription("description2");
+        notificationConfigurationDetail2.setNotifyURL("notifyUrl2");
         final NotificationConfigurationDetails notificationConfigurationDetail3 = new NotificationConfigurationDetails();
-        notificationConfigurationDetail3.setDescription("description4");
-        testObj.setNotificationConfigurationDetails(ImmutableList.of(notificationConfigurationDetail1, notificationConfigurationDetail2, notificationConfigurationDetail3));
+        notificationConfigurationDetail3.setNotifyURL("notifyUrl4");
+        final NotificationConfigurationDetails notificationConfigurationDetail4 = new NotificationConfigurationDetails();
+        notificationConfigurationDetail4.setNotifyURL("notifyUrl5");
+        testObj.setNotificationConfigurationDetails(ImmutableList.of(notificationConfigurationDetail1, notificationConfigurationDetail2, notificationConfigurationDetail3, notificationConfigurationDetail4));
     }
 
 
     @Test
     public void shouldSendUpdateWithCurrentConfigInApplicationYaml() throws Exception {
-        when(notificationFromAdyenMock1.getDescription()).thenReturn("description1");
+        when(notificationFromAdyenMock1.getNotifyURL()).thenReturn("notifyUrl1");
         when(notificationFromAdyenMock1.getNotificationId()).thenReturn(1L);
-        when(notificationFromAdyenMock2.getDescription()).thenReturn("description2");
+        when(notificationFromAdyenMock2.getNotifyURL()).thenReturn("notifyUrl2");
         when(notificationFromAdyenMock2.getNotificationId()).thenReturn(2L);
-        when(notificationFromAdyenMock3.getDescription()).thenReturn("description3");
+        //ignored as we cannot match it to our config
+        when(notificationFromAdyenMock3.getNotifyURL()).thenReturn("notifyUrl3");
         when(notificationFromAdyenMock3.getNotificationId()).thenReturn(3L);
 
         when(adyenNotificationMock.getNotificationConfigurationList()).thenReturn(getNotificationConfigurationListResponseMock);
@@ -66,25 +70,33 @@ public class AdyenStartupValidatorTest {
 
         when(adyenNotificationMock.updateNotificationConfiguration(updateNotificationConfigurationRequestCaptor.capture()))
             .thenReturn(updateNotificationConfigurationResponse1)
-            .thenReturn(updateNotificationConfigurationResponse2)
-            .thenReturn(updateNotificationConfigurationResponse3);
+            .thenReturn(updateNotificationConfigurationResponse2);
+        when(adyenNotificationMock.createNotificationConfiguration(createNotificationConfigurationRequestCaptor.capture()))
+            .thenReturn(createNotificationConfigurationResponseMock1)
+            .thenReturn(createNotificationConfigurationResponseMock2);
+
         when(updateNotificationConfigurationResponse1.getPspReference()).thenReturn("pspReference1");
         when(updateNotificationConfigurationResponse2.getPspReference()).thenReturn("pspReference2");
-        when(updateNotificationConfigurationResponse3.getPspReference()).thenReturn("pspReference3");
+        when(createNotificationConfigurationResponseMock1.getPspReference()).thenReturn("pspReference3");
+        when(createNotificationConfigurationResponseMock2.getPspReference()).thenReturn("pspReference4");
 
         testObj.onApplicationEvent(eventMock);
 
-        final List<UpdateNotificationConfigurationRequest> allValues = updateNotificationConfigurationRequestCaptor.getAllValues();
-        final UpdateNotificationConfigurationRequest updateNotificationConfigurationRequest1 = allValues.get(0);
-        final UpdateNotificationConfigurationRequest updateNotificationConfigurationRequest2 = allValues.get(1);
-        final UpdateNotificationConfigurationRequest updateNotificationConfigurationRequest3 = allValues.get(2);
+        final List<UpdateNotificationConfigurationRequest> allValuesToUpdate = updateNotificationConfigurationRequestCaptor.getAllValues();
+        final UpdateNotificationConfigurationRequest updateNotificationConfigurationRequest1 = allValuesToUpdate.get(0);
+        final UpdateNotificationConfigurationRequest updateNotificationConfigurationRequest2 = allValuesToUpdate.get(1);
         verify(adyenNotificationMock).updateNotificationConfiguration(updateNotificationConfigurationRequest1);
         verify(adyenNotificationMock).updateNotificationConfiguration(updateNotificationConfigurationRequest2);
-        verify(adyenNotificationMock).updateNotificationConfiguration(updateNotificationConfigurationRequest3);
-
-        Assertions.assertThat(updateNotificationConfigurationRequest1.getConfigurationDetails().getNotificationId()).isEqualTo(null);
+        Assertions.assertThat(updateNotificationConfigurationRequest1.getConfigurationDetails().getNotificationId()).isEqualTo(1L);
         Assertions.assertThat(updateNotificationConfigurationRequest2.getConfigurationDetails().getNotificationId()).isEqualTo(2L);
-        Assertions.assertThat(updateNotificationConfigurationRequest3.getConfigurationDetails().getNotificationId()).isEqualTo(1L);
+
+        final List<CreateNotificationConfigurationRequest> allValuesToCreate = createNotificationConfigurationRequestCaptor.getAllValues();
+        final CreateNotificationConfigurationRequest createNotificationConfigurationRequest1 = allValuesToCreate.get(0);
+        final CreateNotificationConfigurationRequest createNotificationConfigurationRequest2 = allValuesToCreate.get(1);
+        verify(adyenNotificationMock).createNotificationConfiguration(createNotificationConfigurationRequest1);
+        verify(adyenNotificationMock).createNotificationConfiguration(createNotificationConfigurationRequest2);
+        Assertions.assertThat(createNotificationConfigurationRequest1.getConfigurationDetails().getNotificationId()).isEqualTo(null);
+        Assertions.assertThat(createNotificationConfigurationRequest2.getConfigurationDetails().getNotificationId()).isEqualTo(null);
     }
 
 }

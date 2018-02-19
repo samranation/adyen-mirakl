@@ -124,7 +124,7 @@ adyenNotificationsConfig:
         - active: TRUE
           description: description
           messageFormat: JSON
-          notifyURL: https://requestb.in/133ann61
+          notifyURL: ${ADYEN_NOTIFY_URL}
           eventConfigs:
             - eventType: ACCOUNT_CREATED
               includeMode: INCLUDE
