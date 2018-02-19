@@ -2,6 +2,10 @@ package com.adyen.mirakl.service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
+import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,7 @@ import com.adyen.model.marketpay.IndividualDetails;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
+
 import static com.adyen.mirakl.startup.StartupValidator.AdyenLegalEntityType.INDIVIDUAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -59,5 +64,40 @@ public class ShopServiceIntTest {
         assertEquals("firstName", individualDetails.getName().getFirstName());
         assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
+    }
+
+    @Test
+    public void testUpdateAccountHolderRequest() {
+
+
+        MiraklShop shop = new MiraklShop();
+        shop.setId("id");
+        shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
+
+        List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalField.setCode(String.valueOf(StartupValidator.CustomMiraklFields.ADYEN_BANK_COUNTRY));
+        additionalField.setValue("GB");
+        additionalFields.add(additionalField);
+        shop.setAdditionalFieldValues(additionalFields);
+
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
+
+        miraklIbanBankAccountInformation.setOwner("Owner");
+        miraklIbanBankAccountInformation.setIban("IBAN");
+        miraklIbanBankAccountInformation.setBic("BIC");
+        miraklIbanBankAccountInformation.setBankZip("1111AA");
+        miraklIbanBankAccountInformation.setBankStreet("1 street");
+        shop.setPaymentInformation(miraklIbanBankAccountInformation);
+
+        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop);
+        assertEquals("id", request.getAccountHolderCode());
+        assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
+        assertEquals("Owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+        assertEquals("IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
+        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
     }
 }

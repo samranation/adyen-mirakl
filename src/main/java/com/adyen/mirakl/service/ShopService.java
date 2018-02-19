@@ -1,9 +1,11 @@
 package com.adyen.mirakl.service;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import javax.annotation.Resource;
+
+import com.adyen.model.marketpay.*;
+import com.adyen.service.exception.ApiException;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,11 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.startup.StartupValidator.CustomMiraklFields;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
-import com.adyen.model.marketpay.CreateAccountHolderResponse;
-import com.adyen.model.marketpay.IndividualDetails;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
@@ -33,9 +31,9 @@ public class ShopService {
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     private static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
-                                                                                                                    .put("Mrs", Name.GenderEnum.FEMALE)
-                                                                                                                    .put("Miss", Name.GenderEnum.FEMALE)
-                                                                                                                    .build();
+        .put("Mrs", Name.GenderEnum.FEMALE)
+        .put("Miss", Name.GenderEnum.FEMALE)
+        .build();
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
@@ -43,16 +41,25 @@ public class ShopService {
     @Resource
     private Account adyenAccountService;
 
-    @Scheduled(cron = "${application.shopUpdaterCron}")
+    //    @Scheduled(cron = "${application.shopUpdaterCron}")
     public void retrievedUpdatedShops() {
         MiraklShops miraklShops = getUpdatedShops();
 
         log.debug("Retrieved shops: " + miraklShops.getShops().size());
         for (MiraklShop shop : miraklShops.getShops()) {
             try {
-                CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
-                CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
-                log.debug("MP resp: " + response);
+                if (accountHolderExists(shop, adyenAccountService)) {
+                    UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop);
+                    UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
+                    log.debug("UpdateAccountHolderResponse: " + response);
+                } else {
+                    CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
+                    CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
+                    log.debug("CreateAccountHolderResponse: " + response);
+                }
+            } catch (ApiException e) {
+                // account does not exists yet
+                log.warn(e.getError().getMessage());
             } catch (Exception e) {
                 log.warn("MP exception: " + e.getMessage());
             }
@@ -94,15 +101,15 @@ public class ShopService {
 
     private LegalEntityEnum getLegalEntityFromShop(MiraklShop shop) {
         MiraklValueListAdditionalFieldValue additionalFieldValue = (MiraklValueListAdditionalFieldValue) shop.getAdditionalFieldValues()
-                                                                                                             .stream()
-                                                                                                             .filter(field -> isListWithCode(field, CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE))
-                                                                                                             .findAny()
-                                                                                                             .orElseThrow(() -> new RuntimeException("Legal entity not found"));
+            .stream()
+            .filter(field -> isListWithCode(field, CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE))
+            .findAny()
+            .orElseThrow(() -> new RuntimeException("Legal entity not found"));
 
         LegalEntityEnum legalEntity = Arrays.stream(LegalEntityEnum.values())
-                                            .filter(legalEntityEnum -> legalEntityEnum.toString().equalsIgnoreCase(additionalFieldValue.getValue()))
-                                            .findAny()
-                                            .orElseThrow(() -> new RuntimeException("Invalid legal entity: " + additionalFieldValue.toString()));
+            .filter(legalEntityEnum -> legalEntityEnum.toString().equalsIgnoreCase(additionalFieldValue.getValue()))
+            .findAny()
+            .orElseThrow(() -> new RuntimeException("Invalid legal entity: " + additionalFieldValue.toString()));
 
         return legalEntity;
     }
@@ -128,5 +135,92 @@ public class ShopService {
 
     private boolean isListWithCode(MiraklAdditionalFieldValue additionalFieldValue, CustomMiraklFields field) {
         return MiraklAdditionalFieldType.LIST.equals(additionalFieldValue.getFieldType()) && field.toString().equalsIgnoreCase(additionalFieldValue.getCode());
+    }
+
+    /**
+     * Check if AccountHolder already exists in Adyen
+     *
+     * @param shop
+     * @param adyenAccountService
+     * @return
+     */
+    private boolean accountHolderExists(MiraklShop shop, Account adyenAccountService) throws Exception {
+
+        // lookup accountHolder in Adyen
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountHolderCode(shop.getId());
+
+        try {
+            GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
+            if (!getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
+                return true;
+            }
+
+        } catch (ApiException e) {
+            // account does not exists yet
+            log.info(e.getError().getMessage());
+        }
+
+        return false;
+    }
+
+    /**
+     * Construct updateAccountHolderRequest to Adyen from Mirakl shop
+     *
+     * @param shop
+     * @return
+     */
+    protected UpdateAccountHolderRequest updateAccountHolderRequestFromShop(MiraklShop shop) {
+
+        UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+        updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+
+        // create AcountHolderDetails
+        AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
+
+        // set BankAccountDetails
+        BankAccountDetail bankAccountDetail = new BankAccountDetail();
+
+        // check if PaymentInformation is object MiraklIbanBankAccountInformation
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
+        miraklIbanBankAccountInformation.getIban();
+        bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
+        bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
+        bankAccountDetail.setCountryCode(getBankCountryFromShop(shop)); // required field
+        bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
+
+        bankAccountDetail.setOwnerPostalCode(miraklIbanBankAccountInformation.getBankZip());
+        bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(miraklIbanBankAccountInformation.getBankStreet()));
+        bankAccountDetail.setOwnerName(miraklIbanBankAccountInformation.getOwner());
+
+        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+        bankAccountDetails.add(bankAccountDetail);
+        accountHolderDetails.setBankAccountDetails(bankAccountDetails);
+
+        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+
+
+        return updateAccountHolderRequest;
+    }
+
+    private String getBankCountryFromShop(MiraklShop shop) {
+        MiraklValueListAdditionalFieldValue additionalFieldValue = (MiraklValueListAdditionalFieldValue) shop.getAdditionalFieldValues()
+            .stream()
+            .filter(field -> isListWithCode(field, CustomMiraklFields.ADYEN_BANK_COUNTRY))
+            .findAny()
+            .orElseThrow(() -> new RuntimeException("Adyen Bank Country not found"));
+
+        return additionalFieldValue.getValue();
+    }
+
+
+    /**
+     * TODO: implement method to retrieve housenumber from street
+     *
+     * @param street
+     * @return
+     */
+    private String getHouseNumberFromStreet(String street) {
+        return "1";
     }
 }
