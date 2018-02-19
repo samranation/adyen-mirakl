@@ -17,6 +17,7 @@ import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.model.marketpay.CreateAccountHolderResponse;
 import com.adyen.model.marketpay.IndividualDetails;
 import com.adyen.service.Account;
+import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -44,7 +45,7 @@ public class ShopService {
     private Account adyenAccountService;
 
     @Scheduled(cron = "${application.shopUpdaterCron}")
-    public void retrievedUpdatedShops() {
+    public void retrieveUpdatedShops() {
         MiraklShops miraklShops = getUpdatedShops();
 
         log.debug("Retrieved shops: " + miraklShops.getShops().size());
@@ -52,15 +53,20 @@ public class ShopService {
             try {
                 CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
                 CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
-                log.debug("MP resp: " + response);
+                log.debug("MP response: " + response);
+            } catch (ApiException e) {
+                log.warn("ApiException: " + e.getError());
             } catch (Exception e) {
-                log.warn("MP exception: " + e.getMessage());
+                log.warn("Exception: " + e.getMessage());
             }
         }
     }
 
     private MiraklShops getUpdatedShops() {
         MiraklGetShopsRequest request = new MiraklGetShopsRequest();
+        // Disable default pagination
+        request.setPaginate(false);
+
         return miraklMarketplacePlatformOperatorApiClient.getShops(request);
     }
 
@@ -121,6 +127,8 @@ public class ShopService {
         name.setLastName(contactInformation.getLastname());
         if (CIVILITY_TO_GENDER.containsKey(contactInformation.getCivility())) {
             name.setGender(CIVILITY_TO_GENDER.get(contactInformation.getCivility()));
+        } else {
+            name.setGender(Name.GenderEnum.UNKNOWN);
         }
         individualDetails.setName(name);
         return individualDetails;
