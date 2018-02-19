@@ -9,15 +9,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
-import com.adyen.mirakl.config.MiraklFrontApiClientFactory;
 import com.adyen.mirakl.startup.StartupValidator;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
-import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.IndividualDetails;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import static com.adyen.mirakl.startup.StartupValidator.AdyenLegalEntityType.INDIVIDUAL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test class for the UserResource REST controller.
@@ -37,7 +38,7 @@ public class ShopServiceIntTest {
         List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
         additionalField.setCode(String.valueOf(StartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
-        additionalField.setValue("BUSINESS");
+        additionalField.setValue(INDIVIDUAL.toString());
 
         MiraklContactInformation contactInformation = new MiraklContactInformation();
         contactInformation.setEmail("email");
@@ -52,12 +53,11 @@ public class ShopServiceIntTest {
         CreateAccountHolderRequest request = shopService.createAccountHolderRequestFromShop(shop);
 
         assertEquals("id", request.getAccountHolderCode());
-        assertEquals(CreateAccountHolderRequest.LegalEntityEnum.BUSINESS, request.getLegalEntity());
-        assertEquals(1, request.getAccountHolderDetails().getBusinessDetails().getShareholders().size());
-        ShareholderContact shareholderContact = request.getAccountHolderDetails().getBusinessDetails().getShareholders().get(0);
-        assertEquals("email", shareholderContact.getEmail());
-        assertEquals("firstName", shareholderContact.getName().getFirstName());
-        assertEquals("lastName", shareholderContact.getName().getLastName());
-        assertEquals(Name.GenderEnum.FEMALE, shareholderContact.getName().getGender());
+        assertEquals(CreateAccountHolderRequest.LegalEntityEnum.INDIVIDUAL, request.getLegalEntity());
+        assertNotNull(request.getAccountHolderDetails().getIndividualDetails());
+        IndividualDetails individualDetails = request.getAccountHolderDetails().getIndividualDetails();
+        assertEquals("firstName", individualDetails.getName().getFirstName());
+        assertEquals("lastName", individualDetails.getName().getLastName());
+        assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
     }
 }

@@ -1,24 +1,21 @@
 package com.adyen.mirakl.service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.adyen.mirakl.config.AdyenConfiguration;
-import com.adyen.mirakl.config.MiraklFrontApiClientFactory;
 import com.adyen.mirakl.startup.StartupValidator.CustomMiraklFields;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.BusinessDetails;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.model.marketpay.CreateAccountHolderResponse;
-import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.IndividualDetails;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
@@ -27,12 +24,9 @@ import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue.MiraklValu
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
-import com.mirakl.client.mmp.front.core.MiraklMarketplacePlatformFrontApi;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 
-/**
- * Service class for managing users.
- */
 @Service
 @Transactional
 public class ShopService {
@@ -43,40 +37,31 @@ public class ShopService {
                                                                                                                     .put("Miss", Name.GenderEnum.FEMALE)
                                                                                                                     .build();
 
-    private final MiraklFrontApiClientFactory miraklFrontApiClientFactory;
+    @Resource
+    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
-    private final AdyenConfiguration adyenConfiguration;
+    @Resource
+    private Account adyenAccountService;
 
-    public ShopService(MiraklFrontApiClientFactory miraklFrontApiClientFactory, AdyenConfiguration adyenConfiguration) {
-        this.miraklFrontApiClientFactory = miraklFrontApiClientFactory;
-        this.adyenConfiguration = adyenConfiguration;
-    }
-
-    /**
-     * Not activated users should be automatically deleted after 3 days.
-     * <p>
-     * This is scheduled to get fired everyday, at 01:00 (am).
-     */
-    @Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "${application.shopUpdaterCron}")
     public void retrievedUpdatedShops() {
         MiraklShops miraklShops = getUpdatedShops();
-        Account adyenAccountService = adyenConfiguration.createAccountService();
 
+        log.debug("Retrieved shops: " + miraklShops.getShops().size());
         for (MiraklShop shop : miraklShops.getShops()) {
             try {
                 CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
                 CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
+                log.debug("MP resp: " + response);
             } catch (Exception e) {
-                //todo: handle
+                log.warn("MP exception: " + e.getMessage());
             }
         }
     }
 
     private MiraklShops getUpdatedShops() {
-        MiraklMarketplacePlatformFrontApi client = miraklFrontApiClientFactory.createMiraklMarketplacePlatformFrontApiClient();
-
         MiraklGetShopsRequest request = new MiraklGetShopsRequest();
-        return client.getShops(request);
+        return miraklMarketplacePlatformOperatorApiClient.getShops(request);
     }
 
     public CreateAccountHolderRequest createAccountHolderRequestFromShop(MiraklShop shop) {
@@ -91,12 +76,17 @@ public class ShopService {
 
         // Set AccountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-        BusinessDetails businessDetails = new BusinessDetails();
-        List<ShareholderContact> shareholders = new ArrayList<>();
 
-        shareholders.add(createShareholderContactFromShop(shop));
-        businessDetails.setShareholders(shareholders);
-        accountHolderDetails.setBusinessDetails(businessDetails);
+        if (LegalEntityEnum.INDIVIDUAL.equals(legalEntity)) {
+            IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
+            accountHolderDetails.setIndividualDetails(individualDetails);
+        } else {
+            throw new RuntimeException(legalEntity.toString() + " not supported");
+        }
+
+        // Set email
+        MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
+        accountHolderDetails.setEmail(contactInformation.getEmail());
         createAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
 
         return createAccountHolderRequest;
@@ -117,11 +107,14 @@ public class ShopService {
         return legalEntity;
     }
 
-    private ShareholderContact createShareholderContactFromShop(MiraklShop shop) {
-        ShareholderContact shareholderContact = new ShareholderContact();
-        MiraklContactInformation contactInformation = shop.getContactInformation();   //todo: NPE check
+    private MiraklContactInformation getContactInformationFromShop(MiraklShop shop) {
+        return Optional.of(shop.getContactInformation()).orElseThrow(() -> new RuntimeException("Contact information not found"));
+    }
 
-        shareholderContact.setEmail(contactInformation.getEmail());
+    private IndividualDetails createIndividualDetailsFromShop(MiraklShop shop) {
+        IndividualDetails individualDetails = new IndividualDetails();
+
+        MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
 
         Name name = new Name();
         name.setFirstName(contactInformation.getFirstname());
@@ -129,8 +122,8 @@ public class ShopService {
         if (CIVILITY_TO_GENDER.containsKey(contactInformation.getCivility())) {
             name.setGender(CIVILITY_TO_GENDER.get(contactInformation.getCivility()));
         }
-        shareholderContact.setName(name);
-        return shareholderContact;
+        individualDetails.setName(name);
+        return individualDetails;
     }
 
     private boolean isListWithCode(MiraklAdditionalFieldValue additionalFieldValue, CustomMiraklFields field) {
