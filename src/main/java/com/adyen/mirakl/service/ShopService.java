@@ -1,6 +1,8 @@
 package com.adyen.mirakl.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Resource;
@@ -46,10 +48,10 @@ public class ShopService {
 
     @Scheduled(cron = "${application.shopUpdaterCron}")
     public void retrieveUpdatedShops() {
-        MiraklShops miraklShops = getUpdatedShops();
+        List<MiraklShop> shops = getUpdatedShops();
 
-        log.debug("Retrieved shops: " + miraklShops.getShops().size());
-        for (MiraklShop shop : miraklShops.getShops()) {
+        log.debug("Retrieved shops: " + shops.size());
+        for (MiraklShop shop : shops) {
             try {
                 CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
                 CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
@@ -62,15 +64,27 @@ public class ShopService {
         }
     }
 
-    private MiraklShops getUpdatedShops() {
-        MiraklGetShopsRequest request = new MiraklGetShopsRequest();
-        // Disable default pagination
-        request.setPaginate(false);
+    public List<MiraklShop> getUpdatedShops() {
+        int offset = 0;
+        Long totalCount = 1L;
+        List<MiraklShop> shops = new ArrayList<>();
 
-        return miraklMarketplacePlatformOperatorApiClient.getShops(request);
+        while (offset < totalCount) {
+            MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
+            miraklGetShopsRequest.setPaginate(false);
+            miraklGetShopsRequest.setOffset(offset);
+
+            MiraklShops miraklShops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest);
+            shops.addAll(miraklShops.getShops());
+
+            totalCount = miraklShops.getTotalCount();
+            offset += miraklShops.getShops().size();
+        }
+
+        return shops;
     }
 
-    public CreateAccountHolderRequest createAccountHolderRequestFromShop(MiraklShop shop) {
+    private CreateAccountHolderRequest createAccountHolderRequestFromShop(MiraklShop shop) {
         CreateAccountHolderRequest createAccountHolderRequest = new CreateAccountHolderRequest();
 
         // Set Account holder code

@@ -22,6 +22,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import static com.adyen.mirakl.startup.StartupValidator.AdyenLegalEntityType.INDIVIDUAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -51,11 +52,15 @@ public class ShopServiceTest {
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
 
+    @Captor
+    private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
+
     @Test
     public void testRetrieveUpdatedShopsZeroShops() throws Exception {
         MiraklShops miraklShops = new MiraklShops();
         List<MiraklShop> shops = new ArrayList<>();
         miraklShops.setShops(shops);
+        miraklShops.setTotalCount(0L);
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(any())).thenReturn(miraklShops);
 
@@ -68,6 +73,7 @@ public class ShopServiceTest {
         MiraklShops miraklShops = new MiraklShops();
         List<MiraklShop> shops = new ArrayList<>();
         miraklShops.setShops(shops);
+        miraklShops.setTotalCount(1L);
 
         MiraklShop shop = new MiraklShop();
         shops.add(shop);
@@ -105,5 +111,25 @@ public class ShopServiceTest {
         assertEquals("firstName", individualDetails.getName().getFirstName());
         assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
+    }
+
+    @Test
+    public void testRetrieveUpdatedShopsPagination() throws Exception {
+        //Response contains one shop and total_count = 2
+        MiraklShops miraklShops = new MiraklShops();
+        List<MiraklShop> shops = new ArrayList<>();
+        miraklShops.setShops(shops);
+        shops.add(new MiraklShop());
+        miraklShops.setTotalCount(2L);
+
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShops(miraklGetShopsRequestCaptor.capture())).thenReturn(miraklShops);
+
+        List<MiraklShop> updatedShops = shopService.getUpdatedShops();
+        assertEquals(2, updatedShops.size());
+
+        List<MiraklGetShopsRequest> miraklGetShopsRequests = miraklGetShopsRequestCaptor.getAllValues();
+        assertEquals(2, miraklGetShopsRequests.size());
+        assertEquals(0L, miraklGetShopsRequests.get(0).getOffset());
+        assertEquals(1L, miraklGetShopsRequests.get(1).getOffset());
     }
 }
