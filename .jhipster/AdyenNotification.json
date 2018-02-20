@@ -1,0 +1,17 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "rawAdyenNotification",
+            "fieldType": "byte[]",
+            "fieldTypeBlobContent": "text"
+        }
+    ],
+    "changelogDate": "20180220102201",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "adyen_notification",
+    "jpaMetamodelFiltering": false,
+    "pagination": "no"
+}
