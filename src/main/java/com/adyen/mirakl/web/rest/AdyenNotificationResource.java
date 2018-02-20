@@ -1,22 +1,21 @@
 package com.adyen.mirakl.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import com.adyen.mirakl.domain.AdyenNotification;
-
+import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.mirakl.web.rest.errors.BadRequestAlertException;
 import com.adyen.mirakl.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * REST controller for managing AdyenNotification.
@@ -31,8 +30,11 @@ public class AdyenNotificationResource {
 
     private final AdyenNotificationRepository adyenNotificationRepository;
 
-    public AdyenNotificationResource(AdyenNotificationRepository adyenNotificationRepository) {
+    private final ApplicationEventPublisher publisher;
+
+    public AdyenNotificationResource(AdyenNotificationRepository adyenNotificationRepository, ApplicationEventPublisher publisher) {
         this.adyenNotificationRepository = adyenNotificationRepository;
+        this.publisher = publisher;
     }
 
     /**
@@ -44,12 +46,12 @@ public class AdyenNotificationResource {
      */
     @PostMapping("/adyen-notifications")
     @Timed
-    public ResponseEntity<AdyenNotification> createAdyenNotification(@RequestBody AdyenNotification adyenNotification) throws URISyntaxException {
+    public ResponseEntity<AdyenNotification> createAdyenNotification(@RequestBody String adyenNotification) throws URISyntaxException {
         log.debug("REST request to save AdyenNotification : {}", adyenNotification);
-        if (adyenNotification.getId() != null) {
-            throw new BadRequestAlertException("A new adyenNotification cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        AdyenNotification result = adyenNotificationRepository.save(adyenNotification);
+        final AdyenNotification entity = new AdyenNotification();
+        entity.setRawAdyenNotification(adyenNotification);
+        AdyenNotification result = adyenNotificationRepository.save(entity);
+        publisher.publishEvent(new AdyenNotifcationEvent(result.getId()));
         return ResponseEntity.created(new URI("/api/adyen-notifications/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
