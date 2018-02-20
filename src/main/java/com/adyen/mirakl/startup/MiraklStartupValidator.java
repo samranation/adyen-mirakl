@@ -60,9 +60,9 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
                 .map(AbstractMiraklAdditionalField::getCode)
                 .anyMatch(customFieldName -> customMiraklFields.toString().equalsIgnoreCase(customFieldName));
             if (startupSuccess) {
-                log.info(String.format("Startup validation succeeded, custom field found: [%s]", customMiraklFields.toString()));
+                log.info(String.format("Startup Mirkal validation succeeded, custom field found: [%s]", customMiraklFields.toString()));
             } else {
-                throw new IllegalStateException(String.format("Startup validation failed, unable to find custom field: [%s]", customMiraklFields.toString()));
+                throw new IllegalStateException(String.format("Startup Mirkal validation failed, unable to find custom field: [%s]", customMiraklFields.toString()));
             }
         }
     }

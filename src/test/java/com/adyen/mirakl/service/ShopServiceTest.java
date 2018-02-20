@@ -1,9 +1,9 @@
 package com.adyen.mirakl.service;
 
-import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.IndividualDetails;
 import com.adyen.model.marketpay.UpdateAccountHolderRequest;
 import com.adyen.service.Account;
@@ -21,9 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,27 +31,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Test class for the UserResource REST controller.
- *
- * @see UserService
- */
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = AdyenMiraklConnectorApp.class)
-@Transactional
+@RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
     @InjectMocks
     private ShopService shopService;
 
     @Mock
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClientMock;
-
     @Mock
     private Account adyenAccountServiceMock;
+    @Mock
+    private GetAccountHolderResponse getAccountHolderResponseMock;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
-
+    @Captor
+    private ArgumentCaptor<UpdateAccountHolderRequest> updateAccountHolderRequestCaptor;
     @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
 
@@ -71,38 +64,13 @@ public class ShopServiceTest {
     }
 
     @Test
-    public void testRetrieveUpdatedShops() throws Exception {
-        MiraklShops miraklShops = new MiraklShops();
-        List<MiraklShop> shops = new ArrayList<>();
-        miraklShops.setShops(shops);
-        miraklShops.setTotalCount(1L);
-
-        MiraklShop shop = new MiraklShop();
-        shops.add(shop);
-
-        List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
-        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
-        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
-
-        MiraklContactInformation contactInformation = new MiraklContactInformation();
-        contactInformation.setEmail("email");
-        contactInformation.setFirstname("firstName");
-        contactInformation.setLastname("lastName");
-        contactInformation.setCivility("Mrs");
-        shop.setContactInformation(contactInformation);
-
-        additionalFields.add(additionalField);
-        shop.setAdditionalFieldValues(additionalFields);
-        shop.setId("id");
-
-        when(miraklMarketplacePlatformOperatorApiClientMock.getShops(any())).thenReturn(miraklShops);
+    public void testRetrieveUpdatedShopsCreate() throws Exception {
+        setup();
         when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(null);
+        when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
 
         shopService.retrieveUpdatedShops();
-        List<CreateAccountHolderRequest> createAccountHolderRequests = createAccountHolderRequestCaptor.getAllValues();
-
-        CreateAccountHolderRequest request = createAccountHolderRequests.get(0);
+        CreateAccountHolderRequest request = createAccountHolderRequestCaptor.getValue();
 
         verify(adyenAccountServiceMock).createAccountHolder(request);
 
@@ -113,6 +81,20 @@ public class ShopServiceTest {
         assertEquals("firstName", individualDetails.getName().getFirstName());
         assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
+    }
+
+    @Test
+    public void testRetrieveUpdatedShopsUpdate() throws Exception {
+        setup();
+        when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(null);
+        when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("alreadyExisting");
+
+        shopService.retrieveUpdatedShops();
+        UpdateAccountHolderRequest request = updateAccountHolderRequestCaptor.getValue();
+
+        verify(adyenAccountServiceMock).updateAccountHolder(request);
+
+        assertEquals("id", request.getAccountHolderCode());
     }
 
     @Test
@@ -159,5 +141,34 @@ public class ShopServiceTest {
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+    }
+
+    private void setup() throws Exception {
+        MiraklShops miraklShops = new MiraklShops();
+        List<MiraklShop> shops = new ArrayList<>();
+        miraklShops.setShops(shops);
+        miraklShops.setTotalCount(1L);
+
+        MiraklShop shop = new MiraklShop();
+        shops.add(shop);
+
+        List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
+        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
+
+        MiraklContactInformation contactInformation = new MiraklContactInformation();
+        contactInformation.setEmail("email");
+        contactInformation.setFirstname("firstName");
+        contactInformation.setLastname("lastName");
+        contactInformation.setCivility("Mrs");
+        shop.setContactInformation(contactInformation);
+
+        additionalFields.add(additionalField);
+        shop.setAdditionalFieldValues(additionalFields);
+        shop.setId("id");
+
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShops(any())).thenReturn(miraklShops);
+        when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponseMock);
     }
 }
