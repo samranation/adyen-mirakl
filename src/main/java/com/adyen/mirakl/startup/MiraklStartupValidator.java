@@ -19,7 +19,7 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
     private final Logger log = LoggerFactory.getLogger(MiraklStartupValidator.class);
 
     public enum CustomMiraklFields {
-        ADYEN_LEGAL_ENTITY_TYPE ("adyen-legal-entity-type");
+        ADYEN_LEGAL_ENTITY_TYPE("adyen-legal-entity-type");
 
         private final String name;
 
@@ -33,9 +33,8 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
     }
 
     public enum AdyenLegalEntityType {
-        INDIVIDUAL ("INDIVIDUAL"),
-        BUSINESS ("BUSINESS")
-        ;
+        INDIVIDUAL("INDIVIDUAL"),
+        BUSINESS("BUSINESS");
 
         private final String name;
 
@@ -55,13 +54,16 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
     public void onApplicationEvent(final ContextRefreshedEvent event) {
         MiraklGetAdditionalFieldRequest miraklGetAdditionalFieldRequest = new MiraklGetAdditionalFieldRequest();
         final List<MiraklFrontOperatorAdditionalField> additionalFields = miraklMarketplacePlatformOperatorApiClient.getAdditionalFields(miraklGetAdditionalFieldRequest);
-        final boolean startupSuccess = additionalFields.stream()
-            .map(AbstractMiraklAdditionalField::getCode)
-            .anyMatch(customFieldName -> CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString().equalsIgnoreCase(customFieldName));
-        if(startupSuccess){
-            log.info(String.format("Startup Mirakl validation succeeded, custom field found: [%s]", CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString()));
-        }else {
-            throw new IllegalStateException(String.format("Startup Mirkal validation failed, unable to find custom field: [%s]", CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE.toString()));
+
+        for (CustomMiraklFields customMiraklFields : CustomMiraklFields.values()) {
+            boolean startupSuccess = additionalFields.stream()
+                .map(AbstractMiraklAdditionalField::getCode)
+                .anyMatch(customFieldName -> customMiraklFields.toString().equalsIgnoreCase(customFieldName));
+            if (startupSuccess) {
+                log.info(String.format("Startup Mirkal validation succeeded, custom field found: [%s]", customMiraklFields.toString()));
+            } else {
+                throw new IllegalStateException(String.format("Startup Mirkal validation failed, unable to find custom field: [%s]", customMiraklFields.toString()));
+            }
         }
     }
 

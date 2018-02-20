@@ -29,7 +29,7 @@ public class MiraklStartupValidatorTest {
     private MiraklFrontOperatorAdditionalField miraklFrontOperatorAdditionalFieldMock1, miraklFrontOperatorAdditionalFieldMock2;
 
     @Rule
-    public ExpectedException thrown= ExpectedException.none();
+    public ExpectedException thrown = ExpectedException.none();
 
 
     @Test
