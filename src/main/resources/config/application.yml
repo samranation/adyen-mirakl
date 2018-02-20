@@ -106,18 +106,14 @@ jhipster:
 # ===================================================================
 
 application:
+    shopUpdaterCron: "0 */5 * * * ?"
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
 
-miraklFront:
-    miraklEnvUrl: ${MIRAKL_ENV_URL}
-    miraklApiKey: ${MIRAKL_API_FRONT_KEY}
-
 adyenConfig:
     userName: ${ADYEN_USER_NAME}
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
-    appName: ${ADYEN_APP_NAME}
-    endpoint: ${ADYEN_ENDPOINT}
+    appName: adyen-mirakl-connector

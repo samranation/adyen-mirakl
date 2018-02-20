@@ -11,16 +11,13 @@ export MIRAKL_SDK_PASSWORD=<pass>
 export MIRAKL_ENV_URL=<miraklEnvUrl>
 export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
-export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 ```
 
-Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_APP_NAME` and `ADYEN_ENDPOINT`. 
+Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS` and `ADYEN_ENV`. 
 ```
 export ADYEN_USER_NAME=<user>
 export ADYEN_PASS=<pass>
 export ADYEN_ENV=<TEST|LIVE>
-export ADYEN_APP_NAME=<adyenAppName>
-export ADYEN_ENDPOINT=<adyenEndpoint>
 ```
 
 And run `source ~/.bashrc`

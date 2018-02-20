@@ -107,6 +107,7 @@ jhipster:
 # ===================================================================
 
 application:
+    shopUpdaterCron: "0 */5 * * * ?"
 
 shops:
     shopIds:
@@ -124,5 +125,4 @@ adyenConfig:
     userName: ${ADYEN_USER_NAME}
     password: ${ADYEN_PASS}
     environment: ${ADYEN_ENV}
-    appName: ${ADYEN_APP_NAME}
-    endpoint: ${ADYEN_ENDPOINT}
+    appName: adyen-mirakl-connector

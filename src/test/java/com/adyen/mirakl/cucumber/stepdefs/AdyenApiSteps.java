@@ -1,6 +1,5 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import com.adyen.model.marketpay.notification.GetNotificationConfigurationListResponse;
 import com.adyen.service.Notification;
 import cucumber.api.java.en.Given;
 
@@ -14,7 +13,5 @@ public class AdyenApiSteps extends StepDefs {
 
     @Given("^a configuration for the notification (.*) has been created$")
     public void aConfigurationForTheNotificationEventTypeHasBeenCreated(String eventType) throws Throwable {
-        final GetNotificationConfigurationListResponse notificationConfigurationList = adyenNotification.getNotificationConfigurationList();
-        System.out.println(notificationConfigurationList);
     }
 }

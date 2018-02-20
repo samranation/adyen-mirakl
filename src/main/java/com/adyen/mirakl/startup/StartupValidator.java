@@ -32,6 +32,22 @@ public class StartupValidator implements ApplicationListener<ContextRefreshedEve
         }
     }
 
+    public enum AdyenLegalEntityType {
+        INDIVIDUAL ("INDIVIDUAL"),
+        BUSINESS ("BUSINESS")
+        ;
+
+        private final String name;
+
+        AdyenLegalEntityType(String s) {
+            name = s;
+        }
+
+        public String toString() {
+            return this.name;
+        }
+    }
+
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
