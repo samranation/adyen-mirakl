@@ -1,17 +1,6 @@
 package com.adyen.mirakl.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.adyen.mirakl.startup.StartupValidator.CustomMiraklFields;
+import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.AccountHolderDetails;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
@@ -29,6 +18,14 @@ import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 @Service
 @Transactional
@@ -115,7 +112,7 @@ public class ShopService {
     private LegalEntityEnum getLegalEntityFromShop(MiraklShop shop) {
         MiraklValueListAdditionalFieldValue additionalFieldValue = (MiraklValueListAdditionalFieldValue) shop.getAdditionalFieldValues()
                                                                                                              .stream()
-                                                                                                             .filter(field -> isListWithCode(field, CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE))
+                                                                                                             .filter(field -> isListWithCode(field, MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE))
                                                                                                              .findAny()
                                                                                                              .orElseThrow(() -> new RuntimeException("Legal entity not found"));
 
@@ -148,7 +145,7 @@ public class ShopService {
         return individualDetails;
     }
 
-    private boolean isListWithCode(MiraklAdditionalFieldValue additionalFieldValue, CustomMiraklFields field) {
+    private boolean isListWithCode(MiraklAdditionalFieldValue additionalFieldValue, MiraklStartupValidator.CustomMiraklFields field) {
         return MiraklAdditionalFieldType.LIST.equals(additionalFieldValue.getFieldType()) && field.toString().equalsIgnoreCase(additionalFieldValue.getCode());
     }
 }

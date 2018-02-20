@@ -1,18 +1,7 @@
 package com.adyen.mirakl.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
-import com.adyen.mirakl.startup.StartupValidator;
+import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.adyen.model.marketpay.IndividualDetails;
@@ -23,13 +12,23 @@ import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import static com.adyen.mirakl.startup.StartupValidator.AdyenLegalEntityType.INDIVIDUAL;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Test class for the UserResource REST controller.
@@ -80,8 +79,8 @@ public class ShopServiceTest {
 
         List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalField.setCode(String.valueOf(StartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
-        additionalField.setValue(INDIVIDUAL.toString());
+        additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
+        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
 
         MiraklContactInformation contactInformation = new MiraklContactInformation();
         contactInformation.setEmail("email");
