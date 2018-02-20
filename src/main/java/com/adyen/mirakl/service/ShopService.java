@@ -1,20 +1,11 @@
 package com.adyen.mirakl.service;
 
-import java.util.*;
-import javax.annotation.Resource;
-
-import com.adyen.model.marketpay.*;
-import com.adyen.service.exception.ApiException;
-import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.adyen.mirakl.startup.StartupValidator.CustomMiraklFields;
+import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Name;
+import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.service.Account;
+import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -22,8 +13,17 @@ import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue.MiraklValu
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 @Service
 @Transactional
@@ -41,12 +41,12 @@ public class ShopService {
     @Resource
     private Account adyenAccountService;
 
-    //    @Scheduled(cron = "${application.shopUpdaterCron}")
-    public void retrievedUpdatedShops() {
-        MiraklShops miraklShops = getUpdatedShops();
+    @Scheduled(cron = "${application.shopUpdaterCron}")
+    public void retrieveUpdatedShops() {
+        List<MiraklShop> shops = getUpdatedShops();
 
-        log.debug("Retrieved shops: " + miraklShops.getShops().size());
-        for (MiraklShop shop : miraklShops.getShops()) {
+        log.debug("Retrieved shops: " + shops.size());
+        for (MiraklShop shop : shops) {
             try {
                 if (accountHolderExists(shop, adyenAccountService)) {
                     UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop);
@@ -61,17 +61,32 @@ public class ShopService {
                 // account does not exists yet
                 log.warn(e.getError().getMessage());
             } catch (Exception e) {
-                log.warn("MP exception: " + e.getMessage());
+                log.warn("Exception: " + e.getMessage());
             }
         }
     }
 
-    private MiraklShops getUpdatedShops() {
-        MiraklGetShopsRequest request = new MiraklGetShopsRequest();
-        return miraklMarketplacePlatformOperatorApiClient.getShops(request);
+    public List<MiraklShop> getUpdatedShops() {
+        int offset = 0;
+        Long totalCount = 1L;
+        List<MiraklShop> shops = new ArrayList<>();
+
+        while (offset < totalCount) {
+            MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
+            miraklGetShopsRequest.setPaginate(false);
+            miraklGetShopsRequest.setOffset(offset);
+
+            MiraklShops miraklShops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest);
+            shops.addAll(miraklShops.getShops());
+
+            totalCount = miraklShops.getTotalCount();
+            offset += miraklShops.getShops().size();
+        }
+
+        return shops;
     }
 
-    public CreateAccountHolderRequest createAccountHolderRequestFromShop(MiraklShop shop) {
+    private CreateAccountHolderRequest createAccountHolderRequestFromShop(MiraklShop shop) {
         CreateAccountHolderRequest createAccountHolderRequest = new CreateAccountHolderRequest();
 
         // Set Account holder code
@@ -102,7 +117,7 @@ public class ShopService {
     private LegalEntityEnum getLegalEntityFromShop(MiraklShop shop) {
         MiraklValueListAdditionalFieldValue additionalFieldValue = (MiraklValueListAdditionalFieldValue) shop.getAdditionalFieldValues()
             .stream()
-            .filter(field -> isListWithCode(field, CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE))
+            .filter(field -> isListWithCode(field, MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE))
             .findAny()
             .orElseThrow(() -> new RuntimeException("Legal entity not found"));
 
@@ -128,12 +143,14 @@ public class ShopService {
         name.setLastName(contactInformation.getLastname());
         if (CIVILITY_TO_GENDER.containsKey(contactInformation.getCivility())) {
             name.setGender(CIVILITY_TO_GENDER.get(contactInformation.getCivility()));
+        } else {
+            name.setGender(Name.GenderEnum.UNKNOWN);
         }
         individualDetails.setName(name);
         return individualDetails;
     }
 
-    private boolean isListWithCode(MiraklAdditionalFieldValue additionalFieldValue, CustomMiraklFields field) {
+    private boolean isListWithCode(MiraklAdditionalFieldValue additionalFieldValue, MiraklStartupValidator.CustomMiraklFields field) {
         return MiraklAdditionalFieldType.LIST.equals(additionalFieldValue.getFieldType()) && field.toString().equalsIgnoreCase(additionalFieldValue.getCode());
     }
 

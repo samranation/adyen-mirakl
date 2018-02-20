@@ -14,9 +14,9 @@ import javax.annotation.Resource;
 import java.util.List;
 
 @Component
-public class StartupValidator implements ApplicationListener<ContextRefreshedEvent> {
+public class MiraklStartupValidator implements ApplicationListener<ContextRefreshedEvent> {
 
-    private final Logger log = LoggerFactory.getLogger(StartupValidator.class);
+    private final Logger log = LoggerFactory.getLogger(MiraklStartupValidator.class);
 
     public enum CustomMiraklFields {
         ADYEN_LEGAL_ENTITY_TYPE("adyen-legal-entity-type");
