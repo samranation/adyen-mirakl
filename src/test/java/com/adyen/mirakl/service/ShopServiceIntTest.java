@@ -68,23 +68,14 @@ public class ShopServiceIntTest {
 
     @Test
     public void testUpdateAccountHolderRequest() {
-
-
         MiraklShop shop = new MiraklShop();
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
 
-        List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
-        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalField.setCode(String.valueOf(StartupValidator.CustomMiraklFields.ADYEN_BANK_COUNTRY));
-        additionalField.setValue("GB");
-        additionalFields.add(additionalField);
-        shop.setAdditionalFieldValues(additionalFields);
-
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
 
         miraklIbanBankAccountInformation.setOwner("Owner");
-        miraklIbanBankAccountInformation.setIban("IBAN");
+        miraklIbanBankAccountInformation.setIban("GB00IBAN");
         miraklIbanBankAccountInformation.setBic("BIC");
         miraklIbanBankAccountInformation.setBankZip("1111AA");
         miraklIbanBankAccountInformation.setBankStreet("1 street");
@@ -94,7 +85,7 @@ public class ShopServiceIntTest {
         assertEquals("id", request.getAccountHolderCode());
         assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
         assertEquals("Owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
-        assertEquals("IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+        assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());

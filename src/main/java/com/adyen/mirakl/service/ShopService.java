@@ -175,42 +175,49 @@ public class ShopService {
         UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
         updateAccountHolderRequest.setAccountHolderCode(shop.getId());
 
-        // create AcountHolderDetails
-        AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
+        try {
+            MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
 
-        // set BankAccountDetails
-        BankAccountDetail bankAccountDetail = new BankAccountDetail();
+            if (!miraklIbanBankAccountInformation.getIban().isEmpty()) {
 
-        // check if PaymentInformation is object MiraklIbanBankAccountInformation
-        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
-        miraklIbanBankAccountInformation.getIban();
-        bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
-        bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
-        bankAccountDetail.setCountryCode(getBankCountryFromShop(shop)); // required field
-        bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
+                // create AcountHolderDetails
+                AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
 
-        bankAccountDetail.setOwnerPostalCode(miraklIbanBankAccountInformation.getBankZip());
-        bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(miraklIbanBankAccountInformation.getBankStreet()));
-        bankAccountDetail.setOwnerName(miraklIbanBankAccountInformation.getOwner());
+                // set BankAccountDetails
+                BankAccountDetail bankAccountDetail = new BankAccountDetail();
 
-        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
-        bankAccountDetails.add(bankAccountDetail);
-        accountHolderDetails.setBankAccountDetails(bankAccountDetails);
+                // check if PaymentInformation is object MiraklIbanBankAccountInformation
+                miraklIbanBankAccountInformation.getIban();
+                bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
+                bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
+                bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
+                bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
-        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+                bankAccountDetail.setOwnerPostalCode(miraklIbanBankAccountInformation.getBankZip());
+                bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(miraklIbanBankAccountInformation.getBankStreet()));
+                bankAccountDetail.setOwnerName(miraklIbanBankAccountInformation.getOwner());
 
+                List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+                bankAccountDetails.add(bankAccountDetail);
+                accountHolderDetails.setBankAccountDetails(bankAccountDetails);
+
+                updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+            }
+
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+        }
 
         return updateAccountHolderRequest;
     }
 
-    private String getBankCountryFromShop(MiraklShop shop) {
-        MiraklValueListAdditionalFieldValue additionalFieldValue = (MiraklValueListAdditionalFieldValue) shop.getAdditionalFieldValues()
-            .stream()
-            .filter(field -> isListWithCode(field, CustomMiraklFields.ADYEN_BANK_COUNTRY))
-            .findAny()
-            .orElseThrow(() -> new RuntimeException("Adyen Bank Country not found"));
-
-        return additionalFieldValue.getValue();
+    /**
+     * First two digits of IBAN holds ISO country code
+     * @param iban
+     * @return
+     */
+    private String getBankCountryFromIban(String iban) {
+        return iban.substring(0, 2);
     }
 
 

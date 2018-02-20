@@ -19,8 +19,7 @@ public class StartupValidator implements ApplicationListener<ContextRefreshedEve
     private final Logger log = LoggerFactory.getLogger(StartupValidator.class);
 
     public enum CustomMiraklFields {
-        ADYEN_LEGAL_ENTITY_TYPE("adyen-legal-entity-type"),
-        ADYEN_BANK_COUNTRY("adyen-bank-country");
+        ADYEN_LEGAL_ENTITY_TYPE("adyen-legal-entity-type");
 
         private final String name;
 
