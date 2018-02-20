@@ -54,7 +54,7 @@ public class AdyenStartupValidator implements ApplicationListener<ContextRefresh
             .collect(Collectors.toMap(NotificationConfigurationDetails::getNotifyURL, NotificationConfigurationDetails::getNotificationId));
 
         //transfer the notification ID
-        notifyUrlsToIds.forEach((desc, id) -> currentNotificationSetup.get(desc).setNotificationId(id));
+        notifyUrlsToIds.forEach((url, id) -> currentNotificationSetup.get(url).setNotificationId(id));
 
         //separate update from create
         final Map<Boolean, List<NotificationConfigurationDetails>> toCreate = currentNotificationSetup.values().stream()
