@@ -40,7 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AdyenNotificationResourceIntTest {
 
     private static final String DEFAULT_RAW_ADYEN_NOTIFICATION = "AAAAAAAAAA";
-    private static final String UPDATED_RAW_ADYEN_NOTIFICATION = "BBBBBBBBBB";
 
     @Autowired
     private AdyenNotificationRepository adyenNotificationRepository;
@@ -105,122 +104,6 @@ public class AdyenNotificationResourceIntTest {
         assertThat(adyenNotificationList).hasSize(databaseSizeBeforeCreate + 1);
         AdyenNotification testAdyenNotification = adyenNotificationList.get(adyenNotificationList.size() - 1);
         assertThat(testAdyenNotification.getRawAdyenNotification()).isEqualTo(DEFAULT_RAW_ADYEN_NOTIFICATION);
-    }
-
-    @Test
-    @Transactional
-    public void createAdyenNotificationWithExistingId() throws Exception {
-        int databaseSizeBeforeCreate = adyenNotificationRepository.findAll().size();
-
-        // Create the AdyenNotification with an existing ID
-        adyenNotification.setId(1L);
-
-        // An entity with an existing ID cannot be created, so this API call must fail
-        restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(adyenNotification)))
-            .andExpect(status().isBadRequest());
-
-        // Validate the AdyenNotification in the database
-        List<AdyenNotification> adyenNotificationList = adyenNotificationRepository.findAll();
-        assertThat(adyenNotificationList).hasSize(databaseSizeBeforeCreate);
-    }
-
-    @Test
-    @Transactional
-    public void getAllAdyenNotifications() throws Exception {
-        // Initialize the database
-        adyenNotificationRepository.saveAndFlush(adyenNotification);
-
-        // Get all the adyenNotificationList
-        restAdyenNotificationMockMvc.perform(get("/api/adyen-notifications?sort=id,desc"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(adyenNotification.getId().intValue())))
-            .andExpect(jsonPath("$.[*].rawAdyenNotification").value(hasItem(DEFAULT_RAW_ADYEN_NOTIFICATION.toString())));
-    }
-
-    @Test
-    @Transactional
-    public void getAdyenNotification() throws Exception {
-        // Initialize the database
-        adyenNotificationRepository.saveAndFlush(adyenNotification);
-
-        // Get the adyenNotification
-        restAdyenNotificationMockMvc.perform(get("/api/adyen-notifications/{id}", adyenNotification.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(adyenNotification.getId().intValue()))
-            .andExpect(jsonPath("$.rawAdyenNotification").value(DEFAULT_RAW_ADYEN_NOTIFICATION.toString()));
-    }
-
-    @Test
-    @Transactional
-    public void getNonExistingAdyenNotification() throws Exception {
-        // Get the adyenNotification
-        restAdyenNotificationMockMvc.perform(get("/api/adyen-notifications/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @Transactional
-    public void updateAdyenNotification() throws Exception {
-        // Initialize the database
-        adyenNotificationRepository.saveAndFlush(adyenNotification);
-        int databaseSizeBeforeUpdate = adyenNotificationRepository.findAll().size();
-
-        // Update the adyenNotification
-        AdyenNotification updatedAdyenNotification = adyenNotificationRepository.findOne(adyenNotification.getId());
-        // Disconnect from session so that the updates on updatedAdyenNotification are not directly saved in db
-        em.detach(updatedAdyenNotification);
-        updatedAdyenNotification
-            .rawAdyenNotification(UPDATED_RAW_ADYEN_NOTIFICATION);
-
-        restAdyenNotificationMockMvc.perform(put("/api/adyen-notifications")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(updatedAdyenNotification)))
-            .andExpect(status().isOk());
-
-        // Validate the AdyenNotification in the database
-        List<AdyenNotification> adyenNotificationList = adyenNotificationRepository.findAll();
-        assertThat(adyenNotificationList).hasSize(databaseSizeBeforeUpdate);
-        AdyenNotification testAdyenNotification = adyenNotificationList.get(adyenNotificationList.size() - 1);
-        assertThat(testAdyenNotification.getRawAdyenNotification()).isEqualTo(UPDATED_RAW_ADYEN_NOTIFICATION);
-    }
-
-    @Test
-    @Transactional
-    public void updateNonExistingAdyenNotification() throws Exception {
-        int databaseSizeBeforeUpdate = adyenNotificationRepository.findAll().size();
-
-        // Create the AdyenNotification
-
-        // If the entity doesn't have an ID, it will be created instead of just being updated
-        restAdyenNotificationMockMvc.perform(put("/api/adyen-notifications")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(adyenNotification)))
-            .andExpect(status().isCreated());
-
-        // Validate the AdyenNotification in the database
-        List<AdyenNotification> adyenNotificationList = adyenNotificationRepository.findAll();
-        assertThat(adyenNotificationList).hasSize(databaseSizeBeforeUpdate + 1);
-    }
-
-    @Test
-    @Transactional
-    public void deleteAdyenNotification() throws Exception {
-        // Initialize the database
-        adyenNotificationRepository.saveAndFlush(adyenNotification);
-        int databaseSizeBeforeDelete = adyenNotificationRepository.findAll().size();
-
-        // Get the adyenNotification
-        restAdyenNotificationMockMvc.perform(delete("/api/adyen-notifications/{id}", adyenNotification.getId())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
-
-        // Validate the database is empty
-        List<AdyenNotification> adyenNotificationList = adyenNotificationRepository.findAll();
-        assertThat(adyenNotificationList).hasSize(databaseSizeBeforeDelete - 1);
     }
 
     @Test
