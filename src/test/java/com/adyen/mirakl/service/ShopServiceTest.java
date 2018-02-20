@@ -1,5 +1,14 @@
 package com.adyen.mirakl.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.CreateAccountHolderRequest;
@@ -15,21 +24,12 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
@@ -123,13 +123,7 @@ public class ShopServiceTest {
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
 
-        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
-
-        miraklIbanBankAccountInformation.setOwner("Owner");
-        miraklIbanBankAccountInformation.setIban("GB00IBAN");
-        miraklIbanBankAccountInformation.setBic("BIC");
-        miraklIbanBankAccountInformation.setBankZip("1111AA");
-        miraklIbanBankAccountInformation.setBankStreet("1 street");
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
         shop.setPaymentInformation(miraklIbanBankAccountInformation);
 
         UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop);
@@ -141,6 +135,18 @@ public class ShopServiceTest {
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+    }
+
+    private MiraklIbanBankAccountInformation createMiraklIbanBankAccountInformation() {
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
+
+        miraklIbanBankAccountInformation.setOwner("Owner");
+        miraklIbanBankAccountInformation.setIban("GB00IBAN");
+        miraklIbanBankAccountInformation.setBic("BIC");
+        miraklIbanBankAccountInformation.setBankZip("1111AA");
+        miraklIbanBankAccountInformation.setBankStreet("1 street");
+
+        return miraklIbanBankAccountInformation;
     }
 
     private void setup() throws Exception {
@@ -167,6 +173,10 @@ public class ShopServiceTest {
         additionalFields.add(additionalField);
         shop.setAdditionalFieldValues(additionalFields);
         shop.setId("id");
+        shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
+
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
+        shop.setPaymentInformation(miraklIbanBankAccountInformation);
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(any())).thenReturn(miraklShops);
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponseMock);
