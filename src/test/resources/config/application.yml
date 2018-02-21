@@ -165,3 +165,6 @@ adyenNotificationsConfig:
               includeMode: INCLUDE
             - eventType: TRANSFER_FUNDS
               includeMode: INCLUDE
+
+requestbin:
+    baseRequestbinUrl: https://adyen-requestbin.herokuapp.com/
