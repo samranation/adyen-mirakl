@@ -6,6 +6,10 @@
             "fieldName": "rawAdyenNotification",
             "fieldType": "byte[]",
             "fieldTypeBlobContent": "text"
+        },
+        {
+            "fieldName": "processed",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20180220102201",
