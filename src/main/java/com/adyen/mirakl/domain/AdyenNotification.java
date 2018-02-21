@@ -26,8 +26,8 @@ public class AdyenNotification implements Serializable {
     @Column(name = "raw_adyen_notification")
     private String rawAdyenNotification;
 
-    @Column(name = "processed")
-    private Boolean processed;
+    @Column(name = "processed", nullable = false)
+    private boolean processed;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -51,16 +51,16 @@ public class AdyenNotification implements Serializable {
         this.rawAdyenNotification = rawAdyenNotification;
     }
 
-    public Boolean isProcessed() {
+    public boolean isProcessed() {
         return processed;
     }
 
-    public AdyenNotification processed(Boolean processed) {
+    public AdyenNotification processed(boolean processed) {
         this.processed = processed;
         return this;
     }
 
-    public void setProcessed(Boolean processed) {
+    public void setProcessed(boolean processed) {
         this.processed = processed;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

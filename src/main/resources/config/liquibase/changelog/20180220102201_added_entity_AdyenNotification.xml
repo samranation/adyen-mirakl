@@ -26,8 +26,8 @@
                 <constraints nullable="true" />
             </column>
 
-            <column name="processed" type="bit">
-                <constraints nullable="true" />
+            <column name="processed" type="boolean" valueBoolean="false">
+                <constraints nullable="false" />
             </column>
 
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here, do not remove-->

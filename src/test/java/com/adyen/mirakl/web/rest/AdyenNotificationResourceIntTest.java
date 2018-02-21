@@ -84,6 +84,7 @@ public class AdyenNotificationResourceIntTest {
         assertThat(adyenNotificationList).hasSize(databaseSizeBeforeCreate + 1);
         AdyenNotification testAdyenNotification = adyenNotificationList.get(adyenNotificationList.size() - 1);
         assertThat(testAdyenNotification.getRawAdyenNotification()).isEqualTo(adyenRequestJson);
+        assertThat(testAdyenNotification.isProcessed()).isFalse();
     }
 
     @Test
