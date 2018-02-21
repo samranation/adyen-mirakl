@@ -65,7 +65,7 @@ public class AdyenStartupValidator implements ApplicationListener<ContextRefresh
             final CreateNotificationConfigurationRequest createNotificationConfigurationRequest = new CreateNotificationConfigurationRequest();
             createNotificationConfigurationRequest.setConfigurationDetails(configurationDetails);
             final CreateNotificationConfigurationResponse createNotificationConfigurationResponse = adyenNotification.createNotificationConfiguration(createNotificationConfigurationRequest);
-            log.info(String.format("Create notification [%s]. Psp ref: [%s]",  configurationDetails,createNotificationConfigurationResponse.getPspReference()));
+            log.info(String.format("Create notification. Psp ref: [%s]",  createNotificationConfigurationResponse.getPspReference()));
         }
 
         //update with our config
@@ -73,7 +73,7 @@ public class AdyenStartupValidator implements ApplicationListener<ContextRefresh
             final UpdateNotificationConfigurationRequest updateNotificationConfigurationRequest = new UpdateNotificationConfigurationRequest();
             updateNotificationConfigurationRequest.setConfigurationDetails(configurationDetails);
             final UpdateNotificationConfigurationResponse updateNotificationConfigurationResponse = adyenNotification.updateNotificationConfiguration(updateNotificationConfigurationRequest);
-            log.info(String.format("Update notification [%s]. Psp ref: [%s]",  configurationDetails,updateNotificationConfigurationResponse.getPspReference()));
+            log.info(String.format("Update notification. Psp ref: [%s]",  updateNotificationConfigurationResponse.getPspReference()));
         }
     }
 
