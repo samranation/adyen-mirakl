@@ -1,0 +1,12 @@
+{
+    "live" : "true",
+    "eventType" : "ACCOUNT_HOLDER_VERIFICATION",
+    "executingUserKey" : "Account Holder Update",
+    "pspReference" : "1215189566695806",
+    "content" : {
+        "verificationStatus" : "AWAITING_DATA",
+        "statusSummaryItems" : [],
+        "verificationType" : "PASSPORT_VERIFICATION",
+        "accountHolderCode" : "8c93e9d5-199f-4c00-9b87-dd6680995ec6"
+    }
+}
