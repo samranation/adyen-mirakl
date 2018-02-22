@@ -122,7 +122,7 @@ adyenConfig:
 adyenNotificationsConfig:
     notificationConfigurationDetails:
         - active: TRUE
-          description: description
+          description: ${ADYEN_NOTIFY_URL}
           messageFormat: JSON
           notifyURL: ${ADYEN_NOTIFY_URL}
           notifyUsername: ${ADYEN_NOTIFY_USERNAME}
