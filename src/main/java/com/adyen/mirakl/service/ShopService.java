@@ -221,7 +221,6 @@ public class ShopService {
 
         // create AcountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
 
         if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
@@ -232,7 +231,7 @@ public class ShopService {
                 }
             }
         }
-
+        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
         return updateAccountHolderRequest;
     }
 
