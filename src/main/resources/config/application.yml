@@ -122,7 +122,7 @@ adyenConfig:
 adyenNotificationsConfig:
     notificationConfigurationDetails:
         - active: TRUE
-          description: description
+          description: ${ADYEN_NOTIFY_URL}
           messageFormat: JSON
           notifyURL: ${ADYEN_NOTIFY_URL}
           notifyUsername: ${ADYEN_NOTIFY_USERNAME}
@@ -158,3 +158,5 @@ adyenNotificationsConfig:
             - eventType: TRANSFER_FUNDS
               includeMode: INCLUDE
 
+shopService:
+    maxUbos: 4

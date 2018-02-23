@@ -1,30 +1,12 @@
 package com.adyen.mirakl.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.BankAccountDetail;
-import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
-import com.adyen.model.marketpay.CreateAccountHolderResponse;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.IndividualDetails;
-import com.adyen.model.marketpay.UpdateAccountHolderRequest;
-import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -35,10 +17,27 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Transactional
 public class ShopService {
+    private static final String ADYEN_UBO = "adyen-ubo";
+    private static final String FIRSTNAME = "firstname";
+    private static final String LASTNAME = "lastname";
+    private static final String GENDER = "gender";
+    private static final String EMAIL = "email";
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     private static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
@@ -51,6 +50,9 @@ public class ShopService {
 
     @Resource
     private Account adyenAccountService;
+
+    @Value("${shopService.maxUbos}")
+    private Integer maxUbos = 4;
 
     @Scheduled(cron = "${application.shopUpdaterCron}")
     public void retrieveUpdatedShops() {
@@ -113,8 +115,11 @@ public class ShopService {
         if (LegalEntityEnum.INDIVIDUAL.equals(legalEntity)) {
             IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
             accountHolderDetails.setIndividualDetails(individualDetails);
-        } else {
-            throw new RuntimeException(legalEntity.toString() + " not supported");
+        } else if (LegalEntityEnum.BUSINESS.equals(legalEntity)) {
+            BusinessDetails businessDetails = createBusinessDetailsFromShop(shop);
+            accountHolderDetails.setBusinessDetails(businessDetails);
+        }else{
+            throw new IllegalArgumentException(legalEntity.toString() + " not supported");
         }
 
         // Set email
@@ -145,6 +150,13 @@ public class ShopService {
         return Optional.of(shop.getContactInformation()).orElseThrow(() -> new RuntimeException("Contact information not found"));
     }
 
+
+    private BusinessDetails createBusinessDetailsFromShop(final MiraklShop shop) {
+        BusinessDetails businessDetails = new BusinessDetails();
+        businessDetails.setShareholders(extractUbos(shop));
+        return businessDetails;
+    }
+
     private IndividualDetails createIndividualDetailsFromShop(MiraklShop shop) {
         IndividualDetails individualDetails = new IndividualDetails();
 
@@ -153,11 +165,7 @@ public class ShopService {
         Name name = new Name();
         name.setFirstName(contactInformation.getFirstname());
         name.setLastName(contactInformation.getLastname());
-        if (CIVILITY_TO_GENDER.containsKey(contactInformation.getCivility())) {
-            name.setGender(CIVILITY_TO_GENDER.get(contactInformation.getCivility()));
-        } else {
-            name.setGender(Name.GenderEnum.UNKNOWN);
-        }
+        name.setGender(CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
         individualDetails.setName(name);
         return individualDetails;
     }
@@ -238,6 +246,50 @@ public class ShopService {
         return bankAccountDetail;
     }
 
+    private List<ShareholderContact> extractUbos(final MiraklShop shop) {
+        Map<String, String> extractedKeysFromMirakl = shop.getAdditionalFieldValues().stream()
+            .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
+            .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
+            .collect(Collectors.toMap(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue, MiraklAdditionalFieldValue::getCode));
+
+        ImmutableList.Builder<ShareholderContact> builder = ImmutableList.builder();
+        generateKeys().forEach((i, keys) -> {
+            String firstName = extractedKeysFromMirakl.getOrDefault(keys.get(FIRSTNAME), "");
+            String lastName = extractedKeysFromMirakl.getOrDefault(keys.get(LASTNAME), "");
+            String gender = extractedKeysFromMirakl.getOrDefault(keys.get(GENDER), "");
+            String email = extractedKeysFromMirakl.getOrDefault(keys.get(EMAIL), "");
+
+            if(ImmutableList.of(firstName, lastName, gender, email).stream().noneMatch(StringUtils::isBlank)){
+                ShareholderContact shareholderContact = new ShareholderContact();
+                Name name = new Name();
+                name.setFirstName(firstName);
+                name.setLastName(lastName);
+                name.setGender(CIVILITY_TO_GENDER.getOrDefault(gender, Name.GenderEnum.UNKNOWN));
+                shareholderContact.setName(name);
+                shareholderContact.setEmail(email);
+                builder.add(shareholderContact);
+            }
+        });
+        return builder.build();
+    }
+
+    private Map<Integer, Map<String, String>> generateKeys(){
+        return  IntStream.rangeClosed(1, maxUbos)
+            .mapToObj(i -> {
+                final Map<Integer, Map<String, String>> grouped = new HashMap<>();
+                grouped.put(i, ImmutableMap.of(
+                    FIRSTNAME, ADYEN_UBO + String.valueOf(i) + "-firstname",
+                    LASTNAME, ADYEN_UBO + String.valueOf(i) + "-lastname",
+                    GENDER, ADYEN_UBO + String.valueOf(i) + "-gender",
+                    EMAIL, ADYEN_UBO + String.valueOf(i) + "-email"));
+                return grouped;
+            }).reduce((x, y) -> {
+                x.put(y.entrySet().iterator().next().getKey()
+                    , y.entrySet().iterator().next().getValue());
+                return x;
+            }).orElseThrow(() -> new IllegalStateException("UBOs must exist, number found: " + maxUbos));
+    }
+
     /**
      * First two digits of IBAN holds ISO country code
      */
@@ -251,5 +303,13 @@ public class ShopService {
      */
     private String getHouseNumberFromStreet(String street) {
         return "1";
+    }
+
+    public Integer getMaxUbos() {
+        return maxUbos;
+    }
+
+    public void setMaxUbos(Integer maxUbos) {
+        this.maxUbos = maxUbos;
     }
 }
