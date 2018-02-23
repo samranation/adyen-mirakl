@@ -20,6 +20,7 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,11 @@ import java.util.stream.IntStream;
 @Service
 @Transactional
 public class ShopService {
+    private static final String ADYEN_UBO = "adyen-ubo";
+    private static final String FIRSTNAME = "firstname";
+    private static final String LASTNAME = "lastname";
+    private static final String GENDER = "gender";
+    private static final String EMAIL = "email";
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     private static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
@@ -44,6 +50,9 @@ public class ShopService {
 
     @Resource
     private Account adyenAccountService;
+
+    @Value("${shopService.maxUbos}")
+    private Integer maxUbos = 4;
 
     @Scheduled(cron = "${application.shopUpdaterCron}")
     public void retrieveUpdatedShops() {
@@ -110,7 +119,7 @@ public class ShopService {
             BusinessDetails businessDetails = createBusinessDetailsFromShop(shop);
             accountHolderDetails.setBusinessDetails(businessDetails);
         }else{
-            throw new RuntimeException(legalEntity.toString() + " not supported");
+            throw new IllegalArgumentException(legalEntity.toString() + " not supported");
         }
 
         // Set email
@@ -245,10 +254,10 @@ public class ShopService {
 
         ImmutableList.Builder<ShareholderContact> builder = ImmutableList.builder();
         generateKeys().forEach((i, keys) -> {
-            String firstName = extractedKeysFromMirakl.getOrDefault(keys.get(0), "");
-            String lastName = extractedKeysFromMirakl.getOrDefault(keys.get(1), "");
-            String gender = extractedKeysFromMirakl.getOrDefault(keys.get(2), "");
-            String email = extractedKeysFromMirakl.getOrDefault(keys.get(3), "");
+            String firstName = extractedKeysFromMirakl.getOrDefault(keys.get(FIRSTNAME), "");
+            String lastName = extractedKeysFromMirakl.getOrDefault(keys.get(LASTNAME), "");
+            String gender = extractedKeysFromMirakl.getOrDefault(keys.get(GENDER), "");
+            String email = extractedKeysFromMirakl.getOrDefault(keys.get(EMAIL), "");
 
             if(ImmutableList.of(firstName, lastName, gender, email).stream().noneMatch(StringUtils::isBlank)){
                 ShareholderContact shareholderContact = new ShareholderContact();
@@ -264,21 +273,21 @@ public class ShopService {
         return builder.build();
     }
 
-    private Map<Integer, List<String>> generateKeys(){
-        return IntStream.of(1, 2, 3, 4)
+    private Map<Integer, Map<String, String>> generateKeys(){
+        return  IntStream.rangeClosed(1, maxUbos)
             .mapToObj(i -> {
-                final Map<Integer, List<String>> grouped = new HashMap<>();
-                grouped.put(i, ImmutableList.of(
-                    "adyen-ubo" + String.valueOf(i) + "-firstname",
-                    "adyen-ubo" + String.valueOf(i) + "-lastname",
-                    "adyen-ubo" + String.valueOf(i) + "-gender",
-                    "adyen-ubo" + String.valueOf(i) + "-email"));
+                final Map<Integer, Map<String, String>> grouped = new HashMap<>();
+                grouped.put(i, ImmutableMap.of(
+                    FIRSTNAME, ADYEN_UBO + String.valueOf(i) + "-firstname",
+                    LASTNAME, ADYEN_UBO + String.valueOf(i) + "-lastname",
+                    GENDER, ADYEN_UBO + String.valueOf(i) + "-gender",
+                    EMAIL, ADYEN_UBO + String.valueOf(i) + "-email"));
                 return grouped;
             }).reduce((x, y) -> {
                 x.put(y.entrySet().iterator().next().getKey()
                     , y.entrySet().iterator().next().getValue());
                 return x;
-            }).get();
+            }).orElseThrow(() -> new IllegalStateException("UBOs must exist, number found: " + maxUbos));
     }
 
     /**
@@ -294,5 +303,13 @@ public class ShopService {
      */
     private String getHouseNumberFromStreet(String street) {
         return "1";
+    }
+
+    public Integer getMaxUbos() {
+        return maxUbos;
+    }
+
+    public void setMaxUbos(Integer maxUbos) {
+        this.maxUbos = maxUbos;
     }
 }

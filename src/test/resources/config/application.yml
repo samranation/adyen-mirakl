@@ -168,3 +168,6 @@ adyenNotificationsConfig:
 
 requestbin:
     baseRequestbinUrl: https://adyen-requestbin.herokuapp.com/
+
+shopService:
+    maxUbos: 4

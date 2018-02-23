@@ -158,3 +158,5 @@ adyenNotificationsConfig:
             - eventType: TRANSFER_FUNDS
               includeMode: INCLUDE
 
+shopService:
+    maxUbos: 4

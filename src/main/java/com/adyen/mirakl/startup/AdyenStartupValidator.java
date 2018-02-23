@@ -39,7 +39,7 @@ public class AdyenStartupValidator implements ApplicationListener<ContextRefresh
             notificationConfigurationDetails.forEach(x -> x.setEventConfigs(x.getEventConfigs()));
             sync();
         }catch (ApiException e){
-            throw new IllegalStateException(String.format("Unable to sync Adyen notification configuration: %s", e.getError().getMessage()), e);
+            throw new IllegalStateException(String.format("Unable to sync Adyen notification configuration: %s", e.getError()), e);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to sync Adyen notification configuration", e);
         }
