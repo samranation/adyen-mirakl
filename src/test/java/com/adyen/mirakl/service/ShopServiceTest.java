@@ -55,8 +55,6 @@ public class ShopServiceTest {
     @Captor
     private ArgumentCaptor<GetAccountHolderResponse> getAccountHolderResponseCaptor;
 
-
-
     @Test
     public void testIsIbanChanged() throws Exception {
 
@@ -132,8 +130,8 @@ public class ShopServiceTest {
         assertEquals(CreateAccountHolderRequest.LegalEntityEnum.INDIVIDUAL, request.getLegalEntity());
         assertNotNull(request.getAccountHolderDetails().getIndividualDetails());
         IndividualDetails individualDetails = request.getAccountHolderDetails().getIndividualDetails();
-        assertEquals("firstName", individualDetails.getName().getFirstName());
-        assertEquals("lastName", individualDetails.getName().getLastName());
+        assertEquals("FirstName", individualDetails.getName().getFirstName());
+        assertEquals("LastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
     }
 
@@ -177,6 +175,10 @@ public class ShopServiceTest {
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
 
+
+        MiraklContactInformation miraklContactInformation = createMiraklContactInformation();
+        shop.setContactInformation(miraklContactInformation);
+
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
         shop.setPaymentInformation(miraklIbanBankAccountInformation);
 
@@ -187,7 +189,7 @@ public class ShopServiceTest {
         UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
         assertEquals("id", request.getAccountHolderCode());
         assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-        assertEquals("Owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+        assertEquals("FirstName LastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
         assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
@@ -211,8 +213,7 @@ public class ShopServiceTest {
     }
 
 
-    private GetAccountHolderResponse createGetAccountHolderResponse()
-    {
+    private GetAccountHolderResponse createGetAccountHolderResponse() {
         GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
         List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
@@ -227,14 +228,20 @@ public class ShopServiceTest {
 
     private MiraklIbanBankAccountInformation createMiraklIbanBankAccountInformation() {
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
-
-        miraklIbanBankAccountInformation.setOwner("Owner");
         miraklIbanBankAccountInformation.setIban("GB00IBAN");
         miraklIbanBankAccountInformation.setBic("BIC");
-        miraklIbanBankAccountInformation.setBankZip("1111AA");
-        miraklIbanBankAccountInformation.setBankStreet("1 street");
-
         return miraklIbanBankAccountInformation;
+    }
+
+    private MiraklContactInformation createMiraklContactInformation() {
+        MiraklContactInformation miraklContactInformation = new MiraklContactInformation();
+        miraklContactInformation.setEmail("email");
+        miraklContactInformation.setFirstname("FirstName");
+        miraklContactInformation.setLastname("LastName");
+        miraklContactInformation.setStreet1("1 street");
+        miraklContactInformation.setZipCode("1111AA");
+        miraklContactInformation.setCivility("Mrs");
+        return miraklContactInformation;
     }
 
     private void setup() throws Exception {
@@ -251,11 +258,7 @@ public class ShopServiceTest {
         additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
         additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
 
-        MiraklContactInformation contactInformation = new MiraklContactInformation();
-        contactInformation.setEmail("email");
-        contactInformation.setFirstname("firstName");
-        contactInformation.setLastname("lastName");
-        contactInformation.setCivility("Mrs");
+        MiraklContactInformation contactInformation = createMiraklContactInformation();
         shop.setContactInformation(contactInformation);
 
         additionalFields.add(additionalField);

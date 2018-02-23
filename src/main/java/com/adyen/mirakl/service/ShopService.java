@@ -272,13 +272,13 @@ public class ShopService {
      * Set bank account details
      */
     private List<BankAccountDetail> setBankAccountDetails(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, MiraklShop shop) {
-        BankAccountDetail bankAccountDetail = createBankAccountDetail(miraklIbanBankAccountInformation, shop.getCurrencyIsoCode().toString());
+        BankAccountDetail bankAccountDetail = createBankAccountDetail(miraklIbanBankAccountInformation, shop);
         List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
         bankAccountDetails.add(bankAccountDetail);
         return bankAccountDetails;
     }
 
-    private BankAccountDetail createBankAccountDetail(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, String currencyCode) {
+    private BankAccountDetail createBankAccountDetail(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, MiraklShop shop) {
         // create AcountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
 
@@ -290,11 +290,15 @@ public class ShopService {
         bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
         bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
         bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
-        bankAccountDetail.setCurrencyCode(currencyCode);
+        bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
-        bankAccountDetail.setOwnerPostalCode(miraklIbanBankAccountInformation.getBankZip());
-        bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(miraklIbanBankAccountInformation.getBankStreet()));
-        bankAccountDetail.setOwnerName(miraklIbanBankAccountInformation.getOwner());
+
+        if(shop.getContactInformation() != null) {
+            bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
+            bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(shop.getContactInformation().getStreet1()));
+            bankAccountDetail.setOwnerName(shop.getContactInformation().getFirstname().concat(" ").concat(shop.getContactInformation().getLastname()));
+        }
+
         bankAccountDetail.setPrimaryAccount(true);
 
         List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
