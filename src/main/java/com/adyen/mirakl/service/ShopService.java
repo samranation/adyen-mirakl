@@ -61,7 +61,7 @@ public class ShopService {
         log.debug("Retrieved shops: " + shops.size());
         for (MiraklShop shop : shops) {
             try {
-                GetAccountHolderResponse getAccountHolderResponse = accountHolderExists(shop, adyenAccountService);
+                GetAccountHolderResponse getAccountHolderResponse = getAccountHolderFromShop(shop);
                 if (getAccountHolderResponse != null) {
                     UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
                     UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
@@ -193,7 +193,7 @@ public class ShopService {
     /**
      * Check if AccountHolder already exists in Adyen
      */
-    private GetAccountHolderResponse accountHolderExists(MiraklShop shop, Account adyenAccountService) throws Exception {
+    private GetAccountHolderResponse getAccountHolderFromShop(MiraklShop shop) throws Exception {
 
         // lookup accountHolder in Adyen
         GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
@@ -226,7 +226,7 @@ public class ShopService {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
             if (! miraklIbanBankAccountInformation.getIban().isEmpty() && shop.getCurrencyIsoCode() != null) {
                 // if IBAN already exists and is the same then ignore this
-                if(!isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse)) {
+                if (! isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse)) {
                     accountHolderDetails.setBankAccountDetails(setBankAccountDetails(miraklIbanBankAccountInformation, shop));
                 }
             }
@@ -258,7 +258,7 @@ public class ShopService {
      */
     protected boolean isIbanIdentical(String iban, GetAccountHolderResponse getAccountHolderResponse) {
 
-        if(getAccountHolderResponse.getAccountHolderDetails() != null && !getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().isEmpty()) {
+        if (getAccountHolderResponse.getAccountHolderDetails() != null && ! getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().isEmpty()) {
             if (iban.equals(getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).getIban())) {
                 return true;
             }
@@ -292,7 +292,7 @@ public class ShopService {
         bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
 
-        if(shop.getContactInformation() != null) {
+        if (shop.getContactInformation() != null) {
             bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
             bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(shop.getContactInformation().getStreet1()));
             bankAccountDetail.setOwnerName(shop.getContactInformation().getFirstname().concat(" ").concat(shop.getContactInformation().getLastname()));
