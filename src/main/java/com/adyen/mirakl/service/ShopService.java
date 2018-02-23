@@ -61,7 +61,7 @@ public class ShopService {
         log.debug("Retrieved shops: " + shops.size());
         for (MiraklShop shop : shops) {
             try {
-                GetAccountHolderResponse getAccountHolderResponse = accountHolderExists(shop, adyenAccountService);
+                GetAccountHolderResponse getAccountHolderResponse = getAccountHolderFromShop(shop);
                 if (getAccountHolderResponse != null) {
                     UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
                     UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
