@@ -36,7 +36,7 @@ public class ShopService {
     private static final String ADYEN_UBO = "adyen-ubo";
     private static final String FIRSTNAME = "firstname";
     private static final String LASTNAME = "lastname";
-    private static final String GENDER = "gender";
+    private static final String CIVILITY = "civility";
     private static final String EMAIL = "email";
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
@@ -256,15 +256,15 @@ public class ShopService {
         generateKeys().forEach((i, keys) -> {
             String firstName = extractedKeysFromMirakl.getOrDefault(keys.get(FIRSTNAME), "");
             String lastName = extractedKeysFromMirakl.getOrDefault(keys.get(LASTNAME), "");
-            String gender = extractedKeysFromMirakl.getOrDefault(keys.get(GENDER), "");
+            String civility = extractedKeysFromMirakl.getOrDefault(keys.get(CIVILITY), "");
             String email = extractedKeysFromMirakl.getOrDefault(keys.get(EMAIL), "");
 
-            if(ImmutableList.of(firstName, lastName, gender, email).stream().noneMatch(StringUtils::isBlank)){
+            if(ImmutableList.of(firstName, lastName, civility, email).stream().noneMatch(StringUtils::isBlank)){
                 ShareholderContact shareholderContact = new ShareholderContact();
                 Name name = new Name();
                 name.setFirstName(firstName);
                 name.setLastName(lastName);
-                name.setGender(CIVILITY_TO_GENDER.getOrDefault(gender, Name.GenderEnum.UNKNOWN));
+                name.setGender(CIVILITY_TO_GENDER.getOrDefault(civility, Name.GenderEnum.UNKNOWN));
                 shareholderContact.setName(name);
                 shareholderContact.setEmail(email);
                 builder.add(shareholderContact);
@@ -280,7 +280,7 @@ public class ShopService {
                 grouped.put(i, ImmutableMap.of(
                     FIRSTNAME, ADYEN_UBO + String.valueOf(i) + "-firstname",
                     LASTNAME, ADYEN_UBO + String.valueOf(i) + "-lastname",
-                    GENDER, ADYEN_UBO + String.valueOf(i) + "-gender",
+                    CIVILITY, ADYEN_UBO + String.valueOf(i) + "-civility",
                     EMAIL, ADYEN_UBO + String.valueOf(i) + "-email"));
                 return grouped;
             }).reduce((x, y) -> {
