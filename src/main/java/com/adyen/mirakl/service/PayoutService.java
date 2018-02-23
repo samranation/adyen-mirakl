@@ -34,12 +34,6 @@ public class PayoutService {
     @Resource
     private Fund adyenFundService;
 
-    public GetAccountHolderResponse getAccountHolderResponse(String accountHolderCode) throws Exception {
-        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
-        getAccountHolderRequest.setAccountHolderCode(accountHolderCode);
-        GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
-        return getAccountHolderResponse;
-    }
 
     public void parseMiraklCsv(String csvData) throws IOException {
         Iterable<CSVRecord> records = null;
@@ -66,9 +60,13 @@ public class PayoutService {
 
     }
 
-    public PayoutAccountHolderRequest payoutAccountHolder(String accountHolderCode, String amount, String currency, String iban, String description) throws Exception {
+    protected PayoutAccountHolderRequest payoutAccountHolder(String accountHolderCode, String amount, String currency, String iban, String description) throws Exception {
+
+        //Call Adyen to retrieve the accountCode from the accountHolderCode
         GetAccountHolderResponse accountHolderResponse = getAccountHolderResponse(accountHolderCode);
         String accountCode = getAccountCode(accountHolderResponse);
+
+        //Retrieve the bankAccountUUID from Adyen matching to the iban provided from Mirakl
         String bankAccountUUID = getBankAccountUUID(accountHolderResponse, iban);
         PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
         payoutAccountHolderRequest.setAccountCode(accountCode);
@@ -81,7 +79,18 @@ public class PayoutService {
         return payoutAccountHolderRequest;
     }
 
-    private String getBankAccountUUID(GetAccountHolderResponse accountHolderResponse, String iban) {
+    protected GetAccountHolderResponse getAccountHolderResponse(String accountHolderCode) throws Exception {
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountHolderCode(accountHolderCode);
+        GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
+        return getAccountHolderResponse;
+    }
+
+    private String getAccountCode(GetAccountHolderResponse accountHolderResponse) {
+        return accountHolderResponse.getAccounts().get(0).getAccountCode();
+    }
+
+    protected String getBankAccountUUID(GetAccountHolderResponse accountHolderResponse, String iban) {
         //Iban Check
         List<BankAccountDetail> bankAccountDetailList = accountHolderResponse.getAccountHolderDetails().getBankAccountDetails();
         if (! bankAccountDetailList.isEmpty()) {
@@ -94,7 +103,5 @@ public class PayoutService {
         throw new RuntimeException("No matching Iban between Mirakl and Adyen platforms.");
     }
 
-    private String getAccountCode(GetAccountHolderResponse accountHolderResponse) {
-        return accountHolderResponse.getAccounts().get(0).getAccountCode();
-    }
+
 }
