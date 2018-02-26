@@ -2,6 +2,7 @@ package com.adyen.mirakl.startup;
 
 import com.adyen.model.marketpay.notification.*;
 import com.adyen.service.Notification;
+import com.adyen.service.exception.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -37,6 +38,8 @@ public class AdyenStartupValidator implements ApplicationListener<ContextRefresh
             //but is not invoked as the NotificationConfigurationDetails.getEventConfigs creates a new list which we can add to
             notificationConfigurationDetails.forEach(x -> x.setEventConfigs(x.getEventConfigs()));
             sync();
+        }catch (ApiException e){
+            throw new IllegalStateException(String.format("Unable to sync Adyen notification configuration: %s", e.getError()), e);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to sync Adyen notification configuration", e);
         }
