@@ -188,17 +188,17 @@ public class ShopServiceTest {
 
     private List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> createMiraklAdditionalUboField(String uboNumber) {
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalFieldUboCivility = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalFieldUboCivility.setCode("firstname"+uboNumber);
-        additionalFieldUboCivility.setValue("adyen-ubo"+uboNumber+"-firstname");
+        additionalFieldUboCivility.setValue("firstname"+uboNumber);
+        additionalFieldUboCivility.setCode("adyen-ubo"+uboNumber+"-firstname");
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalFieldUboFirstName = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalFieldUboFirstName.setCode("lastname"+uboNumber);
-        additionalFieldUboFirstName.setValue("adyen-ubo"+uboNumber+"-lastname");
+        additionalFieldUboFirstName.setValue("lastname"+uboNumber);
+        additionalFieldUboFirstName.setCode("adyen-ubo"+uboNumber+"-lastname");
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalFieldUboLastName = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalFieldUboLastName.setCode("gender"+uboNumber);
-        additionalFieldUboLastName.setValue("adyen-ubo"+uboNumber+"-civility");
+        additionalFieldUboLastName.setValue("gender"+uboNumber);
+        additionalFieldUboLastName.setCode("adyen-ubo"+uboNumber+"-civility");
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalFieldUboDob = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-        additionalFieldUboDob.setCode("email"+uboNumber);
-        additionalFieldUboDob.setValue("adyen-ubo"+uboNumber+"-email");
+        additionalFieldUboDob.setValue("email"+uboNumber);
+        additionalFieldUboDob.setCode("adyen-ubo"+uboNumber+"-email");
         return ImmutableList.of(additionalFieldUboCivility, additionalFieldUboFirstName, additionalFieldUboLastName, additionalFieldUboDob);
     }
 
