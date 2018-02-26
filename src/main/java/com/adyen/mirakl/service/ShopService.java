@@ -61,10 +61,17 @@ public class ShopService {
         log.debug("Retrieved shops: " + shops.size());
         for (MiraklShop shop : shops) {
             try {
-                if (accountHolderExists(shop, adyenAccountService)) {
-                    UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop);
+                GetAccountHolderResponse getAccountHolderResponse = getAccountHolderFromShop(shop);
+                if (getAccountHolderResponse != null) {
+                    UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
                     UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
                     log.debug("UpdateAccountHolderResponse: " + response);
+
+                    // if IBAN has changed remove the old one
+                    if (isIbanChanged(getAccountHolderResponse, shop)) {
+                        DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse));
+                        log.debug("DeleteBankAccountResponse: " + deleteBankAccountResponse);
+                    }
                 } else {
                     CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
                     CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
@@ -77,6 +84,21 @@ public class ShopService {
                 log.warn("Exception: " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * Construct DeleteBankAccountRequest to remove outdated iban bankaccounts
+     */
+    protected DeleteBankAccountRequest deleteBankAccountRequest(GetAccountHolderResponse getAccountHolderResponse) {
+        DeleteBankAccountRequest deleteBankAccountRequest = new DeleteBankAccountRequest();
+        deleteBankAccountRequest.accountHolderCode(getAccountHolderResponse.getAccountHolderCode());
+        List<String> uuids = new ArrayList<>();
+        for (BankAccountDetail bankAccountDetail : getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails()) {
+            uuids.add(bankAccountDetail.getBankAccountUUID());
+        }
+        deleteBankAccountRequest.setBankAccountUUIDs(uuids);
+
+        return deleteBankAccountRequest;
     }
 
     public List<MiraklShop> getUpdatedShops() {
@@ -177,7 +199,7 @@ public class ShopService {
     /**
      * Check if AccountHolder already exists in Adyen
      */
-    private boolean accountHolderExists(MiraklShop shop, Account adyenAccountService) throws Exception {
+    private GetAccountHolderResponse getAccountHolderFromShop(MiraklShop shop) throws Exception {
 
         // lookup accountHolder in Adyen
         GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
@@ -186,42 +208,82 @@ public class ShopService {
         try {
             GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
             if (! getAccountHolderResponse.getAccountHolderCode().isEmpty()) {
-                return true;
+                return getAccountHolderResponse;
             }
         } catch (ApiException e) {
             // account does not exists yet
             log.debug("MarketPay Api Exception: " + e.getError());
         }
 
-        return false;
+        return null;
     }
 
     /**
      * Construct updateAccountHolderRequest to Adyen from Mirakl shop
      */
-    protected UpdateAccountHolderRequest updateAccountHolderRequestFromShop(MiraklShop shop) {
+    protected UpdateAccountHolderRequest updateAccountHolderRequestFromShop(MiraklShop shop, GetAccountHolderResponse getAccountHolderResponse) {
         UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
         updateAccountHolderRequest.setAccountHolderCode(shop.getId());
 
         // create AcountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
 
         if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
             if (! miraklIbanBankAccountInformation.getIban().isEmpty() && shop.getCurrencyIsoCode() != null) {
-                // set BankAccountDetails
-                BankAccountDetail bankAccountDetail = createBankAccountDetail(miraklIbanBankAccountInformation, shop.getCurrencyIsoCode().toString());
-                List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
-                bankAccountDetails.add(bankAccountDetail);
-                accountHolderDetails.setBankAccountDetails(bankAccountDetails);
+                // if IBAN already exists and is the same then ignore this
+                if (! isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse)) {
+                    accountHolderDetails.setBankAccountDetails(setBankAccountDetails(miraklIbanBankAccountInformation, shop));
+                }
             }
         }
-
+        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
         return updateAccountHolderRequest;
     }
 
-    private BankAccountDetail createBankAccountDetail(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, String currencyCode) {
+    /**
+     * Check if IBAN is changed
+     */
+    protected boolean isIbanChanged(GetAccountHolderResponse getAccountHolderResponse, MiraklShop shop) {
+
+        if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
+            MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
+            if (! miraklIbanBankAccountInformation.getIban().isEmpty()) {
+                if (getAccountHolderResponse.getAccountHolderDetails() != null && ! getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().isEmpty()) {
+                    if (! miraklIbanBankAccountInformation.getIban().equals(getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).getIban())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if IBAN is the same as on Adyen side
+     */
+    protected boolean isIbanIdentical(String iban, GetAccountHolderResponse getAccountHolderResponse) {
+
+        if (getAccountHolderResponse.getAccountHolderDetails() != null && ! getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().isEmpty()) {
+            if (iban.equals(getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).getIban())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Set bank account details
+     */
+    private List<BankAccountDetail> setBankAccountDetails(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, MiraklShop shop) {
+        BankAccountDetail bankAccountDetail = createBankAccountDetail(miraklIbanBankAccountInformation, shop);
+        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+        bankAccountDetails.add(bankAccountDetail);
+        return bankAccountDetails;
+    }
+
+    private BankAccountDetail createBankAccountDetail(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, MiraklShop shop) {
         // create AcountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
 
@@ -233,11 +295,16 @@ public class ShopService {
         bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
         bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
         bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
-        bankAccountDetail.setCurrencyCode(currencyCode);
+        bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
-        bankAccountDetail.setOwnerPostalCode(miraklIbanBankAccountInformation.getBankZip());
-        bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(miraklIbanBankAccountInformation.getBankStreet()));
-        bankAccountDetail.setOwnerName(miraklIbanBankAccountInformation.getOwner());
+
+        if (shop.getContactInformation() != null) {
+            bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
+            bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(shop.getContactInformation().getStreet1()));
+            bankAccountDetail.setOwnerName(shop.getContactInformation().getFirstname().concat(" ").concat(shop.getContactInformation().getLastname()));
+        }
+
+        bankAccountDetail.setPrimaryAccount(true);
 
         List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
         bankAccountDetails.add(bankAccountDetail);

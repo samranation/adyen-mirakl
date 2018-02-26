@@ -51,6 +51,55 @@ public class ShopServiceTest {
     private ArgumentCaptor<UpdateAccountHolderRequest> updateAccountHolderRequestCaptor;
     @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
+    @Captor
+    private ArgumentCaptor<GetAccountHolderResponse> getAccountHolderResponseCaptor;
+
+    @Test
+    public void testIsIbanChanged() throws Exception {
+
+        MiraklShop shop = new MiraklShop();
+        shop.setId("id");
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
+        shop.setPaymentInformation(miraklIbanBankAccountInformation);
+
+        GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
+
+        // update bankaccount match
+        assertEquals(false, shopService.isIbanChanged(getAccountHolderResponse, shop));
+
+        // update bankAccountDetails to not matching one
+        getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDifferentIBAN");
+        assertEquals(true, shopService.isIbanChanged(getAccountHolderResponse, shop));
+    }
+
+    @Test
+    public void testIsIbanIdentical() throws Exception {
+        String iban = "GB00IBAN";
+        GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
+        assertEquals(true, shopService.isIbanIdentical(iban, getAccountHolderResponse));
+
+        iban = "GB_IBAN_DOES_NOT_MATCH";
+        assertEquals(false, shopService.isIbanIdentical(iban, getAccountHolderResponse));
+    }
+
+    @Test
+    public void testDeleteBankAccountRequest() throws Exception {
+        GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
+        AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
+        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+        BankAccountDetail bankAccountDetail1 = new BankAccountDetail();
+        bankAccountDetail1.setBankAccountUUID("0000-1111-2222");
+        bankAccountDetails.add(bankAccountDetail1);
+        BankAccountDetail bankAccountDetail2 = new BankAccountDetail();
+        bankAccountDetail2.setBankAccountUUID("1111-2222-3333");
+        bankAccountDetails.add(bankAccountDetail2);
+        accountHolderDetails.setBankAccountDetails(bankAccountDetails);
+        getAccountHolderResponse.setAccountHolderDetails(accountHolderDetails);
+
+        DeleteBankAccountRequest request = shopService.deleteBankAccountRequest(getAccountHolderResponse);
+        assertEquals("0000-1111-2222", request.getBankAccountUUIDs().get(0));
+        assertEquals("1111-2222-3333", request.getBankAccountUUIDs().get(1));
+    }
 
     @Test
     public void testRetrieveUpdatedShopsZeroShops() throws Exception {
@@ -131,18 +180,55 @@ public class ShopServiceTest {
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
 
+
+        MiraklContactInformation miraklContactInformation = createMiraklContactInformation();
+        shop.setContactInformation(miraklContactInformation);
+
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = createMiraklIbanBankAccountInformation();
         shop.setPaymentInformation(miraklIbanBankAccountInformation);
 
-        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop);
+
+        when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn(null);
+
+        // Update with no IBAN yet
+        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
         assertEquals("id", request.getAccountHolderCode());
         assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-        assertEquals("Owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+        assertEquals("firstName lastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
         assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+
+
+        // Update with the same IBAN
+        GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
+
+        UpdateAccountHolderRequest requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        assertEquals(0, requestWithoutIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
+
+
+        // Update with a different IBAN
+        getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDIFFERENTIBAN");
+
+        UpdateAccountHolderRequest requestWithIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
+        assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+    }
+
+
+    private GetAccountHolderResponse createGetAccountHolderResponse() {
+        GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
+        AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
+        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+        BankAccountDetail bankAccountDetail1 = new BankAccountDetail();
+        bankAccountDetail1.setBankAccountUUID("0000-1111-2222");
+        bankAccountDetail1.setIban("GB00IBAN");
+        bankAccountDetails.add(bankAccountDetail1);
+        accountHolderDetails.setBankAccountDetails(bankAccountDetails);
+        getAccountHolderResponse.setAccountHolderDetails(accountHolderDetails);
+        return getAccountHolderResponse;
     }
 
 
@@ -204,14 +290,20 @@ public class ShopServiceTest {
 
     private MiraklIbanBankAccountInformation createMiraklIbanBankAccountInformation() {
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
-
-        miraklIbanBankAccountInformation.setOwner("Owner");
         miraklIbanBankAccountInformation.setIban("GB00IBAN");
         miraklIbanBankAccountInformation.setBic("BIC");
-        miraklIbanBankAccountInformation.setBankZip("1111AA");
-        miraklIbanBankAccountInformation.setBankStreet("1 street");
-
         return miraklIbanBankAccountInformation;
+    }
+
+    private MiraklContactInformation createMiraklContactInformation() {
+        MiraklContactInformation miraklContactInformation = new MiraklContactInformation();
+        miraklContactInformation.setEmail("email");
+        miraklContactInformation.setFirstname("firstName");
+        miraklContactInformation.setLastname("lastName");
+        miraklContactInformation.setStreet1("1 street");
+        miraklContactInformation.setZipCode("1111AA");
+        miraklContactInformation.setCivility("Mrs");
+        return miraklContactInformation;
     }
 
     private void setup(MiraklStartupValidator.AdyenLegalEntityType type, List<MiraklAdditionalFieldValue> additionalFields) throws Exception {
