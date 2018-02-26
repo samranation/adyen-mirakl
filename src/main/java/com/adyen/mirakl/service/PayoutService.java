@@ -50,11 +50,10 @@ public class PayoutService {
             try {
                 PayoutAccountHolderRequest payoutAccountHolderRequest = payoutAccountHolder(accountHolderCode, amount, currency, iban, description);
                 PayoutAccountHolderResponse payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(payoutAccountHolderRequest);
-                System.out.println(payoutAccountHolderResponse);
             } catch (ApiException e) {
-                log.warn("MP exception: " + e.getError());
+                log.error("MP exception: " + e.getError());
             } catch (Exception e) {
-                log.warn("MP exception: " + e.getMessage());
+                log.error("MP exception: " + e.getMessage());
             }
         }
 
@@ -100,7 +99,7 @@ public class PayoutService {
                 }
             }
         }
-        throw new RuntimeException("No matching Iban between Mirakl and Adyen platforms.");
+        throw new IllegalStateException("No matching Iban between Mirakl and Adyen platforms.");
     }
 
 
