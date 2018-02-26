@@ -132,8 +132,8 @@ public class ShopServiceTest {
         assertEquals(CreateAccountHolderRequest.LegalEntityEnum.INDIVIDUAL, request.getLegalEntity());
         assertNotNull(request.getAccountHolderDetails().getIndividualDetails());
         IndividualDetails individualDetails = request.getAccountHolderDetails().getIndividualDetails();
-        assertEquals("FirstName", individualDetails.getName().getFirstName());
-        assertEquals("LastName", individualDetails.getName().getLastName());
+        assertEquals("firstName", individualDetails.getName().getFirstName());
+        assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
     }
 
@@ -194,7 +194,7 @@ public class ShopServiceTest {
         UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
         assertEquals("id", request.getAccountHolderCode());
         assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-        assertEquals("FirstName LastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+        assertEquals("firstName lastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
         assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
@@ -298,8 +298,8 @@ public class ShopServiceTest {
     private MiraklContactInformation createMiraklContactInformation() {
         MiraklContactInformation miraklContactInformation = new MiraklContactInformation();
         miraklContactInformation.setEmail("email");
-        miraklContactInformation.setFirstname("FirstName");
-        miraklContactInformation.setLastname("LastName");
+        miraklContactInformation.setFirstname("firstName");
+        miraklContactInformation.setLastname("lastName");
         miraklContactInformation.setStreet1("1 street");
         miraklContactInformation.setZipCode("1111AA");
         miraklContactInformation.setCivility("Mrs");
