@@ -51,9 +51,9 @@ public class PayoutService {
                 PayoutAccountHolderRequest payoutAccountHolderRequest = payoutAccountHolder(accountHolderCode, amount, currency, iban, description);
                 PayoutAccountHolderResponse payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(payoutAccountHolderRequest);
             } catch (ApiException e) {
-                log.error("MP exception: " + e.getError());
+                log.error("MP exception: " + e.getError(), e);
             } catch (Exception e) {
-                log.error("MP exception: " + e.getMessage());
+                log.error("MP exception: " + e.getMessage(), e);
             }
         }
 
