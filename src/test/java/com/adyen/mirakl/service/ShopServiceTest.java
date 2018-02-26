@@ -195,7 +195,7 @@ public class ShopServiceTest {
         additionalFieldUboFirstName.setValue("adyen-ubo"+uboNumber+"-lastname");
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalFieldUboLastName = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
         additionalFieldUboLastName.setCode("gender"+uboNumber);
-        additionalFieldUboLastName.setValue("adyen-ubo"+uboNumber+"-gender");
+        additionalFieldUboLastName.setValue("adyen-ubo"+uboNumber+"-civility");
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalFieldUboDob = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
         additionalFieldUboDob.setCode("email"+uboNumber);
         additionalFieldUboDob.setValue("adyen-ubo"+uboNumber+"-email");
