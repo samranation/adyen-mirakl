@@ -7,6 +7,7 @@ import com.adyen.Client;
 import com.adyen.Config;
 import com.adyen.enums.Environment;
 import com.adyen.service.Account;
+import com.adyen.service.Fund;
 import com.adyen.service.Notification;
 
 @Configuration
@@ -74,5 +75,10 @@ public class AdyenConfiguration {
     @Bean
     public Account adyenAccountService() {
         return new Account(adyenClient());
+    }
+
+    @Bean
+    public Fund createFundService() {
+        return new Fund(adyenClient());
     }
 }
