@@ -54,7 +54,6 @@ public class ShopService {
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
 
-    @Scheduled(cron = "${application.shopUpdaterCron}")
     public void retrieveUpdatedShops() {
         List<MiraklShop> shops = getUpdatedShops();
 
