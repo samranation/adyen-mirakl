@@ -52,6 +52,9 @@ public class ShopService {
     @Resource
     private Account adyenAccountService;
 
+    //TODO remove - temporary fix for delta to unblock cucumber testing
+    private static final Date startupDate = new Date();
+
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
 
@@ -114,6 +117,8 @@ public class ShopService {
             MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
             miraklGetShopsRequest.setPaginate(false);
             miraklGetShopsRequest.setOffset(offset);
+
+            miraklGetShopsRequest.setUpdatedSince(startupDate);
 
             MiraklShops miraklShops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest);
             shops.addAll(miraklShops.getShops());
