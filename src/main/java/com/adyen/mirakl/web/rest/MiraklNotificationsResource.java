@@ -1,8 +1,6 @@
 package com.adyen.mirakl.web.rest;
 
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -17,8 +15,6 @@ import com.adyen.mirakl.service.PayoutService;
 @RequestMapping("/api/mirakl-notifications")
 public class MiraklNotificationsResource {
 
-    private final Logger log = LoggerFactory.getLogger(MiraklNotificationsResource.class);
-
     private final PayoutService payoutService;
 
     public MiraklNotificationsResource(PayoutService payoutService) {
@@ -29,12 +25,11 @@ public class MiraklNotificationsResource {
      * POST payout
      */
     @PostMapping("/payout")
-    public String receiveNotifications(@RequestPart("file") MultipartFile csvdata) throws IOException {
+    public void receiveNotifications(@RequestPart("file") MultipartFile csvdata) throws IOException {
         String content = new String(csvdata.getBytes());
         if (! content.isEmpty()) {
             payoutService.parseMiraklCsv(content);
         }
-        return content;
     }
 
 }
