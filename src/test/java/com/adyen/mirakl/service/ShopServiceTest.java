@@ -1,6 +1,7 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.startup.MiraklStartupValidator;
+import com.adyen.model.Address;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
@@ -142,6 +143,14 @@ public class ShopServiceTest {
         assertEquals("firstName", individualDetails.getName().getFirstName());
         assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
+        final Address address = request.getAccountHolderDetails().getAddress();
+        
+        Assertions.assertThat(address.getHouseNumberOrName()).isEqualTo("1");
+        Assertions.assertThat(address.getPostalCode()).isEqualTo("zipCode");
+        Assertions.assertThat(address.getStateOrProvince()).isEqualTo("state");
+        Assertions.assertThat(address.getStreet()).isEqualTo("street");
+        Assertions.assertThat(address.getCountry()).isEqualTo("GB");
+        Assertions.assertThat(address.getCity()).isEqualTo("city");
     }
 
     @Test
@@ -332,6 +341,12 @@ public class ShopServiceTest {
         contactInformation.setLastname("lastName");
         contactInformation.setCountry("GBR");
         contactInformation.setCivility("Mrs");
+        contactInformation.setCity("city");
+        contactInformation.setStreet1("street");
+        contactInformation.setZipCode("zipCode");
+        contactInformation.setState("state");
+
+
         shop.setContactInformation(contactInformation);
 
         shop.setAdditionalFieldValues(additionalFields);

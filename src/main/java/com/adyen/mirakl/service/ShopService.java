@@ -177,12 +177,12 @@ public class ShopService {
         MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
         if (! contactInformation.getCountry().isEmpty()) {
             Address address = new Address();
-            address.setCountry(contactInformation.getCountry());
             address.setHouseNumberOrName(getHouseNumberFromStreet(contactInformation.getStreet1()));
             address.setPostalCode(contactInformation.getZipCode());
             address.setStateOrProvince(contactInformation.getState());
             address.setStreet(contactInformation.getStreet1());
             address.setCountry(getIso2CountryCodeFromIso3(contactInformation.getCountry()));
+            address.setCity(contactInformation.getCity());
             return address;
         }
         return null;
