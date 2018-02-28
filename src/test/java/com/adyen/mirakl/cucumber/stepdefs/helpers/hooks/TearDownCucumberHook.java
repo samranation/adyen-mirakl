@@ -1,4 +1,4 @@
-package com.adyen.mirakl.cucumber.stepdefs.helpers.Hooks;
+package com.adyen.mirakl.cucumber.stepdefs.helpers.hooks;
 
 import com.adyen.model.marketpay.notification.DeleteNotificationConfigurationRequest;
 import com.adyen.model.marketpay.notification.GetNotificationConfigurationListResponse;
