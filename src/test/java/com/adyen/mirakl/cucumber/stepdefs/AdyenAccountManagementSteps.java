@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
+
+import com.adyen.service.exception.ApiException;
 import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpCucumberHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
@@ -22,6 +24,8 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+
+import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
 
 public class AdyenAccountManagementSteps {
@@ -67,8 +71,13 @@ public class AdyenAccountManagementSteps {
         MiraklShop miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
         accountHolderRequest.setAccountHolderCode(miraklShop.getId());
 
-        GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(accountHolderRequest);
-        Assertions.assertThat(accountHolderResponse.getAccountHolderStatus().getStatus().toString()).isEqualTo("Active");
+        try{
+            GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(accountHolderRequest);
+            Assertions.assertThat(accountHolderResponse.getAccountHolderStatus().getStatus().toString()).isEqualTo("Active");
+        }catch (ApiException e){
+            e.printStackTrace();
+            fail(e.getError().toString());
+        }
     }
 
     @And("^a notification will be sent pertaining to (.*)$")

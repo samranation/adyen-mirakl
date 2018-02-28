@@ -22,10 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -198,30 +195,37 @@ public class ShopServiceTest {
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn(null);
 
         // Update with no IBAN yet
-        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
-        assertEquals("id", request.getAccountHolderCode());
-        assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-        assertEquals("firstName lastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
-        assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
-        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-        assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
-        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-        assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+        Optional<UpdateAccountHolderRequest> requestOptional = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
+        Assertions.assertThat(requestOptional.isPresent()).isTrue();
+        requestOptional.ifPresent(request -> {
+            assertEquals("id", request.getAccountHolderCode());
+            assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
+            assertEquals("firstName lastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+            assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+            assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+            assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
+            assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+            assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+        });
+
 
 
         // Update with the same IBAN
         GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
 
-        UpdateAccountHolderRequest requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        assertEquals(0, requestWithoutIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
+        Optional<UpdateAccountHolderRequest> requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        Assertions.assertThat(requestWithoutIbanChange.isPresent()).isEqualTo(false);
 
 
         // Update with a different IBAN
         getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDIFFERENTIBAN");
 
-        UpdateAccountHolderRequest requestWithIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
-        assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+        Optional<UpdateAccountHolderRequest> requestWithIbanChangeOptional = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        Assertions.assertThat(requestWithIbanChangeOptional.isPresent()).isEqualTo(true);
+        requestWithIbanChangeOptional.ifPresent(requestWithIbanChange -> {
+            assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
+            assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+        });
     }
 
 
