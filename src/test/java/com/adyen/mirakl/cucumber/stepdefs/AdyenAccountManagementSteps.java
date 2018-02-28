@@ -1,10 +1,5 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Resource;
-import org.assertj.core.api.Assertions;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpCucumberHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
@@ -13,6 +8,7 @@ import com.adyen.mirakl.service.ShopService;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.service.Account;
+import com.adyen.service.exception.ApiException;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -22,9 +18,21 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import org.assertj.core.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
 
 public class AdyenAccountManagementSteps {
+
+    private static final Logger log = LoggerFactory.getLogger(AdyenAccountManagementSteps.class);
 
     @Resource
     private StartUpCucumberHook startUpCucumberHook;
@@ -67,8 +75,13 @@ public class AdyenAccountManagementSteps {
         MiraklShop miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
         accountHolderRequest.setAccountHolderCode(miraklShop.getId());
 
-        GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(accountHolderRequest);
-        Assertions.assertThat(accountHolderResponse.getAccountHolderStatus().getStatus().toString()).isEqualTo("Active");
+        try{
+            GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(accountHolderRequest);
+            Assertions.assertThat(accountHolderResponse.getAccountHolderStatus().getStatus().toString()).isEqualTo("Active");
+        }catch (ApiException e){
+            log.error("Failing test due to exception", e);
+            fail(e.getError().toString());
+        }
     }
 
     @And("^a notification will be sent pertaining to (.*)$")
