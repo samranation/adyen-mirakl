@@ -58,8 +58,8 @@ public class ShopService {
     public void retrieveUpdatedShops() {
         List<MiraklShop> shops = getUpdatedShops();
 
-        log.debug("Retrieved shops: " + shops.size());
-        for (MiraklShop shop : shops) {
+        log.debug("Retrieved shops: {}", shops.size());
+        for (MiraklShop shop : shops)
             try {
                 GetAccountHolderResponse getAccountHolderResponse = getAccountHolderFromShop(shop);
                 if (getAccountHolderResponse != null) {
@@ -70,23 +70,22 @@ public class ShopService {
                     log.debug("CreateAccountHolderResponse: " + response);
                 }
             } catch (ApiException e) {
-                log.error("MarketPay Api Exception: " + e.getError(), e);
+                log.error("MarketPay Api Exception: {}", e.getError(), e);
             } catch (Exception e) {
-                log.error("Exception: " + e.getMessage(), e);
+                log.error("Exception: {}", e.getMessage(), e);
             }
-        }
     }
 
     private void processUpdateAccountHolder(final MiraklShop shop, final GetAccountHolderResponse getAccountHolderResponse) throws Exception {
         Optional<UpdateAccountHolderRequest> updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
         if(updateAccountHolderRequest.isPresent()){
             UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest.get());
-            log.debug("UpdateAccountHolderResponse: " + response);
+            log.debug("UpdateAccountHolderResponse: {}", response);
 
             // if IBAN has changed remove the old one
             if (isIbanChanged(getAccountHolderResponse, shop)) {
                 DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse));
-                log.debug("DeleteBankAccountResponse: " + deleteBankAccountResponse);
+                log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
             }
         }
     }
@@ -242,7 +241,7 @@ public class ShopService {
             }
         } catch (ApiException e) {
             // account does not exists yet
-            log.debug("MarketPay Api Exception: " + e.getError());
+            log.debug("MarketPay Api Exception: {}", e.getError());
         }
 
         return null;
@@ -254,21 +253,21 @@ public class ShopService {
     protected Optional<UpdateAccountHolderRequest> updateAccountHolderRequestFromShop(MiraklShop shop, GetAccountHolderResponse getAccountHolderResponse) {
         if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
-            if (! miraklIbanBankAccountInformation.getIban().isEmpty() && shop.getCurrencyIsoCode() != null) {
+            if ((! miraklIbanBankAccountInformation.getIban().isEmpty() && shop.getCurrencyIsoCode() != null) &&
                 // if IBAN already exists and is the same then ignore this
-                if (! isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse)) {
-                    UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
-                    updateAccountHolderRequest.setAccountHolderCode(shop.getId());
-                    // create AccountHolderDetails
-                    AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-                    accountHolderDetails.setBankAccountDetails(setBankAccountDetails(miraklIbanBankAccountInformation, shop));
-                    updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
-                    return Optional.of(updateAccountHolderRequest);
-                }
+                (! isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse))) {
+                UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+                updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+                // create AccountHolderDetails
+                AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
+                accountHolderDetails.setBankAccountDetails(setBankAccountDetails(miraklIbanBankAccountInformation, shop));
+                updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+                return Optional.of(updateAccountHolderRequest);
+
             }
         }
 
-        log.warn("Unable to create Account holder details, skipping update for shop: "+shop.getId());
+        log.warn("Unable to create Account holder details, skipping update for shop: {}", shop.getId());
         return Optional.empty();
     }
 
