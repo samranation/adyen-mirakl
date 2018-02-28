@@ -4,9 +4,10 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import com.adyen.mirakl.service.PayoutService;
 
 /**
@@ -25,12 +26,15 @@ public class MiraklNotificationsResource {
     }
 
     /**
-     * POST receiveNotifications
+     * POST payout
      */
-    @PostMapping("/receive-notifications")
-    public String receiveNotifications(@RequestBody String csvdata) throws IOException {
-        payoutService.parseMiraklCsv(csvdata);
-        return csvdata;
+    @PostMapping("/payout")
+    public String receiveNotifications(@RequestPart("file") MultipartFile csvdata) throws IOException {
+        String content = new String(csvdata.getBytes());
+        if (! content.isEmpty()) {
+            payoutService.parseMiraklCsv(content);
+        }
+        return content;
     }
 
 }
