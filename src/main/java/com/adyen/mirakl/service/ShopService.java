@@ -123,7 +123,6 @@ public class ShopService {
 
         while (offset < totalCount) {
             MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
-            miraklGetShopsRequest.setPaginate(false);
             miraklGetShopsRequest.setOffset(offset);
 
             miraklGetShopsRequest.setUpdatedSince(deltaService.getShopDelta());

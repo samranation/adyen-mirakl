@@ -204,10 +204,14 @@ public class ShopServiceTest {
 
         List<MiraklGetShopsRequest> miraklGetShopsRequests = miraklGetShopsRequestCaptor.getAllValues();
         assertEquals(2, miraklGetShopsRequests.size());
+
         assertEquals(0L, miraklGetShopsRequests.get(0).getOffset());
         assertEquals(dateMock, miraklGetShopsRequests.get(0).getUpdatedSince());
+        assertEquals(true, miraklGetShopsRequests.get(0).isPaginate());
+
         assertEquals(1L, miraklGetShopsRequests.get(1).getOffset());
         assertEquals(dateMock, miraklGetShopsRequests.get(1).getUpdatedSince());
+        assertEquals(true, miraklGetShopsRequests.get(1).isPaginate());
     }
 
     @Test
