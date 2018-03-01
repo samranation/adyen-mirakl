@@ -92,7 +92,7 @@ public class AdyenAccountManagementSteps {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
-            mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, this.notification);
+            mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, null);
             Assertions.assertThat(getMappedAdyenNotificationResponse()).isNotNull();
             Assertions.assertThat(((Map)getMappedAdyenNotificationResponse().get("content")).get("accountHolderCode")).isEqualTo(shopId);
             Assertions.assertThat(getMappedAdyenNotificationResponse().get("eventType")).isEqualTo(this.notification);
@@ -116,7 +116,7 @@ public class AdyenAccountManagementSteps {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
-            Map mapResult = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, "ACCOUNT_HOLDER_CREATED");
+            Map mapResult = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, "ACCOUNT_HOLDER_CREATED", null);
             Assertions.assertThat(mapResult == null);
         });
     }
