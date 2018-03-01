@@ -18,7 +18,7 @@ public class RestAssuredAdyenApi {
 
     private static final Logger log = LoggerFactory.getLogger(RestAssuredAdyenApi.class);
 
-    public Map<String, Object> getAdyenNotificationBody(String endpoint, String miraklShopId, String eventType) {
+    public Map<String, Object> getAdyenNotificationBody(String endpoint, String miraklShopId, String eventType, String verificationType) {
         ResponseBody body = getResponseBody(endpoint);
         List<String> check = body.jsonPath().get("body");
         if (! CollectionUtils.isEmpty(check) ) {
@@ -28,8 +28,16 @@ public class RestAssuredAdyenApi {
                 mapResult.putAll(new Gson().fromJson(list, new TypeToken<HashMap<String, Object>>() {
                 }.getType()));
                 final Map contentMap = (Map) mapResult.get("content");
-                if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType)) {
-                    return mapResult;
+                if (contentMap.get("verificationType") != null && verificationType != null) {
+                    if (contentMap.get("accountHolderCode").equals(miraklShopId)
+                        && mapResult.get("eventType").equals(eventType)
+                        && contentMap.get("verificationType").equals(verificationType)) {
+                        return mapResult;
+                    }
+                } else {
+                    if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType)) {
+                        return mapResult;
+                    }
                 }
             }
         }
