@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,15 +67,19 @@ public class ShopService {
                 if (getAccountHolderResponse != null) {
                     processUpdateAccountHolder(shop, getAccountHolderResponse);
                 } else {
-                    CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
-                    CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
-                    log.debug("CreateAccountHolderResponse: " + response);
+                    processCreateAccountHolder(shop);
                 }
             } catch (ApiException e) {
                 log.error("MarketPay Api Exception: {}", e.getError(), e);
             } catch (Exception e) {
                 log.error("Exception: {}", e.getMessage(), e);
             }
+    }
+
+    private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
+        CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
+        CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
+        log.debug("CreateAccountHolderResponse: " + response);
     }
 
     private void processUpdateAccountHolder(final MiraklShop shop, final GetAccountHolderResponse getAccountHolderResponse) throws Exception {
@@ -143,6 +146,7 @@ public class ShopService {
         // Set AccountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
         accountHolderDetails.setAddress(setAddressDetails(shop));
+        accountHolderDetails.setBankAccountDetails(setBankAccountDetails(shop));
 
         if (LegalEntityEnum.INDIVIDUAL.equals(legalEntity)) {
             IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
@@ -265,7 +269,7 @@ public class ShopService {
                 updateAccountHolderRequest.setAccountHolderCode(shop.getId());
                 // create AccountHolderDetails
                 AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-                accountHolderDetails.setBankAccountDetails(setBankAccountDetails(miraklIbanBankAccountInformation, shop));
+                accountHolderDetails.setBankAccountDetails(setBankAccountDetails(shop));
                 updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
                 return Optional.of(updateAccountHolderRequest);
 
@@ -311,14 +315,20 @@ public class ShopService {
     /**
      * Set bank account details
      */
-    private List<BankAccountDetail> setBankAccountDetails(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, MiraklShop shop) {
-        BankAccountDetail bankAccountDetail = createBankAccountDetail(miraklIbanBankAccountInformation, shop);
-        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+    private List<BankAccountDetail> setBankAccountDetails(MiraklShop shop) {
+        BankAccountDetail bankAccountDetail = createBankAccountDetail(shop);
+        List<BankAccountDetail> bankAccountDetails = new ArrayList<>();
         bankAccountDetails.add(bankAccountDetail);
         return bankAccountDetails;
     }
 
-    private BankAccountDetail createBankAccountDetail(MiraklIbanBankAccountInformation miraklIbanBankAccountInformation, MiraklShop shop) {
+    private BankAccountDetail createBankAccountDetail(MiraklShop shop) {
+        if(!(shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)){
+            log.debug("No IBAN bank account details, not creating bank account detail");
+            return null;
+        }
+        MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
+
         // create AcountHolderDetails
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
 
@@ -341,7 +351,7 @@ public class ShopService {
 
         bankAccountDetail.setPrimaryAccount(true);
 
-        List<BankAccountDetail> bankAccountDetails = new ArrayList<BankAccountDetail>();
+        List<BankAccountDetail> bankAccountDetails = new ArrayList<>();
         bankAccountDetails.add(bankAccountDetail);
         accountHolderDetails.setBankAccountDetails(bankAccountDetails);
 

@@ -140,14 +140,26 @@ public class ShopServiceTest {
         assertEquals("firstName", individualDetails.getName().getFirstName());
         assertEquals("lastName", individualDetails.getName().getLastName());
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
+
         final Address address = request.getAccountHolderDetails().getAddress();
-        
         Assertions.assertThat(address.getHouseNumberOrName()).isEqualTo("1");
         Assertions.assertThat(address.getPostalCode()).isEqualTo("zipCode");
         Assertions.assertThat(address.getStateOrProvince()).isEqualTo("state");
         Assertions.assertThat(address.getStreet()).isEqualTo("street");
         Assertions.assertThat(address.getCountry()).isEqualTo("GB");
         Assertions.assertThat(address.getCity()).isEqualTo("city");
+
+        final List<BankAccountDetail> bankAccountDetails = request.getAccountHolderDetails().getBankAccountDetails();
+        Assertions.assertThat(bankAccountDetails.size()).isEqualTo(1);
+        final BankAccountDetail bankDetails = bankAccountDetails.iterator().next();
+        Assertions.assertThat(bankDetails.getOwnerPostalCode()).isEqualTo("zipCode");
+        Assertions.assertThat(bankDetails.getOwnerName()).isEqualTo("firstName lastName");
+        Assertions.assertThat(bankDetails.getBankBicSwift()).isEqualTo("BIC");
+        Assertions.assertThat(bankDetails.getCountryCode()).isEqualTo("GB");
+        Assertions.assertThat(bankDetails.getOwnerHouseNumberOrName()).isEqualTo("1");
+        Assertions.assertThat(bankDetails.getIban()).isEqualTo("GB00IBAN");
+        Assertions.assertThat(bankDetails.getCurrencyCode()).isEqualTo("EUR");
+
     }
 
     @Test
