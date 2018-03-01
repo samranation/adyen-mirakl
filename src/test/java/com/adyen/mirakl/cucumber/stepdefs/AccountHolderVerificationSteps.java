@@ -1,6 +1,6 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpCucumberHook;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.jayway.jsonpath.JsonPath;
@@ -10,7 +10,6 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import org.assertj.core.api.Assertions;
-import org.awaitility.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +26,7 @@ public class AccountHolderVerificationSteps {
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
     @Resource
-    private StartUpCucumberHook startUpCucumberHook;
+    private StartUpTestingHook startUpTestingHook;
     private MiraklCreatedShops createdShops;
     private String shopId;
     @Resource
@@ -52,7 +51,7 @@ public class AccountHolderVerificationSteps {
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
 
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, verificationType);
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, notification, verificationType);
 
             Assertions.assertThat(adyenNotificationBody).isNotNull();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))

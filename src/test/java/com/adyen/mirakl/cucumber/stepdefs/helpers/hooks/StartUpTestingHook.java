@@ -19,12 +19,12 @@ import javax.annotation.Resource;
 
 @Component
 @ConfigurationProperties(prefix = "requestbin", ignoreUnknownFields = false)
-public class StartUpCucumberHook implements ApplicationListener<ContextRefreshedEvent> {
+public class StartUpTestingHook implements ApplicationListener<ContextRefreshedEvent> {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Resource
-    private CucumberHooks cucumberHooks;
+    private TestHooks testHooks;
     @Resource
     private Notification adyenNotification;
     private String baseRequestbinUrl;
@@ -74,7 +74,7 @@ public class StartUpCucumberHook implements ApplicationListener<ContextRefreshed
             Assertions.assertThat(found).isTrue();
         });
 
-        cucumberHooks.setConfigurationDetails(configurationDetails);
+        testHooks.setConfigurationDetails(configurationDetails);
         return notificationConfiguration;
     }
 
@@ -85,12 +85,12 @@ public class StartUpCucumberHook implements ApplicationListener<ContextRefreshed
         return notificationEventConfiguration;
     }
 
-    public CucumberHooks getCucumberHooks() {
-        return cucumberHooks;
+    public TestHooks getTestHooks() {
+        return testHooks;
     }
 
-    public void setCucumberHooks(CucumberHooks cucumberHooks) {
-        this.cucumberHooks = cucumberHooks;
+    public void setTestHooks(TestHooks testHooks) {
+        this.testHooks = testHooks;
     }
 
     public Notification getAdyenNotification() {
