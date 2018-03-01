@@ -79,7 +79,7 @@ public class ShopService {
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
-        log.debug("CreateAccountHolderResponse: " + response);
+        log.debug("CreateAccountHolderResponse: {}", response);
     }
 
     private void processUpdateAccountHolder(final MiraklShop shop, final GetAccountHolderResponse getAccountHolderResponse) throws Exception {
