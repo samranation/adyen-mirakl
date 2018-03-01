@@ -88,7 +88,7 @@ public class AdyenAccountManagementSteps {
     @And("^a notification will be sent pertaining to (.*)$")
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
-        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
