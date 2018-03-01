@@ -42,6 +42,10 @@ public class ShopServiceTest {
     private Account adyenAccountServiceMock;
     @Mock
     private GetAccountHolderResponse getAccountHolderResponseMock;
+    @Mock
+    private DeltaService deltaService;
+    @Mock
+    private Date dateMock;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -188,15 +192,22 @@ public class ShopServiceTest {
         shops.add(new MiraklShop());
         miraklShops.setTotalCount(2L);
 
+        when(deltaService.getShopDelta()).thenReturn(dateMock);
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(miraklGetShopsRequestCaptor.capture())).thenReturn(miraklShops);
 
         List<MiraklShop> updatedShops = shopService.getUpdatedShops();
+
+        verify(deltaService, times(2)).getShopDelta();
+        verify(deltaService, times(2)).createNewShopDelta();
+
         assertEquals(2, updatedShops.size());
 
         List<MiraklGetShopsRequest> miraklGetShopsRequests = miraklGetShopsRequestCaptor.getAllValues();
         assertEquals(2, miraklGetShopsRequests.size());
         assertEquals(0L, miraklGetShopsRequests.get(0).getOffset());
+        assertEquals(dateMock, miraklGetShopsRequests.get(0).getUpdatedSince());
         assertEquals(1L, miraklGetShopsRequests.get(1).getOffset());
+        assertEquals(dateMock, miraklGetShopsRequests.get(1).getUpdatedSince());
     }
 
     @Test
