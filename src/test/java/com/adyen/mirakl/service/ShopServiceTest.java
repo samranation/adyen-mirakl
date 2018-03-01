@@ -23,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -198,7 +199,6 @@ public class ShopServiceTest {
         List<MiraklShop> updatedShops = shopService.getUpdatedShops();
 
         verify(deltaService, times(2)).getShopDelta();
-        verify(deltaService, times(2)).createNewShopDelta();
 
         assertEquals(2, updatedShops.size());
 
@@ -299,13 +299,15 @@ public class ShopServiceTest {
 
         shopService.retrieveUpdatedShops();
 
+        verify(deltaService).createNewShopDelta(any(ZonedDateTime.class));
+
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
-                                                                                .stream()
-                                                                                .map(CreateAccountHolderRequest::getAccountHolderDetails)
-                                                                                .map(AccountHolderDetails::getBusinessDetails)
-                                                                                .map(BusinessDetails::getShareholders)
-                                                                                .flatMap(Collection::stream)
-                                                                                .collect(Collectors.toList());
+            .stream()
+            .map(CreateAccountHolderRequest::getAccountHolderDetails)
+            .map(AccountHolderDetails::getBusinessDetails)
+            .map(BusinessDetails::getShareholders)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
 
         Set<String> firstNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getFirstName).collect(Collectors.toSet());
         Set<String> lastNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getLastName).collect(Collectors.toSet());

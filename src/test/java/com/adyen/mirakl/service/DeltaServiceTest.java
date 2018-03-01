@@ -5,6 +5,7 @@ import com.adyen.mirakl.domain.MiraklDelta;
 import com.adyen.mirakl.repository.MiraklDeltaRepository;
 import com.google.common.collect.ImmutableList;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,13 @@ public class DeltaServiceTest {
     private MiraklDeltaRepository miraklDeltaRepository;
 
     private Date date = new Date(0);
+
+    @Before
+    public void removeExistingTestDelta(){
+        final List<MiraklDelta> all = miraklDeltaRepository.findAll();
+        miraklDeltaRepository.delete(all);
+        miraklDeltaRepository.flush();
+    }
 
     @Test
     public void onlyGetsTheLatestDeltaEvenThoughMoreThanShouldNotExist(){
@@ -60,23 +68,25 @@ public class DeltaServiceTest {
         miraklDelta1.setShopDelta(ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()).plusDays(1));
         final Long id = miraklDeltaRepository.saveAndFlush(miraklDelta1).getId();
 
-        deltaService.createNewShopDelta();
+        final ZonedDateTime now = ZonedDateTime.now();
+        deltaService.createNewShopDelta(now);
 
         final List<MiraklDelta> all = miraklDeltaRepository.findAll();
         Assertions.assertThat(all.size()).isEqualTo(1);
         final MiraklDelta miraklDelta = all.iterator().next();
         Assertions.assertThat(miraklDelta.getId()).isEqualTo(id);
-        Assertions.assertThat(miraklDelta.getShopDelta()).isAfter(ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()));
+        Assertions.assertThat(miraklDelta.getShopDelta()).isEqualTo(now);
     }
 
     @Test
     public void createDeltaWhenNonAlreadyExist(){
-        deltaService.createNewShopDelta();
+        final ZonedDateTime now = ZonedDateTime.now();
+        deltaService.createNewShopDelta(now);
 
         final List<MiraklDelta> all = miraklDeltaRepository.findAll();
         Assertions.assertThat(all.size()).isEqualTo(1);
         final MiraklDelta miraklDelta = all.iterator().next();
-        Assertions.assertThat(miraklDelta.getShopDelta()).isAfter(ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()));
+        Assertions.assertThat(miraklDelta.getShopDelta()).isEqualTo(now);
     }
 
 }

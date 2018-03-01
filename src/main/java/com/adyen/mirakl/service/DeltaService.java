@@ -22,17 +22,16 @@ public class DeltaService {
             .orElse(null);
     }
 
-    public void createNewShopDelta() {
+    public void createNewShopDelta(ZonedDateTime delta) {
         final Optional<MiraklDelta> firstByOrderByIdDesc = miraklDeltaRepository.findFirstByOrderByIdDesc();
-        final ZonedDateTime now = ZonedDateTime.now();
 
         if(firstByOrderByIdDesc.isPresent()){
             final MiraklDelta entity = firstByOrderByIdDesc.get();
-            entity.setShopDelta(now);
+            entity.setShopDelta(delta);
             miraklDeltaRepository.saveAndFlush(entity);
         }else{
             final MiraklDelta miraklDelta = new MiraklDelta();
-            miraklDelta.setShopDelta(now);
+            miraklDelta.setShopDelta(delta);
             miraklDeltaRepository.saveAndFlush(miraklDelta);
         }
 
