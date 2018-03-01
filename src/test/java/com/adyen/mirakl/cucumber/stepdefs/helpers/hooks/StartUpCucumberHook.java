@@ -1,13 +1,13 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.hooks;
 
-import com.adyen.model.marketpay.notification.CreateNotificationConfigurationRequest;
-import com.adyen.model.marketpay.notification.CreateNotificationConfigurationResponse;
-import com.adyen.model.marketpay.notification.NotificationConfigurationDetails;
-import com.adyen.model.marketpay.notification.NotificationEventConfiguration;
+import com.adyen.model.marketpay.notification.*;
 import com.adyen.service.Notification;
 import com.google.common.collect.ImmutableList;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
+import org.awaitility.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -29,6 +29,7 @@ public class StartUpCucumberHook implements ApplicationListener<ContextRefreshed
     private Notification adyenNotification;
     private String baseRequestbinUrl;
     private String baseRequestBinUrlPath;
+    private Long notificationId;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -41,6 +42,7 @@ public class StartUpCucumberHook implements ApplicationListener<ContextRefreshed
 
         try {
             CreateNotificationConfigurationResponse configs = createConfigs();
+            notificationId = configs.getConfigurationDetails().getNotificationId();
             log.info(String.format("Notification created successfully. notificationId: [%s]", configs.getConfigurationDetails().getNotificationId().toString()));
         } catch (Exception e) {
             throw new IllegalStateException("Could not create config", e);
@@ -65,6 +67,13 @@ public class StartUpCucumberHook implements ApplicationListener<ContextRefreshed
         configurationDetails.setSslProtocol(NotificationConfigurationDetails.SslProtocolEnum.SSL);
         createNotificationConfigurationRequest.setConfigurationDetails(configurationDetails);
         CreateNotificationConfigurationResponse notificationConfiguration = adyenNotification.createNotificationConfiguration(createNotificationConfigurationRequest);
+
+        Awaitility.await().atMost(Duration.TEN_SECONDS).untilAsserted(() -> {
+            final GetNotificationConfigurationListResponse all = adyenNotification.getNotificationConfigurationList();
+            final boolean found = all.getConfigurations().stream().anyMatch(x -> configurationDetails.getNotifyURL().equals(x.getNotifyURL()));
+            Assertions.assertThat(found).isTrue();
+        });
+
         cucumberHooks.setConfigurationDetails(configurationDetails);
         return notificationConfiguration;
     }
@@ -106,5 +115,13 @@ public class StartUpCucumberHook implements ApplicationListener<ContextRefreshed
 
     public void setBaseRequestBinUrlPath(String baseRequestBinUrlPath) {
         this.baseRequestBinUrlPath = baseRequestBinUrlPath;
+    }
+
+    public Long getNotificationId() {
+        return notificationId;
+    }
+
+    public void setNotificationId(final Long notificationId) {
+        this.notificationId = notificationId;
     }
 }

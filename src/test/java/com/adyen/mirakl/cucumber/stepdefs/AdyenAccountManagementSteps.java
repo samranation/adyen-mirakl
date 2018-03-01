@@ -51,7 +51,7 @@ public class AdyenAccountManagementSteps {
     private RestAssuredAdyenApi restAssuredAdyenApi;
     private String shopId;
     private boolean createShareHolderDate = false;
-    Map<String, Object> mappedAdyenNotificationResponse;
+    private Map<String, Object> mappedAdyenNotificationResponse;
     private String email;
     private MiraklShop miraklShop;
 
@@ -59,13 +59,13 @@ public class AdyenAccountManagementSteps {
     private AssertionHelper assertionHelper;
 
     @Given("^a new shop has been created in Mirakl$")
-    public void aNewShopHasBeenCreatedInMirakl(DataTable table) throws Throwable {
+    public void aNewShopHasBeenCreatedInMirakl(DataTable table) {
         List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
         maps.forEach(map -> createdShops = miraklShopApi.createNewShop(miraklMarketplacePlatformOperatorApiClient, map, createShareHolderDate));
     }
 
     @Then("^we process the data and push to Adyen$")
-    public void adyenWillProcessTheData() throws Throwable {
+    public void adyenWillProcessTheData() {
         shopService.retrieveUpdatedShops();
     }
 
@@ -86,7 +86,7 @@ public class AdyenAccountManagementSteps {
     }
 
     @And("^a notification will be sent pertaining to (.*)$")
-    public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) throws Throwable {
+    public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
         await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
@@ -100,18 +100,18 @@ public class AdyenAccountManagementSteps {
     }
 
     @When("^a complete shareholder detail is submitted on Mirakl$")
-    public void aCompleteShareholderDetailIsSubmittedOnMirakl() throws Throwable {
+    public void aCompleteShareholderDetailIsSubmittedOnMirakl() {
         // createShareHolderDate set to true. Value will be passed to the createMiraklShop method
         createShareHolderDate = true;
     }
 
     @When("^a complete shareholder is not provided$")
-    public void aCompleteShareholderIsNotProvided() throws Throwable {
+    public void aCompleteShareholderIsNotProvided() {
         // empty as createShareHolderDate will be false by default.
     }
 
     @Then("^no account holder is created in Adyen$")
-    public void noAccountHolderIsCreatedInAdyen() throws Throwable {
+    public void noAccountHolderIsCreatedInAdyen() {
         await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
@@ -122,7 +122,7 @@ public class AdyenAccountManagementSteps {
     }
 
     @And("^the shop data is correctly mapped to the Adyen Account$")
-    public void theShopDataIsCorrectlyMappedToTheAdyenAccount() throws Throwable {
+    public void theShopDataIsCorrectlyMappedToTheAdyenAccount() {
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
 
@@ -132,13 +132,13 @@ public class AdyenAccountManagementSteps {
     }
 
     @And("^the account holder is created in Adyen with status Active$")
-    public void theAccountHolderIsCreatedInAdyenWithStatusActive() throws Throwable {
+    public void theAccountHolderIsCreatedInAdyenWithStatusActive()  {
         Assertions.assertThat(JsonPath.parse(getMappedAdyenNotificationResponse().get("content"))
             .read("['accountHolderStatus']['status']").toString()).isEqualTo("Active");
     }
 
     @And("^the shop data is correctly mapped to the Adyen Business Account$")
-    public void theShopDataIsCorrectlyMappedToTheAdyenBusinessAccount() throws Throwable {
+    public void theShopDataIsCorrectlyMappedToTheAdyenBusinessAccount()  {
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
 
