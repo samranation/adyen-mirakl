@@ -1,5 +1,7 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.hooks;
 
+import com.adyen.mirakl.domain.MiraklDelta;
+import com.adyen.mirakl.repository.MiraklDeltaRepository;
 import com.adyen.model.marketpay.notification.*;
 import com.adyen.service.Notification;
 import com.google.common.collect.ImmutableList;
@@ -16,6 +18,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.ZonedDateTime;
 
 @Component
 @ConfigurationProperties(prefix = "requestbin", ignoreUnknownFields = false)
@@ -27,19 +30,26 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
     private TestHooks testHooks;
     @Resource
     private Notification adyenNotification;
+    @Resource
+    private MiraklDeltaRepository miraklDeltaRepository;
     private String baseRequestbinUrl;
     private String baseRequestBinUrlPath;
     private Long notificationId;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        createDelta();
+        createRequestBin();
+        createNotificationConfiguration();
+    }
 
-        ResponseBody body = RestAssured.post(baseRequestbinUrl.concat("api/v1/bins")).thenReturn().body();
-        baseRequestBinUrlPath = baseRequestbinUrl.concat("api/v1/bins/").concat(body.jsonPath().get("name").toString()).concat("/requests");
-        baseRequestbinUrl = baseRequestbinUrl.concat(body.jsonPath().get("name").toString());
+    private void createDelta() {
+        final MiraklDelta miraklDelta = new MiraklDelta();
+        miraklDelta.setShopDelta(ZonedDateTime.now());
+        miraklDeltaRepository.saveAndFlush(miraklDelta);
+    }
 
-        log.info(String.format("Requestbin-endpoint [%s]", baseRequestBinUrlPath));
-
+    private void createNotificationConfiguration() {
         try {
             CreateNotificationConfigurationResponse configs = createConfigs();
             notificationId = configs.getConfigurationDetails().getNotificationId();
@@ -47,6 +57,14 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
         } catch (Exception e) {
             throw new IllegalStateException("Could not create config", e);
         }
+    }
+
+    private void createRequestBin() {
+        ResponseBody body = RestAssured.post(baseRequestbinUrl.concat("api/v1/bins")).thenReturn().body();
+        baseRequestBinUrlPath = baseRequestbinUrl.concat("api/v1/bins/").concat(body.jsonPath().get("name").toString()).concat("/requests");
+        baseRequestbinUrl = baseRequestbinUrl.concat(body.jsonPath().get("name").toString());
+
+        log.info(String.format("Requestbin-endpoint [%s]", baseRequestBinUrlPath));
     }
 
     private CreateNotificationConfigurationResponse createConfigs() throws Exception {
