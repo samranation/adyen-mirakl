@@ -1,21 +1,17 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import com.google.common.collect.ImmutableList;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
-import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
-import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklCreateShopsRequest;
-import com.mirakl.client.mmp.operator.request.shop.MiraklUpdateShopsRequest;
-import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 public class MiraklShopApi extends MiraklShopProperties {

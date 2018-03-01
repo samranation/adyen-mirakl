@@ -9,6 +9,7 @@ import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
+import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -87,10 +88,10 @@ public class AdyenAccountManagementSteps {
     @And("^a notification will be sent pertaining to (.*)$")
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) throws Throwable {
         this.notification = notification;
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
-                                        .iterator()
-                                        .next().getShopCreated().getId();
+                .iterator()
+                .next().getShopCreated().getId();
             mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, this.notification);
             Assertions.assertThat(getMappedAdyenNotificationResponse()).isNotNull();
             Assertions.assertThat(((Map)getMappedAdyenNotificationResponse().get("content")).get("accountHolderCode")).isEqualTo(shopId);
@@ -111,10 +112,10 @@ public class AdyenAccountManagementSteps {
 
     @Then("^no account holder is created in Adyen$")
     public void noAccountHolderIsCreatedInAdyen() throws Throwable {
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
-                                 .iterator()
-                                 .next().getShopCreated().getId();
+                .iterator()
+                .next().getShopCreated().getId();
             Map mapResult = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, "ACCOUNT_HOLDER_CREATED");
             Assertions.assertThat(mapResult == null);
         });
@@ -125,14 +126,15 @@ public class AdyenAccountManagementSteps {
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
 
-        Assertions.assertThat(assertionHelper.adyenAccountDataBuilder(getMappedAdyenNotificationResponse()).build())
-                  .isEqualTo(assertionHelper.miraklShopDataBuilder(email, miraklShop).build());
+        ImmutableList<String> adyen = assertionHelper.adyenAccountDataBuilder(getMappedAdyenNotificationResponse()).build();
+        ImmutableList<String> mirakl = assertionHelper.miraklShopDataBuilder(email, miraklShop).build();
+        Assertions.assertThat(adyen).containsAll(mirakl);
     }
 
     @And("^the account holder is created in Adyen with status Active$")
     public void theAccountHolderIsCreatedInAdyenWithStatusActive() throws Throwable {
         Assertions.assertThat(JsonPath.parse(getMappedAdyenNotificationResponse().get("content"))
-                                                    .read("['accountHolderStatus']['status']").toString()).isEqualTo("Active");
+            .read("['accountHolderStatus']['status']").toString()).isEqualTo("Active");
     }
 
     @And("^the shop data is correctly mapped to the Adyen Business Account$")
@@ -140,8 +142,10 @@ public class AdyenAccountManagementSteps {
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
 
-        Assertions.assertThat(assertionHelper.adyenShareHolderAccountDataBuilder(getMappedAdyenNotificationResponse()).build())
-                  .isEqualTo(assertionHelper.miraklShopShareHolderDataBuilder(miraklShop).build());
+        ImmutableList<String> adyen = assertionHelper.adyenShareHolderAccountDataBuilder(getMappedAdyenNotificationResponse()).build();
+
+        ImmutableList<String> mirakl = assertionHelper.miraklShopShareHolderDataBuilder(miraklShop).build();
+        Assertions.assertThat(adyen).containsAll(mirakl);
     }
 
     public Map<String, Object> getMappedAdyenNotificationResponse() {
