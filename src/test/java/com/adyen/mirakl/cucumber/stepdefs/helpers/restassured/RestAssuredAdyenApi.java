@@ -2,6 +2,7 @@ package com.adyen.mirakl.cucumber.stepdefs.helpers.restassured;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import cucumber.runtime.junit.Assertions;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
 import org.slf4j.Logger;
@@ -42,6 +43,10 @@ public class RestAssuredAdyenApi {
             }
         }
         return null;
+    }
+
+    public boolean endpointHasANotification(String endpoint) {
+        return !"[]".equals(getResponseBody(endpoint).print());
     }
 
     public ResponseBody getResponseBody(String endpoint) {

@@ -4,6 +4,7 @@ import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpCucumberHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.AssertionHelper;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import static org.awaitility.Awaitility.await;
 
 
-public class AccountHolderVerificationSteps {
+public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Resource
     private MiraklShopApi miraklShopApi;
     @Resource
@@ -60,8 +61,8 @@ public class AccountHolderVerificationSteps {
                                                                                                                       String verificationStatus) throws Throwable {
 
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        waitUntilSomethingHits();
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
 
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, verificationType);
@@ -80,8 +81,8 @@ public class AccountHolderVerificationSteps {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
-
-        await().atMost(Duration.TEN_MINUTES).untilAsserted(() -> {
+        waitUntilSomethingHits();
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             String eventType = tableMap.get(0).get("eventType").toString();
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, null);
@@ -102,7 +103,7 @@ public class AccountHolderVerificationSteps {
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false,false);
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false, false);
     }
 
     @When("^the IBAN has been modified in Mirakl$")
@@ -125,12 +126,11 @@ public class AccountHolderVerificationSteps {
     @Then("^adyen will send the (.*) comprising of (.*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        await().atMost(Duration.TEN_MINUTES).untilAsserted(() -> {
-                adyenNotificationBody = restAssuredAdyenApi
-                    .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
-                Assertions.assertThat(adyenNotificationBody).isNotEmpty().withFailMessage("Notification has not been sent yet.");
-            });
-        await().atMost(Duration.ONE_MINUTE).untilAsserted(()-> {
+        waitUntilSomethingHits();
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+            adyenNotificationBody = restAssuredAdyenApi
+                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
+            Assertions.assertThat(adyenNotificationBody).isNotEmpty().withFailMessage("Notification has not been sent yet.");
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verificationType").toString()).isEqualTo(verificationType);
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
