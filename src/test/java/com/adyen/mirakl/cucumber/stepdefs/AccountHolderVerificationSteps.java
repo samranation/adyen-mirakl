@@ -17,8 +17,6 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -28,36 +26,37 @@ import static org.awaitility.Awaitility.await;
 
 
 public class AccountHolderVerificationSteps extends StepDefsHelper {
+
     @Resource
     private MiraklShopApi miraklShopApi;
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
     @Resource
     private StartUpCucumberHook startUpCucumberHook;
-    private MiraklCreatedShops createdShops;
-    private String shopId;
     @Resource
     private RestAssuredAdyenApi restAssuredAdyenApi;
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private boolean createShareHolderDate = false;
-    private boolean createTaxId = false;
     @Resource
     private AssertionHelper assertionHelper;
+
+    private boolean createShareHolderDate = false;
+    private boolean createTaxId = false;
+    private MiraklCreatedShops createdShops;
+    private String shopId;
     private MiraklShop miraklShop;
     private String email;
     private Map<String, Object> content;
-    Map<String, Object> adyenNotificationBody;
+    private Map<String, Object> adyenNotificationBody;
 
     @Given("^a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data$")
     public void aShopHasBeenCreatedInMiraklWithACorrespondingAccountHolderInAdyenWithTheFollowingData(DataTable table) throws Throwable {
         List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
-        tableMap.forEach(map -> createdShops = miraklShopApi.createNewShop(miraklMarketplacePlatformOperatorApiClient, map, createShareHolderDate, createTaxId));
+        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, tableMap, createShareHolderDate, createTaxId);
     }
 
     @Then("^the (.*) notification is sent by Adyen comprising of (.*) and (.*)")
     public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentByAdyenComprisingOfBANK_ACCOUNT_VERIFICATIONAndPASSED(String notification,
                                                                                                                       String verificationType,
-                                                                                                                      String verificationStatus) throws Throwable {
+                                                                                                                      String verificationStatus) {
 
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         waitUntilSomethingHits();
@@ -66,7 +65,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, verificationType);
 
-            Assertions.assertThat(adyenNotificationBody).isNotNull();
+            Assertions.assertThat(adyenNotificationBody).withFailMessage("No data received from notification endpoint").isNotNull();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verificationStatus").toString()).isEqualTo(verificationStatus);
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
@@ -86,7 +85,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, null);
 
-            Assertions.assertThat(adyenNotificationBody).isNotEmpty().withFailMessage("Notification has not been sent yet.");
+            Assertions.assertThat(adyenNotificationBody).withFailMessage("Notification has not been sent yet.").isNotEmpty();
             content = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails[0]BankAccountDetail");
 
             ImmutableList<String> miraklBankAccountDetail = assertionHelper.miraklBankAccountInformation(miraklShop).build();
@@ -100,15 +99,21 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     }
 
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
-    public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() throws Throwable {
+    public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided(DataTable table) throws Throwable {
+        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
+
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false);
+        final String iban = tableMap.get(0).get("iban").toString();
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, iban, false);
     }
 
     @When("^the IBAN has been modified in Mirakl$")
-    public void theIBANHasBeenModifiedInMirakl() throws Throwable {
+    public void theIBANHasBeenModifiedInMirakl(DataTable table) throws Throwable {
+        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
+
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, true);
+        final String iban = tableMap.get(0).get("iban").toString();
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, iban, false);
     }
 
     @And("^the previous BankAccountDetail will be removed$")
@@ -122,14 +127,14 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         createTaxId = true;
     }
 
-    @Then("^adyen will send the (.*) comprising of (.*) and status of (.*)")
+    @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         waitUntilSomethingHits();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
-            Assertions.assertThat(adyenNotificationBody).isNotEmpty().withFailMessage("Notification has not been sent yet.");
+            Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verificationType").toString()).isEqualTo(verificationType);
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
@@ -137,11 +142,32 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         });
     }
 
-    @And("^Mirakl has been updated with the taxId$")
-    public void miraklHasBeenUpdatedWithTheTaxId() throws Throwable {
+    @Then("^adyen will send the (.*) comprising of accountHolder (.*) and status of (.*)")
+    public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATIONAccountHolder(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false);
+        waitUntilSomethingHits();
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+            adyenNotificationBody = restAssuredAdyenApi
+                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
+            Assertions.assertThat(adyenNotificationBody).isNotEmpty();
+            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
+                .read("verification.accountHolder.checks[0].type").toString()).isEqualTo(verificationType);
+            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
+                .read("verification.accountHolder.checks[0].status").toString()).isEqualTo(status);
+        });
+    }
+
+    @And("^Mirakl has been updated with the taxId and bank info$")
+    public void miraklHasBeenUpdatedWithTheTaxId(DataTable table) throws Throwable {
+        shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
+        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
+        final String iban = tableMap.get(0).get("iban").toString();
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, iban, createTaxId);
 
     }
 
+    @Given("^create Shareholder data is set to true$")
+    public void createShareholderDataIsSetToTrue() throws Throwable {
+        createShareHolderDate = true;
+    }
 }

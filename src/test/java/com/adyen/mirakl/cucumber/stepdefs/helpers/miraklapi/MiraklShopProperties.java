@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -22,7 +23,7 @@ public class MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public MiraklCreateShopsRequest createMiraklShopRequest(Map tableData, boolean createShareHolderDate, boolean createTaxId) {
+    public MiraklCreateShopsRequest createMiraklShopRequest(List<Map<Object, Object>> rows, boolean createShareHolderDate, boolean createTaxId) {
         Faker faker = new Faker(new Locale("en-GB"));
 
         String email = ("adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com"));
@@ -31,6 +32,16 @@ public class MiraklShopProperties {
         String firstName = faker.name().firstName();
         String lastName = faker.name().lastName();
 
+        final ImmutableList.Builder<MiraklCreateShop> shopsToCreate = ImmutableList.builder();
+        rows.forEach(tableData -> {
+            MiraklCreateShop createShop = createShop(tableData, createShareHolderDate, createTaxId, faker, email, companyName, shopName, firstName, lastName);
+            shopsToCreate.add(createShop);
+        });
+
+        return new MiraklCreateShopsRequest(shopsToCreate.build());
+    }
+
+    private MiraklCreateShop createShop(final Map tableData, final boolean createShareHolderDate, final boolean createTaxId, final Faker faker, final String email, final String companyName, final String shopName, final String firstName, final String lastName) {
         MiraklCreateShop createShop = new MiraklCreateShop();
 
         String city;
@@ -56,7 +67,7 @@ public class MiraklShopProperties {
         professionalInformation.setCorporateName(companyName);
         professionalInformation.setIdentificationNumber(UUID.randomUUID().toString());
         if (createTaxId) {
-            professionalInformation.setTaxIdentificationNumber("GB"+RandomStringUtils.randomNumeric(9));
+            professionalInformation.setTaxIdentificationNumber("GB"+ RandomStringUtils.randomNumeric(9));
         }
         createShop.setProfessionalInformation(professionalInformation);
 
@@ -98,8 +109,7 @@ public class MiraklShopProperties {
             bic = faker.finance().bic();
             createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
         }
-
-        return new MiraklCreateShopsRequest(ImmutableList.of(createShop));
+        return createShop;
     }
 
     protected MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue createAdditionalField(String code, String value) {

@@ -2,6 +2,9 @@ package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
 import com.github.javafaker.Faker;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.mirakl.client.domain.common.error.ErrorBean;
+import com.mirakl.client.domain.common.error.InputWithErrors;
 import com.mirakl.client.mmp.domain.shop.MiraklPremiumState;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShopAddress;
@@ -11,31 +14,39 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
+import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklCreateShopsRequest;
 import com.mirakl.client.mmp.operator.request.shop.MiraklUpdateShopsRequest;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class MiraklShopApi extends MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final static Gson GSON = new Gson();
 
-    public MiraklCreatedShops createNewShop(MiraklMarketplacePlatformOperatorApiClient client, Map tableData, boolean createShopHolderData, boolean createTaxId) {
+    public MiraklCreatedShops createNewShops(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, boolean createShopHolderData, boolean createTaxId) {
 
-        MiraklCreateShopsRequest miraklShopRequest = createMiraklShopRequest(tableData, createShopHolderData, createTaxId);
+        MiraklCreateShopsRequest miraklShopRequest = createMiraklShopRequest(rows, createShopHolderData, createTaxId);
         MiraklCreatedShops shops = client.createShops(miraklShopRequest);
 
         MiraklCreatedShopReturn miraklCreatedShopReturn = shops.getShopReturns()
-                                                               .stream()
-                                                               .findAny()
-                                                               .orElseThrow(() -> new IllegalStateException("No Shop found"));
+            .stream()
+            .findAny()
+            .orElseThrow(() -> new IllegalStateException("No Shop found"));
 
         if (miraklCreatedShopReturn.getShopCreated() == null) {
             throw new IllegalStateException(miraklCreatedShopReturn.getShopError().getErrors().toString());
@@ -59,28 +70,27 @@ public class MiraklShopApi extends MiraklShopProperties {
             .orElseThrow(() -> new IllegalStateException("Shop cannot be found."));
     }
 
-    public MiraklUpdatedShops updateExistingShop(MiraklCreatedShops createdShops, String shopId, MiraklMarketplacePlatformOperatorApiClient client, boolean changeIbanOnly) {
+    public MiraklUpdatedShops updateExistingShop(MiraklCreatedShops createdShops, String shopId, MiraklMarketplacePlatformOperatorApiClient client, String iban, boolean createTaxId) {
         Faker faker = new Faker();
-        MiraklUpdateShop element = new MiraklUpdateShop();
-        element.setShopId(Long.valueOf(shopId));
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop.setShopId(Long.valueOf(shopId));
 
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
-        if (changeIbanOnly) {
-            paymentInformation.setIban("GB26TEST40051512347366");
 
-        } else {
-            paymentInformation.setIban("GB26TEST40051512347366");
-            paymentInformation.setBic(faker.finance().bic());
-            paymentInformation.setOwner(faker.name().firstName() + " " + faker.name().lastName());
-            paymentInformation.setBankName("RBS");
-        }
-        element.setPaymentInformation(paymentInformation);
+        //update requires bank details for some reason
+        paymentInformation.setIban(iban);
+        paymentInformation.setBic(faker.finance().bic());
+        paymentInformation.setOwner(faker.name().firstName() + " " + faker.name().lastName());
+        paymentInformation.setBankName("RBS");
+
+
+        miraklUpdateShop.setPaymentInformation(paymentInformation);
 
         MiraklShopAddress address = new MiraklShopAddress();
 
         for (MiraklCreatedShopReturn miraklCreatedShopReturn : createdShops.getShopReturns()) {
 
-            element.setName(miraklCreatedShopReturn.getShopCreated().getName());
+            miraklUpdateShop.setName(miraklCreatedShopReturn.getShopCreated().getName());
             address.setCity(miraklCreatedShopReturn.getShopCreated().getContactInformation().getCity());
             address.setCivility(miraklCreatedShopReturn.getShopCreated().getContactInformation().getCivility());
             address.setCountry(miraklCreatedShopReturn.getShopCreated().getContactInformation().getCountry());
@@ -88,19 +98,34 @@ public class MiraklShopApi extends MiraklShopProperties {
             address.setLastname(miraklCreatedShopReturn.getShopCreated().getContactInformation().getLastname());
             address.setStreet1(miraklCreatedShopReturn.getShopCreated().getContactInformation().getStreet1());
             address.setZipCode(miraklCreatedShopReturn.getShopCreated().getContactInformation().getZipCode());
-            element.setAddress(address);
-            element.setEmail(miraklCreatedShopReturn.getShopCreated().getContactInformation().getEmail());
+
+            if (createTaxId) {
+                miraklCreatedShopReturn.getShopCreated().getProfessionalInformation().setTaxIdentificationNumber("GB"+ RandomStringUtils.randomNumeric(9));
+            }
+
+            miraklUpdateShop.setAddress(address);
+            miraklUpdateShop.setEmail(miraklCreatedShopReturn.getShopCreated().getContactInformation().getEmail());
         }
 
-        element.setSuspend(false);
-        element.setPaymentBlocked(false);
-        element.setPremiumState(MiraklPremiumState.NOT_PREMIUM);
+        miraklUpdateShop.setSuspend(false);
+        miraklUpdateShop.setPaymentBlocked(false);
+        miraklUpdateShop.setPremiumState(MiraklPremiumState.NOT_PREMIUM);
 
-        element.setChannels(ImmutableList.of("INIT"));
-        element.setAdditionalFieldValues(ImmutableList.of(createAdditionalField("adyen-legal-entity-type", "Individual")));
+        miraklUpdateShop.setChannels(ImmutableList.of("INIT"));
+        miraklUpdateShop.setAdditionalFieldValues(ImmutableList.of(createAdditionalField("adyen-legal-entity-type", "Individual")));
 
-        MiraklUpdateShopsRequest request = new MiraklUpdateShopsRequest(ImmutableList.of(element));
-        return client.updateShops(request);
+        MiraklUpdateShopsRequest request = new MiraklUpdateShopsRequest(ImmutableList.of(miraklUpdateShop));
+        final MiraklUpdatedShops miraklUpdatedShopsResponse = client.updateShops(request);
+
+        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns().stream()
+            .map(MiraklUpdatedShopReturn::getShopError)
+            .filter(Objects::nonNull)
+            .map(InputWithErrors::getErrors)
+            .collect(Collectors.toList());
+
+        Assertions.assertThat(errors.size()).withFailMessage("errors on update: "+ GSON.toJson(errors)).isZero();
+
+        return miraklUpdatedShopsResponse;
     }
 
     protected MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue createAdditionalField(String code, String value) {

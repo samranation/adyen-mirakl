@@ -61,8 +61,8 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     @Given("^a new shop has been created in Mirakl$")
     public void aNewShopHasBeenCreatedInMirakl(DataTable table) {
-        List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
-        maps.forEach(map -> createdShops = miraklShopApi.createNewShop(miraklMarketplacePlatformOperatorApiClient, map, createShareHolderDate, false));
+        final List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
+        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, maps, createShareHolderDate, false);
     }
 
     @Then("^we process the data and push to Adyen$")

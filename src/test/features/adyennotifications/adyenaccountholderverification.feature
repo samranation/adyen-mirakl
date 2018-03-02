@@ -6,9 +6,7 @@ Feature: Bank Account Verification
             | legalEntity |
             | Individual  |
         When we process the data and push to Adyen
-        Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and <verificationStatus>
-            | verificationStatus |
-            | AWAITING_DATA      |
+        Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and AWAITING_DATA
 
     @ADY-8
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl
@@ -17,28 +15,32 @@ Feature: Bank Account Verification
             | Individual  | RBS       | GB26TEST40051512347366 |
         When we process the data and push to Adyen
         Then a new bankAccountDetail will be created for the existing Account Holder
-            | eventType                   |
-            | ACCOUNT_HOLDER_VERIFICATION |
+            | eventType              |
+            | ACCOUNT_HOLDER_CREATED |
 
-    @ADY-8
+    @ADY-8 @ADY-71 @bug
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl for an existing accountHolder
         Given a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data
             | legalEntity |
             | Individual  |
         And we process the data and push to Adyen
         And a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided
+            | iban                   |
+            | GB26TEST40051512347366 |
         When we process the data and push to Adyen
         Then a new bankAccountDetail will be created for the existing Account Holder
             | eventType              |
             | ACCOUNT_HOLDER_UPDATED |
 
-    @ADY-8
-    Scenario:  Editing IBAN in Mirakl will create new BankAccountDetail in Adyen
+    @ADY-8 @ADY-71 @bug
+    Scenario: Editing IBAN in Mirakl will create new BankAccountDetail in Adyen
         Given a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data
-            | legalEntity | bank name |
-            | Individual  | RBS       |
+            | legalEntity | bank name | iban                   |
+            | Individual  | RBS       | GB26TEST40051512347366 |
         And we process the data and push to Adyen
         When the IBAN has been modified in Mirakl
+            | iban                   |
+            | GB26TEST40051512393150 |
         And we process the data and push to Adyen
         Then a new bankAccountDetail will be created for the existing Account Holder
             | eventType              |
@@ -47,19 +49,24 @@ Feature: Bank Account Verification
 
     @ADY-14
     Scenario: COMPANY_VERIFICATION check upon account creation
-        Given legalBusinessName and taxId have been provided in Mirakl
+        Given create Shareholder data is set to true
+        And legalBusinessName and taxId have been provided in Mirakl
         And a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data
             | legalEntity | maxUbos |
             | Business    | 4       |
         When we process the data and push to Adyen
-        Then adyen will send the ACCOUNT_HOLDER_VERIFICATION comprising of COMPANY_VERIFICATION and status of AWAITING_DATA
+        Then adyen will send the ACCOUNT_HOLDER_VERIFICATION comprising of COMPANY_VERIFICATION and status of DATA_PROVIDED
 
     @ADY-14
     Scenario: COMPANY_VERIFICATION check upon account update
-        Given a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data
+        Given create Shareholder data is set to true
+        And a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data
             | legalEntity | maxUbos |
             | Business    | 4       |
         And we process the data and push to Adyen
         When legalBusinessName and taxId have been provided in Mirakl
-        And Mirakl has been updated with the taxId
-        Then adyen will send the ACCOUNT_HOLDER_UPDATED comprising of COMPANY_VERIFICATION and status of AWAITING_DATA
+        And Mirakl has been updated with the taxId and bank info
+            | iban                   |
+            | GB26TEST40051512347366 |
+        And we process the data and push to Adyen
+        Then adyen will send the ACCOUNT_HOLDER_UPDATED comprising of accountHolder COMPANY_VERIFICATION and status of DATA_PROVIDED
