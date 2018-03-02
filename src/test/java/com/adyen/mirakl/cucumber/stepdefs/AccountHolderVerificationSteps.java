@@ -85,7 +85,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, null);
 
-            Assertions.assertThat(adyenNotificationBody).withFailMessage("Notification has not been sent yet.").isNotEmpty();
+            Assertions.assertThat(adyenNotificationBody).withFailMessage("Notification has not been sent yet.").isNotNull();
             content = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails[0]BankAccountDetail");
 
             ImmutableList<String> miraklBankAccountDetail = assertionHelper.miraklBankAccountInformation(miraklShop).build();

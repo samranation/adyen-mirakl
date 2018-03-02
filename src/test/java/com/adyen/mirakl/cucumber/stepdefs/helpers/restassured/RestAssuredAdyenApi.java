@@ -33,10 +33,12 @@ public class RestAssuredAdyenApi {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId)
                         && mapResult.get("eventType").equals(eventType)
                         && contentMap.get("verificationType").equals(verificationType)) {
+                        log.info("found: {}",list);
                         return mapResult;
                     }
                 } else {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType)) {
+                        log.info("found: {}",list);
                         return mapResult;
                     }
                 }
