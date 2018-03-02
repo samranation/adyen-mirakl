@@ -5,7 +5,7 @@ import com.adyen.model.marketpay.notification.NotificationConfigurationDetails;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CucumberHooks {
+public class TestHooks {
 
     private NotificationConfigurationDetails configurationDetails;
 

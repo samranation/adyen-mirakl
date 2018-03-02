@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 @Component
-public class TearDownCucumberHook implements ApplicationListener<ContextClosedEvent> {
+public class TearDownTestingHook implements ApplicationListener<ContextClosedEvent> {
 
-    private static final Logger log = LoggerFactory.getLogger(TearDownCucumberHook.class);
+    private static final Logger log = LoggerFactory.getLogger(TearDownTestingHook.class);
 
     @Resource
-    private StartUpCucumberHook startUpCucumberHook;
+    private StartUpTestingHook startUpTestingHook;
 
     @Resource
     private Notification adyenNotification;
@@ -32,7 +32,7 @@ public class TearDownCucumberHook implements ApplicationListener<ContextClosedEv
     }
 
     private void removeConfigs() throws Exception {
-        final Long notificationId = startUpCucumberHook.getNotificationId();
+        final Long notificationId = startUpTestingHook.getNotificationId();
         log.info("Deleting notification configuration: {}",notificationId);
         DeleteNotificationConfigurationRequest deleteNotificationConfigurationRequest = new DeleteNotificationConfigurationRequest();
         deleteNotificationConfigurationRequest.setNotificationIds(ImmutableList.of(notificationId));

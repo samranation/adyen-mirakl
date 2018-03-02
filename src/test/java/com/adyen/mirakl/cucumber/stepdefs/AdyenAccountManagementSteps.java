@@ -1,6 +1,6 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpCucumberHook;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.AssertionHelper;
@@ -37,7 +37,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     private static final Logger log = LoggerFactory.getLogger(AdyenAccountManagementSteps.class);
 
     @Resource
-    private StartUpCucumberHook startUpCucumberHook;
+    private StartUpTestingHook startUpCucumberHook;
     @Resource
     private Account adyenAccountService;
     @Resource

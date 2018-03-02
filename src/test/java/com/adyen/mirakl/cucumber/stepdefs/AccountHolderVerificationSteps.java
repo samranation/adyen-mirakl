@@ -1,6 +1,6 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpCucumberHook;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.AssertionHelper;
@@ -32,7 +32,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
     @Resource
-    private StartUpCucumberHook startUpCucumberHook;
+    private StartUpTestingHook startUpTestingHook;
     @Resource
     private RestAssuredAdyenApi restAssuredAdyenApi;
     @Resource
@@ -63,7 +63,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
 
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, verificationType);
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, notification, verificationType);
 
             Assertions.assertThat(adyenNotificationBody).withFailMessage("No data received from notification endpoint").isNotNull();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
@@ -83,7 +83,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             String eventType = tableMap.get(0).get("eventType").toString();
             adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, null);
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, null);
 
             Assertions.assertThat(adyenNotificationBody).withFailMessage("Notification has not been sent yet.").isNotNull();
             content = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails[0]BankAccountDetail");
@@ -133,7 +133,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         waitUntilSomethingHits();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verificationType").toString()).isEqualTo(verificationType);
@@ -148,7 +148,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         waitUntilSomethingHits();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verification.accountHolder.checks[0].type").toString()).isEqualTo(verificationType);
