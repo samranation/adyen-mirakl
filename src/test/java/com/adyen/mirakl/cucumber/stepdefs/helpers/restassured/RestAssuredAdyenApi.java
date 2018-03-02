@@ -46,7 +46,7 @@ public class RestAssuredAdyenApi {
     }
 
     public boolean endpointHasANotification(String endpoint) {
-        return !"[]".equals(getResponseBody(endpoint).print());
+        return !"[]".equals(getResponseBody(endpoint).asString());
     }
 
     public ResponseBody getResponseBody(String endpoint) {
