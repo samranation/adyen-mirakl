@@ -8,7 +8,7 @@ Feature: Bank Account Verification
         When we process the data and push to Adyen
         Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and AWAITING_DATA
 
-    @ADY-8
+    @ADY-8 @bug
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl
         Given a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data
             | legalEntity | bank name | iban                   |
