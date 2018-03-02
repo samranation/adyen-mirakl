@@ -59,17 +59,17 @@ public class MiraklShopApi extends MiraklShopProperties {
             .orElseThrow(() -> new IllegalStateException("Shop cannot be found."));
     }
 
-    public MiraklUpdatedShops updateExistingShop(MiraklCreatedShops createdShops, String shopId, MiraklMarketplacePlatformOperatorApiClient client, boolean changeIbanOnly, boolean createTaxiId) {
+    public MiraklUpdatedShops updateExistingShop(MiraklCreatedShops createdShops, String shopId, MiraklMarketplacePlatformOperatorApiClient client, boolean changeIbanOnly) {
         Faker faker = new Faker();
         MiraklUpdateShop element = new MiraklUpdateShop();
         element.setShopId(Long.valueOf(shopId));
 
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
         if (changeIbanOnly) {
-            paymentInformation.setIban(faker.finance().iban());
+            paymentInformation.setIban("GB26TEST40051512347366");
 
         } else {
-            paymentInformation.setIban(faker.finance().iban());
+            paymentInformation.setIban("GB26TEST40051512347366");
             paymentInformation.setBic(faker.finance().bic());
             paymentInformation.setOwner(faker.name().firstName() + " " + faker.name().lastName());
             paymentInformation.setBankName("RBS");

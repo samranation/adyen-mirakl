@@ -102,13 +102,13 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false, false);
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false);
     }
 
     @When("^the IBAN has been modified in Mirakl$")
     public void theIBANHasBeenModifiedInMirakl() throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, true, false);
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, true);
     }
 
     @And("^the previous BankAccountDetail will be removed$")
@@ -140,7 +140,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @And("^Mirakl has been updated with the taxId$")
     public void miraklHasBeenUpdatedWithTheTaxId() throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false, createTaxId);
+        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false);
 
     }
 

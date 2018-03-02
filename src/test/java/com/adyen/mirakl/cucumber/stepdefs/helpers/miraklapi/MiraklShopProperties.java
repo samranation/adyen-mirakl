@@ -94,7 +94,7 @@ public class MiraklShopProperties {
         } else {
             owner = firstName.concat(" ").concat(lastName);
             bankName = tableData.get("bank name").toString();
-            iban = faker.finance().iban();
+            iban = tableData.get("iban").toString();
             bic = faker.finance().bic();
             createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
         }
