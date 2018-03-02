@@ -22,7 +22,7 @@ public class MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public MiraklCreateShopsRequest createMiraklShopRequest(Map tableData, boolean createShareHolderDate) {
+    public MiraklCreateShopsRequest createMiraklShopRequest(Map tableData, boolean createShareHolderDate, boolean createTaxId) {
         Faker faker = new Faker(new Locale("en-GB"));
 
         String email = ("adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com"));
@@ -55,6 +55,9 @@ public class MiraklShopProperties {
         MiraklProfessionalInformation professionalInformation = new MiraklProfessionalInformation();
         professionalInformation.setCorporateName(companyName);
         professionalInformation.setIdentificationNumber(UUID.randomUUID().toString());
+        if (createTaxId) {
+            professionalInformation.setTaxIdentificationNumber("GB"+RandomStringUtils.randomNumeric(9));
+        }
         createShop.setProfessionalInformation(professionalInformation);
 
         MiraklCreateShopNewUser newUser = new MiraklCreateShopNewUser();
@@ -85,20 +88,16 @@ public class MiraklShopProperties {
         String bankName;
         String iban;
         String bic;
-        // here cucumber tests will not be passing in bank information
-        // in this case we will get faker to generate the data for us
-        if (tableData.get("iban") == null || StringUtils.isEmpty(tableData.get("iban").toString())) {
+
+        if (tableData.get("bank name") == null) {
+            log.info("Bank account information will not be created in this test.");
+        } else {
             owner = firstName.concat(" ").concat(lastName);
-            bankName = "RBS";
+            bankName = tableData.get("bank name").toString();
             iban = faker.finance().iban();
             bic = faker.finance().bic();
-        } else {
-            owner = tableData.get("name").toString();
-            bankName = tableData.get("bank name").toString();
-            iban = tableData.get("iban").toString();
-            bic = tableData.get("bic").toString();
+            createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
         }
-        createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
 
         return new MiraklCreateShopsRequest(ImmutableList.of(createShop));
     }
