@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 
@@ -144,4 +143,5 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, false, createTaxId);
 
     }
+
 }
