@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -51,17 +52,18 @@ public class ShopService {
     @Resource
     private Account adyenAccountService;
 
-    //TODO remove - temporary fix for delta to unblock cucumber testing
-    private static final Date startupDate = new Date();
+    @Resource
+    private DeltaService deltaService;
 
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
 
     public void retrieveUpdatedShops() {
-        List<MiraklShop> shops = getUpdatedShops();
+        final ZonedDateTime beforeProcessing = ZonedDateTime.now();
 
+        List<MiraklShop> shops = getUpdatedShops();
         log.debug("Retrieved shops: {}", shops.size());
-        for (MiraklShop shop : shops)
+        for (MiraklShop shop : shops) {
             try {
                 GetAccountHolderResponse getAccountHolderResponse = getAccountHolderFromShop(shop);
                 if (getAccountHolderResponse != null) {
@@ -74,6 +76,9 @@ public class ShopService {
             } catch (Exception e) {
                 log.error("Exception: {}", e.getMessage(), e);
             }
+        }
+
+        deltaService.createNewShopDelta(beforeProcessing);
     }
 
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
@@ -118,11 +123,9 @@ public class ShopService {
 
         while (offset < totalCount) {
             MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
-            miraklGetShopsRequest.setPaginate(false);
             miraklGetShopsRequest.setOffset(offset);
 
-            miraklGetShopsRequest.setUpdatedSince(startupDate);
-
+            miraklGetShopsRequest.setUpdatedSince(deltaService.getShopDelta());
             MiraklShops miraklShops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest);
             shops.addAll(miraklShops.getShops());
 

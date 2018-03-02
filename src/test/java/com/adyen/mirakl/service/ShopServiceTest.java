@@ -23,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,10 @@ public class ShopServiceTest {
     private Account adyenAccountServiceMock;
     @Mock
     private GetAccountHolderResponse getAccountHolderResponseMock;
+    @Mock
+    private DeltaService deltaService;
+    @Mock
+    private Date dateMock;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -188,15 +193,25 @@ public class ShopServiceTest {
         shops.add(new MiraklShop());
         miraklShops.setTotalCount(2L);
 
+        when(deltaService.getShopDelta()).thenReturn(dateMock);
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(miraklGetShopsRequestCaptor.capture())).thenReturn(miraklShops);
 
         List<MiraklShop> updatedShops = shopService.getUpdatedShops();
+
+        verify(deltaService, times(2)).getShopDelta();
+
         assertEquals(2, updatedShops.size());
 
         List<MiraklGetShopsRequest> miraklGetShopsRequests = miraklGetShopsRequestCaptor.getAllValues();
         assertEquals(2, miraklGetShopsRequests.size());
+
         assertEquals(0L, miraklGetShopsRequests.get(0).getOffset());
+        assertEquals(dateMock, miraklGetShopsRequests.get(0).getUpdatedSince());
+        assertEquals(true, miraklGetShopsRequests.get(0).isPaginate());
+
         assertEquals(1L, miraklGetShopsRequests.get(1).getOffset());
+        assertEquals(dateMock, miraklGetShopsRequests.get(1).getUpdatedSince());
+        assertEquals(true, miraklGetShopsRequests.get(1).isPaginate());
     }
 
     @Test
@@ -288,13 +303,15 @@ public class ShopServiceTest {
 
         shopService.retrieveUpdatedShops();
 
+        verify(deltaService).createNewShopDelta(any(ZonedDateTime.class));
+
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
-                                                                                .stream()
-                                                                                .map(CreateAccountHolderRequest::getAccountHolderDetails)
-                                                                                .map(AccountHolderDetails::getBusinessDetails)
-                                                                                .map(BusinessDetails::getShareholders)
-                                                                                .flatMap(Collection::stream)
-                                                                                .collect(Collectors.toList());
+            .stream()
+            .map(CreateAccountHolderRequest::getAccountHolderDetails)
+            .map(AccountHolderDetails::getBusinessDetails)
+            .map(BusinessDetails::getShareholders)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
 
         Set<String> firstNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getFirstName).collect(Collectors.toSet());
         Set<String> lastNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getLastName).collect(Collectors.toSet());
