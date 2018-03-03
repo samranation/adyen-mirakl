@@ -23,25 +23,24 @@ public class MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public MiraklCreateShopsRequest createMiraklShopRequest(List<Map<Object, Object>> rows, boolean createShareHolderDate, boolean createTaxId) {
+    public MiraklCreateShopsRequest createMiraklShopRequest(List<Map<Object, Object>> rows, boolean createShareHolderDate) {
         Faker faker = new Faker(new Locale("en-GB"));
 
         String email = ("adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com"));
         String companyName = faker.company().name();
         String shopName = companyName.concat("-").concat(RandomStringUtils.randomAlphanumeric(8)).toLowerCase();
         String firstName = faker.name().firstName();
-        String lastName = faker.name().lastName();
 
         final ImmutableList.Builder<MiraklCreateShop> shopsToCreate = ImmutableList.builder();
         rows.forEach(tableData -> {
-            MiraklCreateShop createShop = createShop(tableData, createShareHolderDate, createTaxId, faker, email, companyName, shopName, firstName, lastName);
+            MiraklCreateShop createShop = createShop(tableData, createShareHolderDate, faker, email, companyName, shopName, firstName);
             shopsToCreate.add(createShop);
         });
 
         return new MiraklCreateShopsRequest(shopsToCreate.build());
     }
 
-    private MiraklCreateShop createShop(final Map tableData, final boolean createShareHolderDate, final boolean createTaxId, final Faker faker, final String email, final String companyName, final String shopName, final String firstName, final String lastName) {
+    private MiraklCreateShop createShop(final Map tableData, final boolean createShareHolderDate, final Faker faker, final String email, final String companyName, final String shopName, final String firstName) {
         MiraklCreateShop createShop = new MiraklCreateShop();
 
         String city;
@@ -66,9 +65,6 @@ public class MiraklShopProperties {
         MiraklProfessionalInformation professionalInformation = new MiraklProfessionalInformation();
         professionalInformation.setCorporateName(companyName);
         professionalInformation.setIdentificationNumber(UUID.randomUUID().toString());
-        if (createTaxId) {
-            professionalInformation.setTaxIdentificationNumber("GB"+ RandomStringUtils.randomNumeric(9));
-        }
         createShop.setProfessionalInformation(professionalInformation);
 
         MiraklCreateShopNewUser newUser = new MiraklCreateShopNewUser();

@@ -2,6 +2,7 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.AssertionHelper;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
@@ -37,6 +38,8 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     private RestAssuredAdyenApi restAssuredAdyenApi;
     @Resource
     private AssertionHelper assertionHelper;
+    @Resource
+    private MiraklUpdateShopApi miraklUpdateShopsApi;
 
     private boolean createShareHolderDate = false;
     private boolean createTaxId = false;
@@ -50,7 +53,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Given("^a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data$")
     public void aShopHasBeenCreatedInMiraklWithACorrespondingAccountHolderInAdyenWithTheFollowingData(DataTable table) throws Throwable {
         List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
-        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, tableMap, createShareHolderDate, createTaxId);
+        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, tableMap, createShareHolderDate);
     }
 
     @Then("^the (.*) notification is sent by Adyen comprising of (.*) and (.*)")
@@ -99,21 +102,17 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     }
 
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
-    public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided(DataTable table) throws Throwable {
-        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
-
+    public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        final String iban = tableMap.get(0).get("iban").toString();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, iban, false);
+        miraklUpdateShopsApi.updateShopToAddBankDetails(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient);
     }
 
     @When("^the IBAN has been modified in Mirakl$")
     public void theIBANHasBeenModifiedInMirakl(DataTable table) throws Throwable {
-        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
+        List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
 
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        final String iban = tableMap.get(0).get("iban").toString();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, iban, false);
+        miraklUpdateShopsApi.updateShopsIbanNumberOnly(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, rows);
     }
 
     @And("^the previous BankAccountDetail will be removed$")
@@ -157,17 +156,14 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         });
     }
 
-    @And("^Mirakl has been updated with the taxId and bank info$")
-    public void miraklHasBeenUpdatedWithTheTaxId(DataTable table) throws Throwable {
-        shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
-        final String iban = tableMap.get(0).get("iban").toString();
-        miraklShopApi.updateExistingShop(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, iban, createTaxId);
-
-    }
-
     @Given("^create Shareholder data is set to true$")
     public void createShareholderDataIsSetToTrue() throws Throwable {
         createShareHolderDate = true;
+    }
+
+    @And("^Mirakl has been updated with a taxId$")
+    public void miraklHasBeenUpdatedWithATaxId() throws Throwable {
+        shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
+        miraklUpdateShopsApi.updateShopToIncludeVATNumber(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient);
     }
 }
