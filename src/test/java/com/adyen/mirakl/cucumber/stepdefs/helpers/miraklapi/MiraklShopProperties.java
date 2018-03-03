@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -22,7 +23,7 @@ public class MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public MiraklCreateShopsRequest createMiraklShopRequest(Map tableData, boolean createShareHolderDate) {
+    public MiraklCreateShopsRequest createMiraklShopRequest(List<Map<Object, Object>> rows, boolean createShareHolderDate, boolean createTaxId) {
         Faker faker = new Faker(new Locale("en-GB"));
 
         String email = ("adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com"));
@@ -31,6 +32,16 @@ public class MiraklShopProperties {
         String firstName = faker.name().firstName();
         String lastName = faker.name().lastName();
 
+        final ImmutableList.Builder<MiraklCreateShop> shopsToCreate = ImmutableList.builder();
+        rows.forEach(tableData -> {
+            MiraklCreateShop createShop = createShop(tableData, createShareHolderDate, createTaxId, faker, email, companyName, shopName, firstName, lastName);
+            shopsToCreate.add(createShop);
+        });
+
+        return new MiraklCreateShopsRequest(shopsToCreate.build());
+    }
+
+    private MiraklCreateShop createShop(final Map tableData, final boolean createShareHolderDate, final boolean createTaxId, final Faker faker, final String email, final String companyName, final String shopName, final String firstName, final String lastName) {
         MiraklCreateShop createShop = new MiraklCreateShop();
 
         String city;
@@ -46,7 +57,7 @@ public class MiraklShopProperties {
         address.setCivility("Mr");
         address.setCountry("GBR");
         address.setFirstname(firstName);
-        address.setLastname(lastName);
+        address.setLastname(tableData.get("lastName").toString());
         address.setStreet1(faker.address().streetAddress());
         address.setZipCode(faker.address().zipCode());
         createShop.setAddress(address);
@@ -55,6 +66,9 @@ public class MiraklShopProperties {
         MiraklProfessionalInformation professionalInformation = new MiraklProfessionalInformation();
         professionalInformation.setCorporateName(companyName);
         professionalInformation.setIdentificationNumber(UUID.randomUUID().toString());
+        if (createTaxId) {
+            professionalInformation.setTaxIdentificationNumber("GB"+ RandomStringUtils.randomNumeric(9));
+        }
         createShop.setProfessionalInformation(professionalInformation);
 
         MiraklCreateShopNewUser newUser = new MiraklCreateShopNewUser();
@@ -85,22 +99,17 @@ public class MiraklShopProperties {
         String bankName;
         String iban;
         String bic;
-        // here cucumber tests will not be passing in bank information
-        // in this case we will get faker to generate the data for us
-        if (tableData.get("iban") == null || StringUtils.isEmpty(tableData.get("iban").toString())) {
-            owner = firstName.concat(" ").concat(lastName);
-            bankName = "RBS";
-            iban = faker.finance().iban();
-            bic = faker.finance().bic();
+
+        if (tableData.get("bank name") == null) {
+            log.info("Bank account information will not be created in this test.");
         } else {
-            owner = tableData.get("name").toString();
+            owner = tableData.get("bankOwnerName").toString();
             bankName = tableData.get("bank name").toString();
             iban = tableData.get("iban").toString();
-            bic = tableData.get("bic").toString();
+            bic = faker.finance().bic();
+            createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
         }
-        createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
-
-        return new MiraklCreateShopsRequest(ImmutableList.of(createShop));
+        return createShop;
     }
 
     protected MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue createAdditionalField(String code, String value) {

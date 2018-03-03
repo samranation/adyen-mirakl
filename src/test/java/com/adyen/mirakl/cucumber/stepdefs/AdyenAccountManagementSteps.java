@@ -4,6 +4,7 @@ import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.AssertionHelper;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.mirakl.service.ShopService;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
@@ -20,18 +21,18 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.assertj.core.api.Assertions;
+import org.awaitility.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
 
-public class AdyenAccountManagementSteps {
+public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     private static final Logger log = LoggerFactory.getLogger(AdyenAccountManagementSteps.class);
 
@@ -60,8 +61,8 @@ public class AdyenAccountManagementSteps {
 
     @Given("^a new shop has been created in Mirakl$")
     public void aNewShopHasBeenCreatedInMirakl(DataTable table) {
-        List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
-        maps.forEach(map -> createdShops = miraklShopApi.createNewShop(miraklMarketplacePlatformOperatorApiClient, map, createShareHolderDate));
+        final List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
+        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, maps, createShareHolderDate, false);
     }
 
     @Then("^we process the data and push to Adyen$")
@@ -88,7 +89,8 @@ public class AdyenAccountManagementSteps {
     @And("^a notification will be sent pertaining to (.*)$")
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
-        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+        waitUntilSomethingHits();
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
@@ -112,7 +114,8 @@ public class AdyenAccountManagementSteps {
 
     @Then("^no account holder is created in Adyen$")
     public void noAccountHolderIsCreatedInAdyen() {
-        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
+        waitUntilSomethingHits();
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();

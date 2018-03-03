@@ -2,6 +2,7 @@ package com.adyen.mirakl.cucumber.stepdefs.helpers.restassured;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import cucumber.runtime.junit.Assertions;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
 import org.slf4j.Logger;
@@ -32,16 +33,22 @@ public class RestAssuredAdyenApi {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId)
                         && mapResult.get("eventType").equals(eventType)
                         && contentMap.get("verificationType").equals(verificationType)) {
+                        log.info("found from url: {} : {}",endpoint, list);
                         return mapResult;
                     }
                 } else {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType)) {
+                        log.info("found from url: {} : {}",endpoint, list);
                         return mapResult;
                     }
                 }
             }
         }
         return null;
+    }
+
+    public boolean endpointHasANotification(String endpoint) {
+        return !"[]".equals(getResponseBody(endpoint).asString());
     }
 
     public ResponseBody getResponseBody(String endpoint) {
