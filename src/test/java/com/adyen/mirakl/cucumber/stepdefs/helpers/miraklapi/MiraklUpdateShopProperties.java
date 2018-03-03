@@ -93,6 +93,7 @@ public class MiraklUpdateShopProperties {
         miraklUpdateShop.setPaymentBlocked(miraklCreatedShopReturn.getShopCreated().getPaymentDetail().getPaymentBlocked());
     }
 
+    // Mandatory for shop update
     protected void getShopNameAndEmail(MiraklCreatedShopReturn miraklCreatedShopReturn, MiraklUpdateShop miraklUpdateShop) {
         miraklUpdateShop.setName(miraklCreatedShopReturn.getShopCreated().getName());
         miraklUpdateShop.setEmail(miraklCreatedShopReturn.getShopCreated().getContactInformation().getEmail());
