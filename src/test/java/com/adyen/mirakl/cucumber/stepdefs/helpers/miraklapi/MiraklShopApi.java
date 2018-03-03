@@ -5,10 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.mirakl.client.domain.common.error.ErrorBean;
 import com.mirakl.client.domain.common.error.InputWithErrors;
-import com.mirakl.client.mmp.domain.shop.MiraklPremiumState;
-import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.domain.shop.MiraklShopAddress;
-import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.domain.shop.*;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShopReturn;
@@ -105,13 +102,27 @@ public class MiraklShopApi extends MiraklShopProperties {
 
             miraklUpdateShop.setAddress(address);
             miraklUpdateShop.setEmail(miraklCreatedShopReturn.getShopCreated().getContactInformation().getEmail());
+
+            // gets the sales channel code, if multiple found then immutable list should handle
+            ImmutableList.Builder<String> channelsBuilder = new ImmutableList.Builder<>();
+            for (String channel : miraklCreatedShopReturn.getShopCreated().getChannels()) {
+                channelsBuilder.add(channel);
+            }
+            miraklUpdateShop.setChannels(channelsBuilder.build());
+            miraklUpdateShop.setPremiumState(miraklCreatedShopReturn.getShopCreated().getPremiumState());
+
+            // if shop state is either open or close then setSuspend will be false else if enum is already suspend then we will keep it true
+            boolean setSuspend;
+            MiraklShopState state = miraklCreatedShopReturn.getShopCreated().getState();
+            if (state.equals(MiraklShopState.OPEN) || state.equals(MiraklShopState.CLOSE)){
+                setSuspend = false;
+            } else {
+                setSuspend = true;
+            }
+            miraklUpdateShop.setSuspend(setSuspend);
+            miraklUpdateShop.setPaymentBlocked(miraklCreatedShopReturn.getShopCreated().getPaymentDetail().getPaymentBlocked());
         }
 
-        miraklUpdateShop.setSuspend(false);
-        miraklUpdateShop.setPaymentBlocked(false);
-        miraklUpdateShop.setPremiumState(MiraklPremiumState.NOT_PREMIUM);
-
-        miraklUpdateShop.setChannels(ImmutableList.of("INIT"));
         miraklUpdateShop.setAdditionalFieldValues(ImmutableList.of(createAdditionalField("adyen-legal-entity-type", "Individual")));
 
         MiraklUpdateShopsRequest request = new MiraklUpdateShopsRequest(ImmutableList.of(miraklUpdateShop));

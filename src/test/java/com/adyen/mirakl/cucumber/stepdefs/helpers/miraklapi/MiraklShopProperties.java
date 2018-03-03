@@ -57,7 +57,7 @@ public class MiraklShopProperties {
         address.setCivility("Mr");
         address.setCountry("GBR");
         address.setFirstname(firstName);
-        address.setLastname(lastName);
+        address.setLastname(tableData.get("lastName").toString());
         address.setStreet1(faker.address().streetAddress());
         address.setZipCode(faker.address().zipCode());
         createShop.setAddress(address);
@@ -103,7 +103,7 @@ public class MiraklShopProperties {
         if (tableData.get("bank name") == null) {
             log.info("Bank account information will not be created in this test.");
         } else {
-            owner = firstName.concat(" ").concat(lastName);
+            owner = tableData.get("bankOwnerName").toString();
             bankName = tableData.get("bank name").toString();
             iban = tableData.get("iban").toString();
             bic = faker.finance().bic();
