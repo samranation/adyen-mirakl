@@ -17,10 +17,10 @@ public class StepDefsHelper {
     @Resource
     private StartUpTestingHook startUpTestingHook;
 
-    protected void waitUntilSomethingHits() {
+    protected void waitUntilEndpointIsNotNull() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
-            boolean somethingHitTheEndPoint = restAssuredAdyenApi.endpointHasANotification(startUpTestingHook.getBaseRequestBinUrlPath());
-            Assertions.assertThat(somethingHitTheEndPoint).isTrue();
+            boolean endpointHasReceivedANotification = restAssuredAdyenApi.endpointHasANotification(startUpTestingHook.getBaseRequestBinUrlPath());
+            Assertions.assertThat(endpointHasReceivedANotification).isTrue();
         });
     }
 }

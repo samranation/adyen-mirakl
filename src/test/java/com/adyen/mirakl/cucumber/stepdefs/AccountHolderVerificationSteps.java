@@ -62,7 +62,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
                                                                                                                       String verificationStatus) {
 
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
 
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
@@ -82,7 +82,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             String eventType = tableMap.get(0).get("eventType").toString();
             adyenNotificationBody = restAssuredAdyenApi
@@ -129,7 +129,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
@@ -144,7 +144,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Then("^adyen will send the (.*) comprising of accountHolder (.*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATIONAccountHolder(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);

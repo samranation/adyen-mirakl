@@ -93,7 +93,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     @And("^a notification will be sent pertaining to (.*)$")
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
@@ -118,7 +118,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     @Then("^no account holder is created in Adyen$")
     public void noAccountHolderIsCreatedInAdyen() {
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
@@ -168,7 +168,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     @And("^a notification of (.*) will not be sent$")
     public void aNotificationOfACCOUNT_HOLDER_UPDATEDWillNotBeSent(String notification) throws Throwable {
-        waitUntilSomethingHits();
+        waitUntilEndpointIsNotNull();
         await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
             shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
             mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, null);
