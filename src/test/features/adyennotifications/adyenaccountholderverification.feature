@@ -25,8 +25,6 @@ Feature: Bank Account Verification
             | Individual  | TestData |
         And we process the data and push to Adyen
         And a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided
-            | iban                   |
-            | GB26TEST40051512347366 |
         When we process the data and push to Adyen
         Then a new bankAccountDetail will be created for the existing Account Holder
             | eventType              |
@@ -64,9 +62,6 @@ Feature: Bank Account Verification
             | legalEntity | maxUbos | lastName |
             | Business    | 4       | TestData |
         And we process the data and push to Adyen
-        When legalBusinessName and taxId have been provided in Mirakl
-        And Mirakl has been updated with the taxId and bank info
-            | iban                   |
-            | GB26TEST40051512347366 |
+        And Mirakl has been updated with a taxId
         And we process the data and push to Adyen
         Then adyen will send the ACCOUNT_HOLDER_UPDATED comprising of accountHolder COMPANY_VERIFICATION and status of DATA_PROVIDED

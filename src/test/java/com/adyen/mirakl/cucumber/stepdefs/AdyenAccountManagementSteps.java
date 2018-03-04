@@ -2,6 +2,7 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.AssertionHelper;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
+import static com.adyen.mirakl.cucumber.stepdefs.MiraklApiSteps.foundShop;
 
 public class AdyenAccountManagementSteps extends StepDefsHelper {
 
@@ -46,23 +48,25 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     private MiraklShopApi miraklShopApi;
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
-    private MiraklCreatedShops createdShops;
-    private String notification;
     @Resource
     private RestAssuredAdyenApi restAssuredAdyenApi;
+    @Resource
+    private MiraklUpdateShopApi miraklUpdateShopsApi;
+    @Resource
+    private AssertionHelper assertionHelper;
+
+    private MiraklCreatedShops createdShops;
+    private String notification;
     private String shopId;
     private boolean createShareHolderDate = false;
     private Map<String, Object> mappedAdyenNotificationResponse;
     private String email;
     private MiraklShop miraklShop;
 
-    @Resource
-    private AssertionHelper assertionHelper;
-
     @Given("^a new shop has been created in Mirakl$")
     public void aNewShopHasBeenCreatedInMirakl(DataTable table) {
         final List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
-        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, maps, createShareHolderDate, false);
+        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, maps, createShareHolderDate);
     }
 
     @Then("^we process the data and push to Adyen$")
@@ -89,8 +93,8 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     @And("^a notification will be sent pertaining to (.*)$")
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
-        waitUntilSomethingHits();
-        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+        waitForNotification();
+        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
@@ -114,7 +118,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     @Then("^no account holder is created in Adyen$")
     public void noAccountHolderIsCreatedInAdyen() {
-        waitUntilSomethingHits();
+        waitForNotification();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
@@ -153,5 +157,23 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     public Map<String, Object> getMappedAdyenNotificationResponse() {
         return this.mappedAdyenNotificationResponse;
+    }
+
+    @When("^the Mirakl Shop Details have been updated$")
+    public void theMiraklShopDetailsHaveBeenUpdated(DataTable table) throws Throwable {
+        final List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+
+        MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
+        miraklUpdateShopsApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows);
+    }
+
+    @And("^a notification of (.*) will not be sent$")
+    public void aNotificationOfACCOUNT_HOLDER_UPDATEDWillNotBeSent(String notification) throws Throwable {
+        waitForNotification();
+        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
+            shopId = foundShop.getId();
+            mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, null);
+            Assertions.assertThat(getMappedAdyenNotificationResponse()).isNull();
+        });
     }
 }
