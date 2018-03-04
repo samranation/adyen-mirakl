@@ -23,6 +23,9 @@ public class StepDefsHelper {
     @Resource
     private StartUpTestingHook startUpTestingHook;
 
+    protected static volatile MiraklCreatedShops createdShops;
+    protected static volatile MiraklShop foundShop;
+
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
             boolean endpointHasReceivedANotification = restAssuredAdyenApi.endpointHasANotification(startUpTestingHook.getBaseRequestBinUrlPath());
