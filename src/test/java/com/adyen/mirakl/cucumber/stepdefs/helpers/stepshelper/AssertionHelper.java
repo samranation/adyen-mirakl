@@ -99,7 +99,8 @@ public class AssertionHelper {
             miraklShopData.add(((MiraklIbanBankAccountInformation) paymentInformation).getIban());
             miraklShopData.add(((MiraklIbanBankAccountInformation) paymentInformation).getBic());
         }
-        miraklShopData.add(miraklShop.getPaymentInformation().getOwner());
+        //bank from adyen returns fullname and owner from mirakl paymentInfo is only first name
+        miraklShopData.add(String.format("%s %s", miraklShop.getContactInformation().getFirstname(), miraklShop.getContactInformation().getLastname()));
         return miraklShopData;
     }
 
