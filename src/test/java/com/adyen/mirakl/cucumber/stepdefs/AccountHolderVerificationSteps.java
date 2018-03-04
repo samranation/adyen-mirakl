@@ -62,7 +62,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
                                                                                                                       String verificationStatus) {
 
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        waitUntilEndpointIsNotNull();
+        waitForNotification();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
 
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
@@ -82,7 +82,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
-        waitUntilEndpointIsNotNull();
+        waitForNotification();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             String eventType = tableMap.get(0).get("eventType").toString();
             adyenNotificationBody = restAssuredAdyenApi
@@ -103,16 +103,15 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() throws Throwable {
-        shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklUpdateShopsApi.updateShopToAddBankDetails(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient);
+        MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
+        miraklUpdateShopsApi.updateShopToAddBankDetails(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient);
     }
 
     @When("^the IBAN has been modified in Mirakl$")
     public void theIBANHasBeenModifiedInMirakl(DataTable table) throws Throwable {
         List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
-
-        shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklUpdateShopsApi.updateShopsIbanNumberOnly(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient, rows);
+        MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
+        miraklUpdateShopsApi.updateShopsIbanNumberOnly(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows);
     }
 
     @And("^the previous BankAccountDetail will be removed$")
@@ -129,7 +128,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        waitUntilEndpointIsNotNull();
+        waitForNotification();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
@@ -144,7 +143,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Then("^adyen will send the (.*) comprising of accountHolder (.*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATIONAccountHolder(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        waitUntilEndpointIsNotNull();
+        waitForNotification();
         await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
@@ -164,6 +163,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @And("^Mirakl has been updated with a taxId$")
     public void miraklHasBeenUpdatedWithATaxId() throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
-        miraklUpdateShopsApi.updateShopToIncludeVATNumber(createdShops, shopId, miraklMarketplacePlatformOperatorApiClient);
+        MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
+        miraklUpdateShopsApi.updateShopToIncludeVATNumber(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient);
     }
 }

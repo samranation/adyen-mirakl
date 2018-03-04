@@ -25,8 +25,6 @@ Feature: Bank Account Verification
             | Individual  | TestData |
         And we process the data and push to Adyen
         And a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided
-            | legalEntity |
-            | Individual  |
         When we process the data and push to Adyen
         Then a new bankAccountDetail will be created for the existing Account Holder
             | eventType              |
