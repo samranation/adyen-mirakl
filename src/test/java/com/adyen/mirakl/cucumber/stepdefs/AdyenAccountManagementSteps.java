@@ -29,7 +29,6 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
-import static com.adyen.mirakl.cucumber.stepdefs.MiraklApiSteps.foundShop;
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
 
