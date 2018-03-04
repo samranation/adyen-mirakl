@@ -32,7 +32,7 @@ public class MiraklApiSteps extends StepDefsHelper {
     private String seller;
     private String legalEntity;
     private MiraklShop miraklShop;
-    public static MiraklShop foundShop;
+
 
     @Given("^the operator has specified that the (.*) is an (.*)")
     public void theOperatorHasSpecifiedThatTheSellerIsAnLegalEntity(String seller, String legalEntity) throws Throwable {

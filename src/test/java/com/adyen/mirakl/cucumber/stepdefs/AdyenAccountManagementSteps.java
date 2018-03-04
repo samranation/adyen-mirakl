@@ -15,7 +15,6 @@ import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
-import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -30,9 +29,9 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
+import static com.adyen.mirakl.cucumber.stepdefs.MiraklApiSteps.foundShop;
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
-import static com.adyen.mirakl.cucumber.stepdefs.MiraklApiSteps.foundShop;
 
 public class AdyenAccountManagementSteps extends StepDefsHelper {
 
@@ -55,18 +54,23 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     @Resource
     private AssertionHelper assertionHelper;
 
-    private MiraklCreatedShops createdShops;
     private String notification;
     private String shopId;
-    private boolean createShareHolderDate = false;
     private Map<String, Object> mappedAdyenNotificationResponse;
     private String email;
     private MiraklShop miraklShop;
 
-    @Given("^a new shop has been created in Mirakl$")
-    public void aNewShopHasBeenCreatedInMirakl(DataTable table) {
-        final List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
-        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, maps, createShareHolderDate);
+
+    @Given("^a new shop has been created in Mirakl for an (.*)$")
+    public void aNewShopHasBeenCreatedInMiraklForAnIndividual(String legalEntity, DataTable table) throws Throwable {
+        final List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+        createdShops = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
+    }
+
+    @When("^a new shop has been created in Mirakl for a (.*)")
+    public void aNewShopHasBeenCreatedInMiraklForABusiness(String legalEntity, DataTable table) throws Throwable {
+        final List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+        createdShops = miraklShopApi.createBusinessShopWithUbos(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
     }
 
     @Then("^we process the data and push to Adyen$")
@@ -105,15 +109,9 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
         });
     }
 
-    @When("^a complete shareholder detail is submitted on Mirakl$")
-    public void aCompleteShareholderDetailIsSubmittedOnMirakl() {
-        // createShareHolderDate set to true. Value will be passed to the createMiraklShop method
-        createShareHolderDate = true;
-    }
-
     @When("^a complete shareholder is not provided$")
     public void aCompleteShareholderIsNotProvided() {
-        // empty as createShareHolderDate will be false by default.
+        // UBOs were not provided in this test.
     }
 
     @Then("^no account holder is created in Adyen$")

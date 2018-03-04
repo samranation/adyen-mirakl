@@ -38,7 +38,6 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
     }
 
     public void updateShopToIncludeVATNumber(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
-
             miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
 
             // update VAT number:
@@ -63,9 +62,9 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
 
             miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
             updateMiraklRequest(client, miraklUpdateShopBuilder);
-
     }
 
+    // required for any update we do to Mirakl
     private MiraklUpdateShop populateAllMandatoryFields(MiraklShop miraklShop, String shopId) {
             miraklUpdateShop.setShopId(Long.valueOf(shopId));
             MiraklIbanBankAccountInformation paymentInformation = populateMiraklIbanBankAccountInformation();

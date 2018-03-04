@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
-import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -41,19 +40,16 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Resource
     private MiraklUpdateShopApi miraklUpdateShopsApi;
 
-    private boolean createShareHolderDate = false;
-    private boolean createTaxId = false;
-    private MiraklCreatedShops createdShops;
     private String shopId;
     private MiraklShop miraklShop;
     private String email;
     private Map<String, Object> content;
     private Map<String, Object> adyenNotificationBody;
 
-    @Given("^a shop has been created in Mirakl with a corresponding account holder in Adyen with the following data$")
-    public void aShopHasBeenCreatedInMiraklWithACorrespondingAccountHolderInAdyenWithTheFollowingData(DataTable table) throws Throwable {
-        List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
-        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, tableMap, createShareHolderDate);
+    @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
+    public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
+        List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+        createdShops = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
     }
 
     @Then("^the (.*) notification is sent by Adyen comprising of (.*) and (.*)")
@@ -120,11 +116,6 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         Assertions.assertThat(content).hasSize(1);
     }
 
-    @And("^legalBusinessName and taxId have been provided in Mirakl$")
-    public void legalbusinessnameAndTaxIdHaveBeenProvidedInMirakl() throws Throwable {
-        createTaxId = true;
-    }
-
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
@@ -153,11 +144,6 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verification.accountHolder.checks[0].status").toString()).isEqualTo(status);
         });
-    }
-
-    @Given("^create Shareholder data is set to true$")
-    public void createShareholderDataIsSetToTrue() throws Throwable {
-        createShareHolderDate = true;
     }
 
     @And("^Mirakl has been updated with a taxId$")

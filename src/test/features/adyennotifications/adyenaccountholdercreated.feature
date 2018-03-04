@@ -2,9 +2,9 @@ Feature: Seller Account Management
 
     @ADY-6
     Scenario: Creating Mirakl shop will create Adyen Account Holder for an Individual
-        Given a new shop has been created in Mirakl
-            | legalEntity | lastName |
-            | Individual  | TestData |
+        Given a new shop has been created in Mirakl for an Individual
+            | lastName |
+            | TestData |
         When we process the data and push to Adyen
         Then an AccountHolder will be created in Adyen with status Active
         And a notification will be sent pertaining to ACCOUNT_HOLDER_CREATED
@@ -12,10 +12,9 @@ Feature: Seller Account Management
 
     @ADY-53
     Scenario: Adding more shareholders will update the existing accountHolder
-        Given a complete shareholder detail is submitted on Mirakl
-        When a new shop has been created in Mirakl
-            | legalEntity | maxUbos | lastName |
-            | Business    | 4       | TestData |
+        Given a new shop has been created in Mirakl for a Business
+            | maxUbos | lastName |
+            | 4       | TestData |
         And we process the data and push to Adyen
         Then a notification will be sent pertaining to ACCOUNT_HOLDER_CREATED
         And the account holder is created in Adyen with status Active
@@ -23,8 +22,8 @@ Feature: Seller Account Management
 
     @ADY-53
     Scenario: Don't create Adyen Account Holder if no shareholder data has been entered
-        Given a new shop has been created in Mirakl
-            | legalEntity | lastName |
-            | Business    | TestData |
+        When a new shop has been created in Mirakl for a Business
+            | lastName |
+            | TestData |
         When a complete shareholder is not provided
         Then no account holder is created in Adyen
