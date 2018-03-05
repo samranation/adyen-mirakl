@@ -171,3 +171,6 @@ requestbin:
 
 shopService:
     maxUbos: 4
+
+miraklConfig:
+    createShopDeltaAtStartup: true
