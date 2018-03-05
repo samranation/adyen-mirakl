@@ -337,7 +337,7 @@ public class ShopService {
         if (shop.getContactInformation() != null) {
             bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
             bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(shop.getContactInformation().getStreet1()));
-            bankAccountDetail.setOwnerName(shop.getContactInformation().getFirstname().concat(" ").concat(shop.getContactInformation().getLastname()));
+            bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
         }
 
         bankAccountDetail.setPrimaryAccount(true);
