@@ -22,10 +22,13 @@ public final class ShopUtil {
     private static final String CIVILITY = "civility";
     private static final String EMAIL = "email";
 
-    public static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
+    public final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
         .put("Mrs", Name.GenderEnum.FEMALE)
         .put("Miss", Name.GenderEnum.FEMALE)
         .build();
+
+    private ShopUtil() {
+    }
 
     public static List<ShareholderContact> extractUbos(final MiraklShop shop, Integer maxUbos) {
         Map<String, String> extractedKeysFromMirakl = shop.getAdditionalFieldValues()
