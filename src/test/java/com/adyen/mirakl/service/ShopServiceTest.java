@@ -158,7 +158,7 @@ public class ShopServiceTest {
         Assertions.assertThat(bankAccountDetails.size()).isEqualTo(1);
         final BankAccountDetail bankDetails = bankAccountDetails.iterator().next();
         Assertions.assertThat(bankDetails.getOwnerPostalCode()).isEqualTo("zipCode");
-        Assertions.assertThat(bankDetails.getOwnerName()).isEqualTo("firstName lastName");
+        Assertions.assertThat(bankDetails.getOwnerName()).isEqualTo("owner");
         Assertions.assertThat(bankDetails.getBankBicSwift()).isEqualTo("BIC");
         Assertions.assertThat(bankDetails.getCountryCode()).isEqualTo("GB");
         Assertions.assertThat(bankDetails.getOwnerHouseNumberOrName()).isEqualTo("1");
@@ -236,7 +236,7 @@ public class ShopServiceTest {
         requestOptional.ifPresent(request -> {
             assertEquals("id", request.getAccountHolderCode());
             assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-            assertEquals("firstName lastName", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+            assertEquals("owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
             assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
             assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
             assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
@@ -345,6 +345,7 @@ public class ShopServiceTest {
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
         miraklIbanBankAccountInformation.setIban("GB00IBAN");
         miraklIbanBankAccountInformation.setBic("BIC");
+        miraklIbanBankAccountInformation.setOwner("owner");
         return miraklIbanBankAccountInformation;
     }
 
