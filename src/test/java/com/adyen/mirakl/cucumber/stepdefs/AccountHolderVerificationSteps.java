@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.awaitility.Awaitility.await;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.worldMap;
 
 
 public class AccountHolderVerificationSteps extends StepDefsHelper {
@@ -49,14 +51,15 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
         List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
-        createdShops = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
+        MiraklCreatedShops shopForIndividualWithBankDetails = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
+        worldMap.put("createdShops", shopForIndividualWithBankDetails );
     }
 
     @Then("^the (.*) notification is sent by Adyen comprising of (.*) and (.*)")
     public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentByAdyenComprisingOfBANK_ACCOUNT_VERIFICATIONAndPASSED(String notification,
                                                                                                                       String verificationType,
                                                                                                                       String verificationStatus) {
-
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         waitForNotification();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
@@ -75,11 +78,12 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Then("^a new bankAccountDetail will be created for the existing Account Holder$")
     public void aNewBankAccountDetailWillBeCreatedForTheExistingAccountHolder(DataTable table) throws Throwable {
         List<Map<Object, Object>> tableMap = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
         waitForNotification();
-        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
             String eventType = tableMap.get(0).get("eventType").toString();
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, null);
@@ -99,6 +103,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() throws Throwable {
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
         miraklUpdateShopsApi.updateShopToAddBankDetails(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient);
     }
@@ -106,6 +111,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @When("^the IBAN has been modified in Mirakl$")
     public void theIBANHasBeenModifiedInMirakl(DataTable table) throws Throwable {
         List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
         miraklUpdateShopsApi.updateShopsIbanNumberOnly(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows);
     }
@@ -118,9 +124,11 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
+
         waitForNotification();
-        await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
+        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
@@ -133,9 +141,11 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @Then("^adyen will send the (.*) comprising of accountHolder (.*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATIONAccountHolder(String eventType, String verificationType, String status) throws Throwable {
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
+
         waitForNotification();
-        await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
+        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
@@ -148,6 +158,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @And("^Mirakl has been updated with a taxId$")
     public void miraklHasBeenUpdatedWithATaxId() throws Throwable {
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) worldMap.get("createdShops");
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
         miraklUpdateShopsApi.updateShopToIncludeVATNumber(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient);

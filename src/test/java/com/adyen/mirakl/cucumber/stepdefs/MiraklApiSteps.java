@@ -18,6 +18,8 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.worldMap;
+
 public class MiraklApiSteps extends StepDefsHelper {
 
     private final Logger log = LoggerFactory.getLogger(MiraklApiSteps.class);
@@ -63,7 +65,7 @@ public class MiraklApiSteps extends StepDefsHelper {
 
         this.seller = shopConfiguration.shopIds.get(rows.get(0).get("seller").toString()).toString();
         miraklShop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, seller);
-        foundShop = miraklShop;
+        worldMap.put("createdShop", miraklShop);
 
         Assertions.assertThat(miraklShop.getId()).isEqualTo(this.seller);
         rows.forEach(row-> {

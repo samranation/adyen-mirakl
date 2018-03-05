@@ -10,6 +10,7 @@ import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklUpdateShopsRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +75,13 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
             populateShopNameAndEmail(miraklShop, miraklUpdateShop);
             populateMiraklChannel(miraklShop, miraklUpdateShop);
             populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(miraklShop, miraklUpdateShop);
-            miraklUpdateShop.setAdditionalFieldValues(ImmutableList.of(createAdditionalField(miraklShop)));
+
+            // map will be used to define additional fields that require updates/changes
+            Map<String, String> fieldsToUpdate = new HashMap<>();
+//            blah.put("adyen-ubo1-civility", "Mrs");
+//            blah.put("adyen-individual-idnumber", "0123456789");
+
+            populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate);
         return miraklUpdateShop;
     }
 

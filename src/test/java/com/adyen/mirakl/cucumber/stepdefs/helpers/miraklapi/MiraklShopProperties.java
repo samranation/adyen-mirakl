@@ -20,7 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
-public class MiraklShopProperties {
+public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     Faker faker = new Faker(new Locale("en-GB"));
@@ -125,10 +125,6 @@ public class MiraklShopProperties {
         }
         String shopId = shops.getShopReturns().iterator().next().getShopCreated().getId();
         log.info(String.format("Mirakl Shop Id: [%s]", shopId));
-    }
-
-    protected MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue createAdditionalField(String code, String value) {
-        return new MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue(code, value);
     }
 
     protected MiraklIbanBankAccountInformation miraklIbanBankAccountInformation(String owner, String bankName, String iban, String bic) {

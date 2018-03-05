@@ -21,7 +21,7 @@ import org.assertj.core.api.Assertions;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MiraklUpdateShopProperties {
+public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
 
     protected final static Faker FAKER = new Faker(new Locale("en-GB"));
     protected final static Gson GSON = new Gson();
@@ -124,16 +124,37 @@ public class MiraklUpdateShopProperties {
         return paymentInformation;
     }
 
-    // Mandatory for shop update
-    protected MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue createAdditionalField(MiraklShop miraklShop) {
-        String legalValue = miraklShop
-            .getAdditionalFieldValues().stream()
-            .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
-            .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
-            .filter(x -> "adyen-legal-entity-type".equals(x.getCode()))
-            .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue)
-            .findAny().orElse(null);
+    protected void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop, Map<String,String> fieldsToUpdate) {
+        final List<MiraklAdditionalFieldValue>  addFields =  new LinkedList<>(miraklShop.getAdditionalFieldValues());
 
-        return new MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue("adyen-legal-entity-type", legalValue);
+        for (String fieldCode : fieldsToUpdate.keySet()) {
+            MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue result = addFields.stream()
+                .filter(x -> fieldCode.equals(x.getCode()))
+                .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
+                .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
+                .findFirst().orElseThrow(() -> new IllegalStateException("Field: '"+fieldCode+"' was not found."));
+
+            // TODO: if field does not exist we need a method to add the field to the addFields list
+
+            result.setValue(fieldsToUpdate.get(fieldCode));
+        }
+
+        final List<MiraklRequestAdditionalFieldValue> updatedAddFields = new LinkedList<>();
+        for (MiraklAdditionalFieldValue field : addFields)
+        {
+            if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) {
+                updatedAddFields.add(new MiraklRequestAdditionalFieldValue.MiraklMultipleRequestAdditionalFieldValue(field.getCode(),
+                    ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) field).getValues()));
+
+            }
+            else if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) {
+                updatedAddFields.add(new MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue(field.getCode(),
+                    ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) field).getValue()));
+            }
+            else {
+               Assertions.fail("unexpected additional field type {0} ", field.getClass());
+            }
+        }
+        miraklUpdateShop.setAdditionalFieldValues(updatedAddFields);
     }
 }
