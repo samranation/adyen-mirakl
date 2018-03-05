@@ -98,7 +98,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
         waitForNotification();
-        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
+        await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();

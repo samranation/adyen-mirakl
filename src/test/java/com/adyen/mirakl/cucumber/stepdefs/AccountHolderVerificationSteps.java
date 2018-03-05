@@ -120,7 +120,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
         shopId = createdShops.getShopReturns().iterator().next().getShopCreated().getId();
         waitForNotification();
-        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+        await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
             adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shopId, eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
