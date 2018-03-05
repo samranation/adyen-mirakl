@@ -1,5 +1,6 @@
 package com.adyen.mirakl.service;
 
+import com.adyen.mirakl.service.util.ShopUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
@@ -7,8 +8,6 @@ import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue;
@@ -28,23 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @Transactional
 public class ShopService {
-    private static final String ADYEN_UBO = "adyen-ubo";
-    private static final String FIRSTNAME = "firstname";
-    private static final String LASTNAME = "lastname";
-    private static final String CIVILITY = "civility";
-    private static final String EMAIL = "email";
-    private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
-    private static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
-                                                                                                                    .put("Mrs", Name.GenderEnum.FEMALE)
-                                                                                                                    .put("Miss", Name.GenderEnum.FEMALE)
-                                                                                                                    .build();
+    private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
@@ -216,7 +204,7 @@ public class ShopService {
             }
         }
 
-        businessDetails.setShareholders(extractUbos(shop));
+        businessDetails.setShareholders(ShopUtil.extractUbos(shop, maxUbos));
         return businessDetails;
     }
 
@@ -228,7 +216,7 @@ public class ShopService {
         Name name = new Name();
         name.setFirstName(contactInformation.getFirstname());
         name.setLastName(contactInformation.getLastname());
-        name.setGender(CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
+        name.setGender(ShopUtil.CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
         individualDetails.setName(name);
         return individualDetails;
     }
@@ -361,53 +349,6 @@ public class ShopService {
         return bankAccountDetail;
     }
 
-    private List<ShareholderContact> extractUbos(final MiraklShop shop) {
-        Map<String, String> extractedKeysFromMirakl = shop.getAdditionalFieldValues()
-                                                          .stream()
-                                                          .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
-                                                          .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
-                                                          .collect(Collectors.toMap(MiraklAdditionalFieldValue::getCode,
-                                                                                    MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue));
-
-        ImmutableList.Builder<ShareholderContact> builder = ImmutableList.builder();
-        generateKeys().forEach((i, keys) -> {
-            String firstName = extractedKeysFromMirakl.getOrDefault(keys.get(FIRSTNAME), "");
-            String lastName = extractedKeysFromMirakl.getOrDefault(keys.get(LASTNAME), "");
-            String civility = extractedKeysFromMirakl.getOrDefault(keys.get(CIVILITY), "");
-            String email = extractedKeysFromMirakl.getOrDefault(keys.get(EMAIL), "");
-
-            if (ImmutableList.of(firstName, lastName, civility, email).stream().noneMatch(StringUtils::isBlank)) {
-                ShareholderContact shareholderContact = new ShareholderContact();
-                Name name = new Name();
-                name.setFirstName(firstName);
-                name.setLastName(lastName);
-                name.setGender(CIVILITY_TO_GENDER.getOrDefault(civility, Name.GenderEnum.UNKNOWN));
-                shareholderContact.setName(name);
-                shareholderContact.setEmail(email);
-                builder.add(shareholderContact);
-            }
-        });
-        return builder.build();
-    }
-
-    private Map<Integer, Map<String, String>> generateKeys() {
-        return IntStream.rangeClosed(1, maxUbos).mapToObj(i -> {
-            final Map<Integer, Map<String, String>> grouped = new HashMap<>();
-            grouped.put(i,
-                        ImmutableMap.of(FIRSTNAME,
-                                        ADYEN_UBO + String.valueOf(i) + "-firstname",
-                                        LASTNAME,
-                                        ADYEN_UBO + String.valueOf(i) + "-lastname",
-                                        CIVILITY,
-                                        ADYEN_UBO + String.valueOf(i) + "-civility",
-                                        EMAIL,
-                                        ADYEN_UBO + String.valueOf(i) + "-email"));
-            return grouped;
-        }).reduce((x, y) -> {
-            x.put(y.entrySet().iterator().next().getKey(), y.entrySet().iterator().next().getValue());
-            return x;
-        }).orElseThrow(() -> new IllegalStateException("UBOs must exist, number found: " + maxUbos));
-    }
 
     /**
      * First two digits of IBAN holds ISO country code
