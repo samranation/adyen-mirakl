@@ -30,8 +30,6 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
     private TestHooks testHooks;
     @Resource
     private Notification adyenNotification;
-    @Resource
-    private MiraklDeltaRepository miraklDeltaRepository;
     private String baseRequestbinUrl;
     private String baseRequestBinUrlPath;
     private Long notificationId;
@@ -46,7 +44,6 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
     private void createDelta() {
         final MiraklDelta miraklDelta = new MiraklDelta();
         miraklDelta.setShopDelta(ZonedDateTime.now());
-        miraklDeltaRepository.saveAndFlush(miraklDelta);
     }
 
     private void createNotificationConfiguration() {
