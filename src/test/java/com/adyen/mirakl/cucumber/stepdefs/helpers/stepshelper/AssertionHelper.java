@@ -12,8 +12,11 @@ import net.minidev.json.JSONArray;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
 
 @Service
 public class AssertionHelper {
@@ -49,18 +52,31 @@ public class AssertionHelper {
         return adyenShopData;
     }
 
-    public ImmutableList.Builder<String> adyenBankAccountDetail(Map adyenNotificationContent) {
+    public ImmutableList.Builder<String> adyenBankAccountDetail(List<Map<Object, Object>> bankAccountDetails) {
+        Map bankAccountDetail = new HashMap();
+        // if more than one bankAccountDetail is returned then we need to check if the one we care about it there
+        if (bankAccountDetails.size() > 1) {
+            for (Map jsonArray : bankAccountDetails) {
+                String iban = JsonPath.parse(jsonArray).read("BankAccountDetail.iban").toString();
+                if (iban.equals(cucumberMap.get("iban"))){
+                    bankAccountDetail = (Map) jsonArray.get("BankAccountDetail");
+                }
+            }
+        } else {
+            bankAccountDetail = (Map) bankAccountDetails.get(0).get("BankAccountDetail");
+        }
         ImmutableList.Builder<String> adyenShopData = new ImmutableList.Builder<>();
 
-        DocumentContext parse = JsonPath.parse(adyenNotificationContent);
+        DocumentContext parsedBankAccountDetail = JsonPath.parse(bankAccountDetail);
+        adyenShopData.add(parsedBankAccountDetail.read("iban").toString());
+        adyenShopData.add(parsedBankAccountDetail.read("bankBicSwift").toString());
+        adyenShopData.add(parsedBankAccountDetail.read("ownerName").toString());
 
-        adyenShopData.add(parse.read("iban").toString());
-        adyenShopData.add(parse.read("bankBicSwift").toString());
-        adyenShopData.add(parse.read("ownerName").toString());
+        // we'll use this for more assertions in calling method
+        cucumberMap.put("bankAccountDetail", parsedBankAccountDetail);
 
         return adyenShopData;
     }
-
 
     public ImmutableList.Builder<String> miraklShopShareHolderDataBuilder(MiraklShop miraklShop) {
         ImmutableList.Builder<String> miraklShopData = new ImmutableList.Builder<>();

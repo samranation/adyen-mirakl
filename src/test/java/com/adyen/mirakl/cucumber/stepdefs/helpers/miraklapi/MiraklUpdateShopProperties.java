@@ -76,7 +76,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         MiraklShopState state = miraklShop.getState();
         setSuspend = state.equals(MiraklShopState.SUSPENDED);
         miraklUpdateShop.setSuspend(setSuspend);
-
+        miraklUpdateShop.setProfessional(miraklShop.isProfessional());
         miraklUpdateShop.setPaymentBlocked(miraklShop.getPaymentDetail().getPaymentBlocked());
         miraklUpdateShop.setPremiumState(miraklShop.getPremiumState());
     }
@@ -133,8 +133,6 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
                 .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
                 .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
                 .findFirst().orElseThrow(() -> new IllegalStateException("Field: '"+fieldCode+"' was not found."));
-
-            // TODO: if field does not exist we need a method to add the field to the addFields list
 
             result.setValue(fieldsToUpdate.get(fieldCode));
         }

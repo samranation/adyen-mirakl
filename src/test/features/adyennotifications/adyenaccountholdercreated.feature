@@ -11,7 +11,7 @@ Feature: Seller Account Management
         And the shop data is correctly mapped to the Adyen Account
 
     @ADY-53
-    Scenario: Adding more shareholders will update the existing accountHolder
+    Scenario: Creating new shop as Business with all shareholders will create new Account Holder in adyen
         Given a new shop has been created in Mirakl for a Business
             | maxUbos | lastName |
             | 4       | TestData |

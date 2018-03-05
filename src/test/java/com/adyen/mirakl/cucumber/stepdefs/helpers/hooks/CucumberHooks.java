@@ -7,10 +7,10 @@ import java.util.Map;
 
 public class CucumberHooks {
 
-    public static Map<String, Object> worldMap;
+    public static Map<String, Object> cucumberMap;
 
     @Before
     public void beforeScenario() {
-        worldMap = new HashMap<>();
+        cucumberMap = new HashMap<>();
     }
 }
