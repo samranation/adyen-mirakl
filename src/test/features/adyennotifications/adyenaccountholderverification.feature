@@ -18,7 +18,7 @@ Feature: Bank Account Verification
             | eventType              |
             | ACCOUNT_HOLDER_CREATED |
 
-    @ADY-8 @ADY-71 @bug
+    @ADY-8 @ADY-71
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl for an existing accountHolder
         Given a new shop has been created in Mirakl for an Individual
             | lastName |
