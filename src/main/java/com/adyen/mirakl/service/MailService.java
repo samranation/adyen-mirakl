@@ -1,15 +1,15 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.domain.User;
-
 import io.github.jhipster.config.JHipsterProperties;
-
 import org.apache.commons.lang3.CharEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -40,13 +40,16 @@ public class MailService {
 
     private final SpringTemplateEngine templateEngine;
 
+    private final RetryTemplate retryMailTemplate;
+
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender,
-            MessageSource messageSource, SpringTemplateEngine templateEngine) {
+            MessageSource messageSource, SpringTemplateEngine templateEngine, RetryTemplate retryMailTemplate) {
 
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
+        this.retryMailTemplate = retryMailTemplate;
     }
 
     @Async
@@ -62,8 +65,20 @@ public class MailService {
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
-            javaMailSender.send(mimeMessage);
-            log.debug("Sent email to User '{}'", to);
+            try {
+                retryMailTemplate.execute((RetryCallback<Object, Throwable>) retryContext -> {
+                    log.info("Attempt to send email: {}", retryContext.getRetryCount());
+                    javaMailSender.send(mimeMessage);
+                    log.debug("Sent email to User '{}'", to);
+                    return null;
+                }, recoveryContext -> {
+                    log.error("Fail sending email, we can do something here to recover (retry one last time)");
+                    javaMailSender.send(mimeMessage);
+                    return null;
+                });
+            } catch (Throwable throwable) {
+                log.error("Failed to send the email", throwable);
+            }
         } catch (Exception e) {
             if (log.isDebugEnabled()) {
                 log.warn("Email could not be sent to user '{}'", to, e);

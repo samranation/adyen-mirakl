@@ -1,7 +1,7 @@
 package com.adyen.mirakl.service;
-import com.adyen.mirakl.config.Constants;
 
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.User;
 import io.github.jhipster.config.JHipsterProperties;
 import org.junit.Before;
@@ -16,6 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.retry.policy.NeverRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 
@@ -54,7 +56,9 @@ public class MailServiceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
+        final RetryTemplate retryMailTemplate = new RetryTemplate();
+        retryMailTemplate.setRetryPolicy(new NeverRetryPolicy());
+        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine, retryMailTemplate);
     }
 
     @Test
