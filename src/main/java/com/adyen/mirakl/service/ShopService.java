@@ -9,14 +9,18 @@ import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
+import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -398,4 +402,56 @@ public class ShopService {
         }
         return countryCodes;
     }
+
+    //ADY-15 temp
+    protected void retrieveBankproofAndUpload(ArrayList shopIDs) throws Exception {
+        List<MiraklShopDocument> miraklShopDocumentList = retrieveUpdatedDocs(shopIDs);
+        System.out.println(miraklShopDocumentList.get(0));
+
+        for (MiraklShopDocument document : miraklShopDocumentList) {
+            System.out.println(document.getTypeCode());
+            if (document.getTypeCode().equals("adyen-bankproof")) {
+                System.out.println(document.getTypeCode());
+                FileWrapper content = downloadSelectedDocument(document);
+                System.out.println(content.toString());
+                String UUID = retrieveBankAccountUUID(document.getShopId());
+                uploadDocumentToAdyen(content, document.getShopId(), UUID);
+            }
+        }
+    }
+
+
+    protected List<MiraklShopDocument> retrieveUpdatedDocs(ArrayList shopIDs) {
+        //replace with call to get all documents with updated_since
+        MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(shopIDs);
+        //        request.getQueryParams().put("updated_since", "2018-01-01");
+        return miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
+    }
+
+    protected FileWrapper downloadSelectedDocument(MiraklShopDocument document) {
+        MiraklDownloadShopsDocumentsRequest request = new MiraklDownloadShopsDocumentsRequest();
+        ArrayList<String> documentIds = new ArrayList();
+        documentIds.add(document.getId());
+        request.setDocumentIds(documentIds);
+        FileWrapper fileWrapper = miraklMarketplacePlatformOperatorApiClient.downloadShopsDocuments(request);
+        return fileWrapper;
+    }
+
+    protected void uploadDocumentToAdyen(FileWrapper document, String shopId, String UUID) throws Exception {
+        UploadDocumentRequest request = new UploadDocumentRequest();
+        request.setAccountHolderCode(shopId);
+        request.setDocumentContent(document.toString());
+        request.setBankAccountUUID(UUID);
+        UploadDocumentResponse response = adyenAccountService.uploadDocument(request);
+        System.out.println("Request: " + request);
+        System.out.println("Response: " + response);
+    }
+
+    protected String retrieveBankAccountUUID(String shopID) throws Exception {
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountHolderCode(shopID);
+        GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
+        return getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).getBankAccountUUID();
+    }
+
 }
