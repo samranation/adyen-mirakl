@@ -25,8 +25,10 @@ export ADYEN_NOTIFY_PASSWORD=<notifyPassword>
 
 We use heroku mailtrap for development, please add the user and password in application.yml
 ```
-export MAIL_TRAP_USER=<user>
-export MAIL_TRAP_PASS=<pass>
+export MAIL_HOST=<host>
+export MAIL_PORT=<port>
+export MAIL_USER=<user>
+export MAIL_PASS=<pass>
 ```
 
 And run `source ~/.bashrc`
