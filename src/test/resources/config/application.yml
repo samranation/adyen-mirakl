@@ -184,3 +184,5 @@ shopService:
 
 miraklConfig:
     createShopDeltaAtStartup: true
+
+mail.max.retries: 10
