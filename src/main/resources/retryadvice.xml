@@ -29,7 +29,7 @@
         <ref bean="mailSupportListener" />
     </util:list>
 
-    <bean id="mailSupportListener" class="com.adyen.mirakl.config.RetryConfiguration.MailSupportListener"/>
+    <bean id="mailSupportListener" class="com.adyen.mirakl.config.RetryConfiguration$MailSupportListener"/>
 
     <bean id="taskRetryPolicy" class="org.springframework.retry.policy.SimpleRetryPolicy">
         <property name="maxAttempts" value="${mail.max.retries}"/>
