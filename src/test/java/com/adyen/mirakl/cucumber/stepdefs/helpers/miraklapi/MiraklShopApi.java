@@ -1,8 +1,10 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
+import com.google.common.collect.ImmutableList;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreateShop;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklCreateShopsRequest;
@@ -18,23 +20,52 @@ import java.util.Map;
 public class MiraklShopApi extends MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+    private ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder;
 
-    public MiraklCreatedShops createNewShops(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, boolean createShopHolderData) {
+    private ImmutableList.Builder<MiraklCreateShop> miraklShopCreateBuilder(MiraklCreateShop miraklCreateShop) {
+        ImmutableList.Builder<MiraklCreateShop> builder = new ImmutableList.Builder<>();
+        builder.add(miraklCreateShop);
+        return builder;
+    }
 
-        MiraklCreateShopsRequest miraklShopRequest = createMiraklShopRequest(rows, createShopHolderData);
-        MiraklCreatedShops shops = client.createShops(miraklShopRequest);
+    // Individual Shop
+    public MiraklCreatedShops createShopForIndividual(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
+        miraklCreateShop = populateMiraklShop(rows, legalEntity);
+        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client);
+    }
 
-        MiraklCreatedShopReturn miraklCreatedShopReturn = shops.getShopReturns()
-            .stream()
-            .findAny()
-            .orElseThrow(() -> new IllegalStateException("No Shop found"));
+    // Individual Shop with Bank Details
+    public MiraklCreatedShops createShopForIndividualWithBankDetails(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
+        miraklCreateShop = populateMiraklShop(rows, legalEntity);
+        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        populatePaymentInformation(rows, miraklCreateShop);
+        return createMiraklShopRequest(client);
+    }
 
-        if (miraklCreatedShopReturn.getShopCreated() == null) {
-            throw new IllegalStateException(miraklCreatedShopReturn.getShopError().getErrors().toString());
-        }
-        String shopId = shops.getShopReturns().iterator().next().getShopCreated().getId();
-        log.info(String.format("Mirakl Shop Id: [%s]", shopId));
+    // Business with UBOs populated, amount of UBOs come from Cucumber tables
+    public MiraklCreatedShops createBusinessShopWithUbos(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
+        miraklCreateShop = populateMiraklShop(rows, legalEntity);
+        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        populateShareHolderData(legalEntity, rows, miraklCreateShop);
+        return createMiraklShopRequest(client);
+    }
 
+    // Mandatory for any type of shop creation
+    public MiraklCreateShop populateMiraklShop(List<Map<Object, Object>> rows, String legalEntity){
+        populateMiraklAddress(rows, miraklCreateShop);
+        populateMiraklProfessionalInformation(miraklCreateShop);
+        populateUserEmailAndShopName(miraklCreateShop);
+        populateAddFieldsLegalAndHouseNumber(legalEntity, miraklCreateShop);
+        return miraklCreateShop;
+    }
+
+    public MiraklCreatedShops createMiraklShopRequest(MiraklMarketplacePlatformOperatorApiClient client) {
+        MiraklCreateShopsRequest miraklCreateShopsRequest = new MiraklCreateShopsRequest(miraklCreateShopBuilder.build());
+        MiraklCreatedShops shops = client.createShops(miraklCreateShopsRequest);
+        throwErrorIfShopIsNotCreated(shops);
+        shops.getShopReturns().forEach(MiraklCreatedShopReturn::getShopCreated);
         return shops;
     }
 

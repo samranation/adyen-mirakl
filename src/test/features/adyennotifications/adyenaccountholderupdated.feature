@@ -1,10 +1,10 @@
 Feature: Account Holder Updated notification upon Mirakl shop changes
 
-    @ADY-11 @ADY-71 @bug
-    Scenario: Updating Mirakl existing shop and verifying Adyen Account Holder Details are updates
-        Given a new shop has been created in Mirakl
-            | legalEntity | lastName |
-            | Individual  | TestData |
+    @ADY-11 @ADY-71 @ADY-83 @bug
+    Scenario: Updating Mirakl existing shop with contact details and verifying Adyen Account Holder Details are updated
+        Given a new shop has been created in Mirakl for an Individual
+            | lastName |
+            | TestData |
         And we process the data and push to Adyen
         And an AccountHolder will be created in Adyen with status Active
         When the Mirakl Shop Details have been updated

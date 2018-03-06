@@ -18,6 +18,8 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
+
 public class MiraklApiSteps extends StepDefsHelper {
 
     private final Logger log = LoggerFactory.getLogger(MiraklApiSteps.class);
@@ -32,7 +34,7 @@ public class MiraklApiSteps extends StepDefsHelper {
     private String seller;
     private String legalEntity;
     private MiraklShop miraklShop;
-    public static MiraklShop foundShop;
+
 
     @Given("^the operator has specified that the (.*) is an (.*)")
     public void theOperatorHasSpecifiedThatTheSellerIsAnLegalEntity(String seller, String legalEntity) throws Throwable {
@@ -63,7 +65,7 @@ public class MiraklApiSteps extends StepDefsHelper {
 
         this.seller = shopConfiguration.shopIds.get(rows.get(0).get("seller").toString()).toString();
         miraklShop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, seller);
-        foundShop = miraklShop;
+        cucumberMap.put("createdShop", miraklShop);
 
         Assertions.assertThat(miraklShop.getId()).isEqualTo(this.seller);
         rows.forEach(row-> {

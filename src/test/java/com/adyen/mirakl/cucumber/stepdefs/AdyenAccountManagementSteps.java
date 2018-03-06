@@ -32,7 +32,7 @@ import java.util.Map;
 
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
-import static com.adyen.mirakl.cucumber.stepdefs.MiraklApiSteps.foundShop;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
 
 public class AdyenAccountManagementSteps extends StepDefsHelper {
 
@@ -55,18 +55,26 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     @Resource
     private AssertionHelper assertionHelper;
 
-    private MiraklCreatedShops createdShops;
     private String notification;
     private String shopId;
-    private boolean createShareHolderDate = false;
     private Map<String, Object> mappedAdyenNotificationResponse;
     private String email;
     private MiraklShop miraklShop;
 
-    @Given("^a new shop has been created in Mirakl$")
-    public void aNewShopHasBeenCreatedInMirakl(DataTable table) {
-        final List<Map<Object, Object>> maps = table.getTableConverter().toMaps(table, String.class, String.class);
-        createdShops = miraklShopApi.createNewShops(miraklMarketplacePlatformOperatorApiClient, maps, createShareHolderDate);
+
+    @Given("^a new shop has been created in Mirakl for an (.*)$")
+    public void aNewShopHasBeenCreatedInMiraklForAnIndividual(String legalEntity, DataTable table) throws Throwable {
+        final List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
+        cucumberMap.put("createdShops", shopForIndividual);
+    }
+
+    @When("^a new shop has been created in Mirakl for a (.*)")
+    public void aNewShopHasBeenCreatedInMiraklForABusiness(String legalEntity, DataTable table) throws Throwable {
+        final List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+
+        MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithUbos(miraklMarketplacePlatformOperatorApiClient, rows, legalEntity);
+        cucumberMap.put("createdShops", businessShopWithUbos);
     }
 
     @Then("^we process the data and push to Adyen$")
@@ -77,6 +85,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     @And("^an AccountHolder will be created in Adyen with status Active$")
     public void anAccountHolderWillBeCreatedInAdyenWithStatusActive() throws Throwable {
         GetAccountHolderRequest accountHolderRequest = new GetAccountHolderRequest();
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         MiraklShop miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
         accountHolderRequest.setAccountHolderCode(miraklShop.getId());
@@ -94,7 +103,8 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
         this.notification = notification;
         waitForNotification();
-        await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
+        await().atMost(Duration.FIVE_MINUTES).untilAsserted(() -> {
+            MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
@@ -105,21 +115,16 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
         });
     }
 
-    @When("^a complete shareholder detail is submitted on Mirakl$")
-    public void aCompleteShareholderDetailIsSubmittedOnMirakl() {
-        // createShareHolderDate set to true. Value will be passed to the createMiraklShop method
-        createShareHolderDate = true;
-    }
-
     @When("^a complete shareholder is not provided$")
     public void aCompleteShareholderIsNotProvided() {
-        // empty as createShareHolderDate will be false by default.
+        // UBOs were not provided in this test.
     }
 
     @Then("^no account holder is created in Adyen$")
     public void noAccountHolderIsCreatedInAdyen() {
         waitForNotification();
         await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+            MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
             shopId = createdShops.getShopReturns()
                 .iterator()
                 .next().getShopCreated().getId();
@@ -130,6 +135,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     @And("^the shop data is correctly mapped to the Adyen Account$")
     public void theShopDataIsCorrectlyMappedToTheAdyenAccount() {
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
 
@@ -146,6 +152,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
 
     @And("^the shop data is correctly mapped to the Adyen Business Account$")
     public void theShopDataIsCorrectlyMappedToTheAdyenBusinessAccount()  {
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
         email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         miraklShop = miraklShopApi.filterMiraklShopsByEmailAndReturnShop(miraklMarketplacePlatformOperatorApiClient, email);
 
@@ -162,7 +169,7 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     @When("^the Mirakl Shop Details have been updated$")
     public void theMiraklShopDetailsHaveBeenUpdated(DataTable table) throws Throwable {
         final List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
-
+        MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
         MiraklShop miraklShop = retrieveMiraklShopByFiltersOnShopEmail(createdShops, miraklMarketplacePlatformOperatorApiClient, miraklShopApi);
         miraklUpdateShopsApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows);
     }
@@ -171,7 +178,9 @@ public class AdyenAccountManagementSteps extends StepDefsHelper {
     public void aNotificationOfACCOUNT_HOLDER_UPDATEDWillNotBeSent(String notification) throws Throwable {
         waitForNotification();
         await().atMost(Duration.TWO_MINUTES).untilAsserted(() -> {
-            shopId = foundShop.getId();
+            MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
+            shopId = createdShop.getId();
+
             mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shopId, notification, null);
             Assertions.assertThat(getMappedAdyenNotificationResponse()).isNull();
         });
