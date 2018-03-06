@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.mirakl.client.domain.common.error.ErrorBean;
 import com.mirakl.client.domain.common.error.InputWithErrors;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
+import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShopAddress;
 import com.mirakl.client.mmp.domain.shop.MiraklShopState;
@@ -26,8 +27,12 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
     protected final static Faker FAKER = new Faker(new Locale("en-GB"));
     protected final static Gson GSON = new Gson();
 
-    protected void updateMiraklShopTaxId(MiraklShop miraklShop) {
-        miraklShop.getProfessionalInformation().setTaxIdentificationNumber("GB" + RandomStringUtils.randomNumeric(9));
+    protected MiraklProfessionalInformation updateMiraklShopTaxId(MiraklShop miraklShop) {
+        MiraklProfessionalInformation miraklProfessionalInformation = new MiraklProfessionalInformation();
+        miraklProfessionalInformation.setTaxIdentificationNumber("GB" + RandomStringUtils.randomNumeric(9));
+        miraklProfessionalInformation.setIdentificationNumber(miraklShop.getProfessionalInformation().getIdentificationNumber());
+        miraklProfessionalInformation.setCorporateName(miraklShop.getProfessionalInformation().getCorporateName());
+        return miraklProfessionalInformation;
     }
 
     protected void throwErrorIfShopFailedToUpdate(MiraklUpdatedShops miraklUpdatedShopsResponse) {
