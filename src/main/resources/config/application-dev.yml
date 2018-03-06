@@ -48,11 +48,6 @@ spring:
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: true
             hibernate.cache.region.factory_class: io.github.jhipster.config.jcache.NoDefaultJCacheRegionFactory
-    mail:
-        host: smtp.mailtrap.io
-        port: 2525
-        username: ${MAIL_TRAP_USER}
-        password: ${MAIL_TRAP_PASS}
     messages:
         cache-seconds: 1
     thymeleaf:

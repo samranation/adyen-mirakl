@@ -48,6 +48,12 @@ spring:
             enabled: false
     thymeleaf:
         mode: XHTML
+    mail:
+        host: ${MAIL_HOST}
+        port: ${MAIL_PORT}
+        username: ${MAIL_TRAP_USER}
+        password: ${MAIL_TRAP_PASS}
+
 security:
     basic:
         enabled: false
