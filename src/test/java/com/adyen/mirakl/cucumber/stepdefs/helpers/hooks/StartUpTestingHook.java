@@ -69,13 +69,24 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
         NotificationConfigurationDetails configurationDetails = new NotificationConfigurationDetails();
         configurationDetails.setActive(true);
         configurationDetails.description(baseRequestbinUrl);
-        // Event Config
-        configurationDetails.setEventConfigs(ImmutableList.of(notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_CREATED,
-            NotificationEventConfiguration.IncludeModeEnum.INCLUDE),
-            notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_VERIFICATION,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE),
-            notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_UPDATED,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE)
+        // Event Configs
+        configurationDetails.setEventConfigs(ImmutableList.of(
+            notificationEventConfiguration(
+                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_CREATED,
+                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
+            ),
+            notificationEventConfiguration(
+                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_VERIFICATION,
+                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
+            ),
+            notificationEventConfiguration(
+                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_UPDATED,
+                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
+            ),
+            notificationEventConfiguration(
+                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_PAYOUT,
+                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
+            )
         ));
 
         configurationDetails.messageFormat(NotificationConfigurationDetails.MessageFormatEnum.JSON);

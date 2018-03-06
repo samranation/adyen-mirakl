@@ -44,11 +44,19 @@ public class MiraklShopApi extends MiraklShopProperties {
         return createMiraklShopRequest(client);
     }
 
+    // Individual Shop with full KYC data including bank account details and identity check data
+    public MiraklCreatedShops createShopForIndividualWithFullKYCData(MiraklMarketplacePlatformOperatorApiClient client,  List<Map<Object, Object>> rows, String legalEntity) {
+        miraklCreateShop = populateMiraklShop(rows, legalEntity);
+        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        populatePaymentInformation(rows, miraklCreateShop);
+        return createMiraklShopRequest(client);
+    }
+
     // Business with UBOs populated, amount of UBOs come from Cucumber tables
     public MiraklCreatedShops createBusinessShopWithUbos(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
         miraklCreateShop = populateMiraklShop(rows, legalEntity);
-        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         populateShareHolderData(legalEntity, rows, miraklCreateShop);
+        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         return createMiraklShopRequest(client);
     }
 
@@ -56,7 +64,7 @@ public class MiraklShopApi extends MiraklShopProperties {
     public MiraklCreateShop populateMiraklShop(List<Map<Object, Object>> rows, String legalEntity){
         populateMiraklAddress(rows, miraklCreateShop);
         populateMiraklProfessionalInformation(miraklCreateShop);
-        populateUserEmailAndShopName(miraklCreateShop);
+        populateUserEmailAndShopName(miraklCreateShop, rows);
         populateAddFieldsLegalAndHouseNumber(legalEntity, miraklCreateShop);
         return miraklCreateShop;
     }

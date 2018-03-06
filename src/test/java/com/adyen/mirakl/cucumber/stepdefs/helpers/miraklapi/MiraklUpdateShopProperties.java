@@ -125,6 +125,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         paymentInformation.setBic(FAKER.finance().bic());
         paymentInformation.setOwner(FAKER.name().firstName() + " " + FAKER.name().lastName());
         paymentInformation.setBankName("RBS");
+        paymentInformation.setBankCity("PASSED");
 
         return paymentInformation;
     }

@@ -1,8 +1,11 @@
 package com.adyen.mirakl.service;
 
-import java.io.IOException;
-import java.util.List;
-import javax.annotation.Resource;
+import com.adyen.Util.Util;
+import com.adyen.model.Amount;
+import com.adyen.model.marketpay.*;
+import com.adyen.service.Account;
+import com.adyen.service.Fund;
+import com.adyen.service.exception.ApiException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -10,16 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.adyen.Util.Util;
-import com.adyen.model.Amount;
-import com.adyen.model.marketpay.BankAccountDetail;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.PayoutAccountHolderRequest;
-import com.adyen.model.marketpay.PayoutAccountHolderResponse;
-import com.adyen.service.Account;
-import com.adyen.service.Fund;
-import com.adyen.service.exception.ApiException;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.util.List;
 
 
 @Service
@@ -50,6 +47,7 @@ public class PayoutService {
             try {
                 PayoutAccountHolderRequest payoutAccountHolderRequest = payoutAccountHolder(accountHolderCode, amount, currency, iban, description);
                 PayoutAccountHolderResponse payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(payoutAccountHolderRequest);
+                log.info("Payout submitted for accountHolder: [{}] + Psp ref: [{}]", accountHolderCode, payoutAccountHolderResponse.getPspReference());
             } catch (ApiException e) {
                 log.error("MP exception: " + e.getError(), e);
             } catch (Exception e) {

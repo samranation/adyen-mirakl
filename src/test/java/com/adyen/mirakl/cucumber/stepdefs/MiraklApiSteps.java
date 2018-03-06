@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberTable;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
 
 public class MiraklApiSteps extends StepDefsHelper {
 
@@ -78,7 +80,7 @@ public class MiraklApiSteps extends StepDefsHelper {
 
     @When("^the Mirakl Shop Details have been updated as the same as before$")
     public void theMiraklShopDetailsHaveBeenUpdatedAsTheSameAsBefore(DataTable table) throws Throwable {
-        List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
-        miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows);
+        cucumberTable.put("table", table);
+        miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
     }
 }

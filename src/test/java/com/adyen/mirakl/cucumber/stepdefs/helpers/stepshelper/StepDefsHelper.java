@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions;
 import org.awaitility.Duration;
 
 import javax.annotation.Resource;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -23,14 +24,19 @@ public class StepDefsHelper {
     @Resource
     private StartUpTestingHook startUpTestingHook;
 
-    protected static volatile MiraklCreatedShops createdShops;
-    protected static volatile MiraklShop foundShop;
-
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
             boolean endpointHasReceivedANotification = restAssuredAdyenApi.endpointHasANotification(startUpTestingHook.getBaseRequestBinUrlPath());
             Assertions.assertThat(endpointHasReceivedANotification).isTrue();
         });
+    }
+
+    // use for scenarios which don't require eventType verification
+    protected Map<String, Object> getAdyenNotificationBody(String notification, String accountHolderCode) {
+        Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
+            .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), accountHolderCode, notification, null);
+        Assertions.assertThat(adyenNotificationBody).withFailMessage("No data in endpoint.").isNotNull();
+        return adyenNotificationBody;
     }
 
     protected MiraklShop getMiraklShop(MiraklMarketplacePlatformOperatorApiClient client, String seller) {
