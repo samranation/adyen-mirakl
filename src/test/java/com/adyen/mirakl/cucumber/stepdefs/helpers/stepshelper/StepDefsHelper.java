@@ -2,6 +2,7 @@ package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
@@ -23,6 +24,8 @@ public class StepDefsHelper {
     private RestAssuredAdyenApi restAssuredAdyenApi;
     @Resource
     private StartUpTestingHook startUpTestingHook;
+    @Resource
+    protected MiraklUpdateShopApi miraklUpdateShopApi;
 
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {

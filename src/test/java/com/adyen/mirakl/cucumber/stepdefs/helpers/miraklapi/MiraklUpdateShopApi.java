@@ -65,6 +65,12 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
+    public void uploadIndividualPhotoId(MiraklShop miraklShop, String shopId) {
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
+
+        // upload
+    }
+
     // required for any update we do to Mirakl
     private MiraklUpdateShop populateAllMandatoryFields(MiraklShop miraklShop, String shopId) {
         miraklUpdateShop.setShopId(Long.valueOf(shopId));
@@ -78,8 +84,6 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
 
         // map will be used to define additional fields that require updates/changes
         Map<String, String> fieldsToUpdate = new HashMap<>();
-//            blah.put("adyen-ubo1-civility", "Mrs");
-//            blah.put("adyen-individual-idnumber", "0123456789");
 
         populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate);
         return miraklUpdateShop;

@@ -16,6 +16,9 @@ import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
+import com.mirakl.client.mmp.request.common.document.MiraklUploadDocument;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 
@@ -130,6 +133,11 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         return paymentInformation;
     }
 
+    protected void blah(MiraklShop miraklShop) {
+        // TODO: finish this
+        MiraklUploadShopDocumentsRequest miraklUploadShopDocumentsRequest;
+    }
+
     protected void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop, Map<String,String> fieldsToUpdate) {
         final List<MiraklAdditionalFieldValue>  addFields =  new LinkedList<>(miraklShop.getAdditionalFieldValues());
 
@@ -149,7 +157,6 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
             if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) {
                 updatedAddFields.add(new MiraklRequestAdditionalFieldValue.MiraklMultipleRequestAdditionalFieldValue(field.getCode(),
                     ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) field).getValues()));
-
             }
             else if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) {
                 updatedAddFields.add(new MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue(field.getCode(),
