@@ -177,7 +177,7 @@ public class AccountManagementSteps extends StepDefsHelper {
     }
 
     @And("^a notification of (.*) will not be sent$")
-    public void aNotificationOfACCOUNT_HOLDER_UPDATEDWillNotBeSent(String notification) throws Throwable {
+    public void aNotificationOfACCOUNT_HOLDER_UPDATEDWillNotBeSent(String notification) {
         waitForNotification();
         await().untilAsserted(() -> {
             MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
@@ -188,7 +188,7 @@ public class AccountManagementSteps extends StepDefsHelper {
         });
     }
 
-    @Given("^a AccountHolder exists who has passed KYC checks and is eligible for payout$")
+    @Given("^a AccountHolder exists who (?:is not|is) eligible for payout$")
     public void aAccountHolderExistsWhoHasPassedKYCChecksAndIsEligibleForPayout(DataTable table) throws Throwable {
         cucumberTable.put("table", table);
         String seller = rows().get(0).get("seller").toString();
@@ -199,7 +199,15 @@ public class AccountManagementSteps extends StepDefsHelper {
         request.setAccountHolderCode(accountHolderCode);
         GetAccountHolderResponse response = adyenConfiguration.adyenAccountService().getAccountHolder(request);
         Boolean allowPayout = response.getAccountHolderStatus().getPayoutState().getAllowPayout();
+        String accountCode = response.getAccounts()
+            .stream()
+            .map(com.adyen.model.marketpay.Account::getAccountCode)
+            .findFirst()
+            .orElse(null);
+        cucumberMap.put("accountCode", accountCode);
+
         Assertions.assertThat(allowPayout)
-            .withFailMessage("Payout status is not true for accountHolderCode: <%s> (seller: <%s>)", accountHolderCode, seller).isTrue();
+            .withFailMessage("Payout status is not true for accountHolderCode: <%s> (seller: <%s>)", accountHolderCode, seller)
+            .isEqualTo(Boolean.parseBoolean(rows().get(0).get("allowPayout").toString()));
     }
 }
