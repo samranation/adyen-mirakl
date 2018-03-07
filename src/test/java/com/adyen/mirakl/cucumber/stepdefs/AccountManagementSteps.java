@@ -66,14 +66,14 @@ public class AccountManagementSteps extends StepDefsHelper {
     private MiraklShop miraklShop;
 
     @Given("^a new shop has been created in Mirakl for an (.*)$")
-    public void aNewShopHasBeenCreatedInMiraklForAnIndividual(String legalEntity, DataTable table) throws Throwable {
+    public void aNewShopHasBeenCreatedInMiraklForAnIndividual(String legalEntity, DataTable table) {
         cucumberTable.put("table", table);
         MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, rows(), legalEntity);
         cucumberMap.put("createdShops", shopForIndividual);
     }
 
     @When("^a new shop has been created in Mirakl for a (.*)")
-    public void aNewShopHasBeenCreatedInMiraklForABusiness(String legalEntity, DataTable table) throws Throwable {
+    public void aNewShopHasBeenCreatedInMiraklForABusiness(String legalEntity, DataTable table) {
         cucumberTable.put("table", table);
         MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithUbos(miraklMarketplacePlatformOperatorApiClient, rows(), legalEntity);
         cucumberMap.put("createdShops", businessShopWithUbos);
