@@ -4,6 +4,7 @@ import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.domain.ProcessEmail;
 import com.adyen.mirakl.domain.enumeration.EmailState;
 import com.adyen.mirakl.repository.ProcessEmailRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -53,6 +56,27 @@ public class RetryEmailServiceTest {
 
         verify(mailService, never()).sendEmail(anyString(), anyString(), anyString(), anyBoolean(), anyBoolean());
     }
+
+    @Test
+    public void shouldRemoveSentEmails(){
+        createProcessEmail("to1", "subject", "content", false, false, EmailState.SENT);
+        createProcessEmail("to2", "subject", "content", false, false, EmailState.FAILED);
+        createProcessEmail("to3", "subject", "content", false, false, EmailState.PROCESSING);
+        createProcessEmail("to4", "subject", "content", false, false, EmailState.SENT);
+
+        retryEmailService.removeSentEmails();
+
+        final List<ProcessEmail> all = processEmailRepository.findAll();
+        Assertions.assertThat(all.size()).isEqualTo(2);
+
+        final ProcessEmail remaining1 = processEmailRepository.findExisting("to2", "subject", "content", false, false).orElse(null);
+        final ProcessEmail remaining2 = processEmailRepository.findExisting("to3", "subject", "content", false, false).orElse(null);
+        Assertions.assertThat(remaining1).isNotNull();
+        Assertions.assertThat(remaining2).isNotNull();
+        Assertions.assertThat(remaining1.getState()).isEqualTo(EmailState.FAILED);
+        Assertions.assertThat(remaining2.getState()).isEqualTo(EmailState.PROCESSING);
+    }
+
 
     public void createProcessEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml, EmailState emailState){
         final ProcessEmail processEmail = new ProcessEmail();

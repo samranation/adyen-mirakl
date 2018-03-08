@@ -29,5 +29,10 @@ public class SchedulerTrigger {
         retryEmailService.retryFailedEmails();
     }
 
+    @Scheduled(cron = "${application.removeSentEmailsCron}")
+    public void removeSentEmails(){
+        retryEmailService.removeSentEmails();
+    }
+
 
 }

@@ -18,11 +18,19 @@ public class RetryEmailService {
     private MailService mailService;
 
     public void retryFailedEmails(){
-        final List<ProcessEmail> byState = processEmailRepository.findByState(EmailState.FAILED);
-        if(CollectionUtils.isEmpty(byState)){
+        final List<ProcessEmail> failedEmails = processEmailRepository.findByState(EmailState.FAILED);
+        if(CollectionUtils.isEmpty(failedEmails)){
            return;
         }
-        byState.forEach(email -> mailService.sendEmail(email.getTo(), email.getSubject(), email.getContent(), email.isMultipart(), email.isHtml()));
+        failedEmails.forEach(email -> mailService.sendEmail(email.getTo(), email.getSubject(), email.getContent(), email.isMultipart(), email.isHtml()));
+    }
+
+    public void removeSentEmails(){
+        final List<ProcessEmail> sentEmails = processEmailRepository.findByState(EmailState.SENT);
+        if(CollectionUtils.isEmpty(sentEmails)){
+            return;
+        }
+        processEmailRepository.delete(sentEmails);
     }
 
 }
