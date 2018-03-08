@@ -32,8 +32,6 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     @Resource
     private MiraklShopApi miraklShopApi;
     @Resource
-    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
-    @Resource
     private StartUpTestingHook startUpTestingHook;
     @Resource
     private RestAssuredAdyenApi restAssuredAdyenApi;

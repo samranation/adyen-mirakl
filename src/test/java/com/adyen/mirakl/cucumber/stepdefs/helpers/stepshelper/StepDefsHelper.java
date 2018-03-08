@@ -2,10 +2,13 @@ package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
+import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
+import com.mirakl.client.mmp.domain.shop.AbstractMiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
@@ -23,6 +26,10 @@ public class StepDefsHelper {
     private RestAssuredAdyenApi restAssuredAdyenApi;
     @Resource
     private StartUpTestingHook startUpTestingHook;
+    @Resource
+    protected MiraklUpdateShopApi miraklUpdateShopApi;
+    @Resource
+    protected MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
@@ -52,5 +59,20 @@ public class StepDefsHelper {
     protected MiraklShop retrieveMiraklShopByFiltersOnShopEmail(MiraklCreatedShops createdShops, MiraklMarketplacePlatformOperatorApiClient client, MiraklShopApi miraklShopApi) {
         String email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
         return miraklShopApi.filterMiraklShopsByEmailAndReturnShop(client, email);
+    }
+
+    protected String retrieveShopIdFromCreatedShop(MiraklCreatedShops createdShops) {
+        return createdShops.getShopReturns()
+            .stream()
+            .map(MiraklCreatedShopReturn::getShopCreated)
+            .map(AbstractMiraklShop::getId)
+            .findFirst().orElse(null);
+    }
+
+    protected MiraklShop retrieveMiraklShopFromCreatedShops(MiraklCreatedShops createdShops) {
+        return createdShops.getShopReturns()
+            .stream()
+            .map(MiraklCreatedShopReturn::getShopCreated)
+            .findFirst().orElse(null);
     }
 }
