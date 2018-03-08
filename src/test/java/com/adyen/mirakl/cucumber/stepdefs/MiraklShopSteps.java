@@ -1,42 +1,25 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import com.adyen.mirakl.config.ShopConfiguration;
-import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.assertj.core.api.Assertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberTable;
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
 
-public class MiraklApiSteps extends StepDefsHelper {
+public class MiraklShopSteps extends StepDefsHelper {
 
-    private final Logger log = LoggerFactory.getLogger(MiraklApiSteps.class);
-
-    @Resource
-    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
-    @Resource
-    private ShopConfiguration shopConfiguration;
-    @Resource
-    private MiraklUpdateShopApi miraklUpdateShopApi;
     private String additionalFieldName;
     private String seller;
     private String legalEntity;
     private MiraklShop miraklShop;
-
 
     @Given("^the operator has specified that the (.*) is an (.*)")
     public void theOperatorHasSpecifiedThatTheSellerIsAnLegalEntity(String seller, String legalEntity) {

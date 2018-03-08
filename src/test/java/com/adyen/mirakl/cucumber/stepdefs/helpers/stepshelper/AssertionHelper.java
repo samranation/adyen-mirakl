@@ -58,7 +58,7 @@ public class AssertionHelper {
         if (bankAccountDetails.size() > 1) {
             for (Map jsonArray : bankAccountDetails) {
                 String iban = JsonPath.parse(jsonArray).read("BankAccountDetail.iban").toString();
-                if (iban.equals(cucumberMap.get("iban"))){
+                if (iban.equals(cucumberMap.get("iban").toString())){
                     bankAccountDetail = (Map) jsonArray.get("BankAccountDetail");
                 }
             }
