@@ -79,8 +79,7 @@ public class PayoutService {
     protected GetAccountHolderResponse getAccountHolderResponse(String accountHolderCode) throws Exception {
         GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
         getAccountHolderRequest.setAccountHolderCode(accountHolderCode);
-        GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
-        return getAccountHolderResponse;
+        return adyenAccountService.getAccountHolder(getAccountHolderRequest);
     }
 
     private String getAccountCode(GetAccountHolderResponse accountHolderResponse) {
