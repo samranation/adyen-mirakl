@@ -23,11 +23,14 @@ public class RestAssuredAdyenApi {
         List<String> check = body.jsonPath().get("body");
         if (! CollectionUtils.isEmpty(check) ) {
             for (String list : check) {
-                Map<String, Object> mapResult = new HashMap<>();
 
-                mapResult.putAll(new Gson().fromJson(list, new TypeToken<HashMap<String, Object>>() {
+                Map<String, Object> mapResult = new HashMap<>(new Gson().fromJson(list, new TypeToken<HashMap<String, Object>>() {
                 }.getType()));
+
                 final Map contentMap = (Map) mapResult.get("content");
+                // if verificationType, accountHolderCode and verificationType have been provided
+                // by cucumber and they match the notification in endpoint then return that notification
+                // else if only accountHolderCode and eventType have been provided then return that notification
                 if (contentMap.get("verificationType") != null && verificationType != null) {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId)
                         && mapResult.get("eventType").equals(eventType)
