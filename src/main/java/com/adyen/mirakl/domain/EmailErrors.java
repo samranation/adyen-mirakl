@@ -25,6 +25,9 @@ public class EmailErrors implements Serializable {
     @Column(name = "errors")
     private String errors;
 
+    @ManyToOne
+    private ProcessEmail processEmail;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -45,6 +48,19 @@ public class EmailErrors implements Serializable {
 
     public void setErrors(String errors) {
         this.errors = errors;
+    }
+
+    public ProcessEmail getProcessEmail() {
+        return processEmail;
+    }
+
+    public EmailErrors processEmail(ProcessEmail processEmail) {
+        this.processEmail = processEmail;
+        return this;
+    }
+
+    public void setProcessEmail(ProcessEmail processEmail) {
+        this.processEmail = processEmail;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
