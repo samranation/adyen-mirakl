@@ -62,3 +62,13 @@ Feature: Bank Account Verification
         And Mirakl has been updated with a taxId
         And we process the data and push to Adyen
         Then adyen will send the ACCOUNT_HOLDER_UPDATED comprising of accountHolder COMPANY_VERIFICATION and status of DATA_PROVIDED
+
+    @ADY-15 @exclude
+    Scenario: Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen
+        Given a shop has been created in Mirakl for an Individual with Bank Information
+            | city   | bank name | iban                   | bankOwnerName | lastName |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
+        And we process the data and push to Adyen
+        When the seller uploads a Bank Statement in Mirakl
+        And we process the data and push to Adyen
+        Then the ACCOUNT_HOLDER_UPDATED notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and PASSED

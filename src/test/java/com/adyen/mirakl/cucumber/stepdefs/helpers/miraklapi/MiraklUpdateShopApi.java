@@ -9,7 +9,7 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklUpdateShopsRequest;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -65,6 +65,13 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
+    public void uploadBankStatementToExistingShop(String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
+        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        // upload bankStatement
+        MiraklUploadShopDocumentsRequest miraklUploadShopDocumentsRequest = uploadMiraklShopWithBankStatement(shopId);
+        client.uploadShopDocuments(miraklUploadShopDocumentsRequest);
+    }
+
     // required for any update we do to Mirakl
     private MiraklUpdateShop populateAllMandatoryFields(MiraklShop miraklShop, String shopId) {
         miraklUpdateShop.setShopId(Long.valueOf(shopId));
@@ -78,8 +85,6 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
 
         // map will be used to define additional fields that require updates/changes
         Map<String, String> fieldsToUpdate = new HashMap<>();
-//            blah.put("adyen-ubo1-civility", "Mrs");
-//            blah.put("adyen-individual-idnumber", "0123456789");
 
         populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate);
         return miraklUpdateShop;
