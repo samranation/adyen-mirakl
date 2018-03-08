@@ -1,6 +1,6 @@
 Feature: Payout notifications for seller payout
 
-    @ADY-9 @exclude
+    @ADY-9 @ADY-86 @bug
     Scenario: Successful payout notification is received upon successful seller payout
         Given a AccountHolder exists who is eligible for payout
             | seller       | allowPayout |
@@ -12,7 +12,7 @@ Feature: Payout notifications for seller payout
             | currency | amount | statusCode | iban                   |
             | EUR      | 2914.0 | Initiated  | GB26TEST40051512347366 |
 
-    @ADY-9 @exclude
+    @ADY-9 @ADY-86 @bug
     Scenario: Failure status is received for payout notification
         Given a AccountHolder exists who is not eligible for payout
             | seller       | allowPayout |
