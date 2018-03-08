@@ -1,8 +1,6 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
-import com.github.javafaker.Faker;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import com.mirakl.client.domain.common.error.ErrorBean;
 import com.mirakl.client.domain.common.error.InputWithErrors;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -17,18 +15,15 @@ import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShopReturn
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.common.document.MiraklUploadDocument;
-import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
 import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
-
-    protected final static Faker FAKER = new Faker(new Locale("en-GB"));
-    protected final static Gson GSON = new Gson();
 
     protected MiraklProfessionalInformation updateMiraklShopTaxId(MiraklShop miraklShop) {
         MiraklProfessionalInformation miraklProfessionalInformation = new MiraklProfessionalInformation();
@@ -38,14 +33,17 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         return miraklProfessionalInformation;
     }
 
-    protected void throwErrorIfShopFailedToUpdate(MiraklUpdatedShops miraklUpdatedShopsResponse) {
-        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns().stream()
-            .map(MiraklUpdatedShopReturn::getShopError)
-            .filter(Objects::nonNull)
-            .map(InputWithErrors::getErrors)
-            .collect(Collectors.toList());
+    protected MiraklUploadShopDocumentsRequest uploadMiraklShopWithBankStatement(String shopId) {
+        ImmutableList.Builder<MiraklUploadDocument> docUploadRequestBuilder = new ImmutableList.Builder<>();
 
-        Assertions.assertThat(errors.size()).withFailMessage("errors on update: " + GSON.toJson(errors)).isZero();
+        MiraklUploadDocument element = new MiraklUploadDocument();
+        element.setFile(new File("/home/admin/workspace/adyen-mirakl/src/test/resources/fileuploads/BankStatement.jpg"));
+        element.setFileName("BankStatement.jpg");
+        element.setTypeCode("adyen-bankproof");
+
+        docUploadRequestBuilder.add(element);
+
+        return miraklUploadShopDocumentsRequest(shopId, docUploadRequestBuilder.build());
     }
 
     protected MiraklIbanBankAccountInformation updateNewMiraklIbanOnly(MiraklShop miraklShop, List<Map<Object, Object>> rows) {
@@ -133,11 +131,6 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         return paymentInformation;
     }
 
-    protected void blah(MiraklShop miraklShop) {
-        // TODO: finish this
-        MiraklUploadShopDocumentsRequest miraklUploadShopDocumentsRequest;
-    }
-
     protected void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop, Map<String,String> fieldsToUpdate) {
         final List<MiraklAdditionalFieldValue>  addFields =  new LinkedList<>(miraklShop.getAdditionalFieldValues());
 
@@ -167,5 +160,15 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
             }
         }
         miraklUpdateShop.setAdditionalFieldValues(updatedAddFields);
+    }
+
+    protected void throwErrorIfShopFailedToUpdate(MiraklUpdatedShops miraklUpdatedShopsResponse) {
+        final List<Set<ErrorBean>> errors = miraklUpdatedShopsResponse.getShopReturns().stream()
+            .map(MiraklUpdatedShopReturn::getShopError)
+            .filter(Objects::nonNull)
+            .map(InputWithErrors::getErrors)
+            .collect(Collectors.toList());
+
+        Assertions.assertThat(errors.size()).withFailMessage("errors on update: " + GSON.toJson(errors)).isZero();
     }
 }

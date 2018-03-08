@@ -11,6 +11,7 @@ public class UpdateMiraklShopsSteps extends StepDefsHelper {
     @When("^the seller uploads a Bank Statement in Mirakl$")
     public void theSellerUploadsABankStatementInMirakl() {
         MiraklCreatedShops createdShops = (MiraklCreatedShops) cucumberMap.get("createdShops");
-//        miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData();
+        String shopId = retrieveShopIdFromCreatedShop(createdShops);
+        miraklUpdateShopApi.uploadBankStatementToExistingShop(shopId, miraklMarketplacePlatformOperatorApiClient);
     }
 }

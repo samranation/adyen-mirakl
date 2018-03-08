@@ -65,10 +65,10 @@ Feature: Bank Account Verification
 
     @ADY-15
     Scenario: Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen
-        Given a new shop has been created in Mirakl for an Individual
-            | lastName |
-            | TestData |
+        Given a shop has been created in Mirakl for an Individual with Bank Information
+            | city   | bank name | iban                   | bankOwnerName | lastName |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And we process the data and push to Adyen
         When the seller uploads a Bank Statement in Mirakl
-
-
+        And we process the data and push to Adyen
+        Then the ACCOUNT_HOLDER_UPDATED notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and PASSED
