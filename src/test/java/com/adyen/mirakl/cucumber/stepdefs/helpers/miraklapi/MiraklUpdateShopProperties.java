@@ -1,6 +1,7 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 import com.mirakl.client.domain.common.error.ErrorBean;
 import com.mirakl.client.domain.common.error.InputWithErrors;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
@@ -20,6 +21,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 
 import java.io.File;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,8 +38,10 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
     protected MiraklUploadShopDocumentsRequest uploadMiraklShopWithBankStatement(String shopId) {
         ImmutableList.Builder<MiraklUploadDocument> docUploadRequestBuilder = new ImmutableList.Builder<>();
 
+        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
+
         MiraklUploadDocument element = new MiraklUploadDocument();
-        element.setFile(new File("/home/admin/workspace/adyen-mirakl/src/test/resources/fileuploads/BankStatement.jpg"));
+        element.setFile(new File(url.toString()));
         element.setFileName("BankStatement.jpg");
         element.setTypeCode("adyen-bankproof");
 
