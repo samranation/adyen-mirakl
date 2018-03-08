@@ -8,7 +8,7 @@ Feature: Bank Account Verification
         When we process the data and push to Adyen
         Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and DATA_PROVIDED
 
-    @ADY-8 @ADY-77 @ADY-84 @bug
+    @ADY-8 @ADY-77 @ADY-84
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | bank name | iban                   | bankOwnerName | lastName |
@@ -30,7 +30,7 @@ Feature: Bank Account Verification
             | eventType              |
             | ACCOUNT_HOLDER_UPDATED |
 
-    @ADY-8 @ADY-71 @ADY-84 @bug
+    @ADY-8 @ADY-71 @ADY-84
     Scenario: Editing IBAN in Mirakl will create new BankAccountDetail in Adyen
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | bank name | iban                   | bankOwnerName | lastName |
@@ -45,7 +45,7 @@ Feature: Bank Account Verification
             | ACCOUNT_HOLDER_UPDATED |
         And the previous BankAccountDetail will be removed
 
-    @ADY-14 @ADY-84 @bug
+    @ADY-14 @ADY-84
     Scenario: COMPANY_VERIFICATION check upon account creation
         Given a new shop has been created in Mirakl for a Business
             | maxUbos | lastName |

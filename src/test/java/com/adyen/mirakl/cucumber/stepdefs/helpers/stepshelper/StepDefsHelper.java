@@ -1,9 +1,13 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
+import com.adyen.mirakl.config.AdyenConfiguration;
+import com.adyen.mirakl.config.ShopConfiguration;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
+import com.adyen.mirakl.service.ShopService;
+import com.adyen.service.Account;
 import com.mirakl.client.mmp.domain.shop.AbstractMiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
@@ -23,13 +27,29 @@ import static org.awaitility.Awaitility.await;
 public class StepDefsHelper {
 
     @Resource
-    private RestAssuredAdyenApi restAssuredAdyenApi;
+    protected RestAssuredAdyenApi restAssuredAdyenApi;
     @Resource
-    private StartUpTestingHook startUpTestingHook;
+    protected StartUpTestingHook startUpTestingHook;
     @Resource
-    protected MiraklUpdateShopApi miraklUpdateShopApi;
+    protected MiraklShopApi miraklShopApi;
     @Resource
     protected MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
+    @Resource
+    protected AssertionHelper assertionHelper;
+    @Resource
+    protected MiraklUpdateShopApi miraklUpdateShopsApi;
+    @Resource
+    protected ShopService shopService;
+    @Resource
+    protected StartUpTestingHook startUpCucumberHook;
+    @Resource
+    protected Account adyenAccountService;
+    @Resource
+    protected ShopConfiguration shopConfiguration;
+    @Resource
+    protected AdyenConfiguration adyenConfiguration;
+    @Resource
+    protected MiraklUpdateShopApi miraklUpdateShopApi;
 
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
@@ -56,23 +76,11 @@ public class StepDefsHelper {
             .orElseThrow(() -> new IllegalStateException("Cannot find shop"));
     }
 
-    protected MiraklShop retrieveMiraklShopByFiltersOnShopEmail(MiraklCreatedShops createdShops, MiraklMarketplacePlatformOperatorApiClient client, MiraklShopApi miraklShopApi) {
-        String email = createdShops.getShopReturns().iterator().next().getShopCreated().getContactInformation().getEmail();
-        return miraklShopApi.filterMiraklShopsByEmailAndReturnShop(client, email);
-    }
-
     protected String retrieveShopIdFromCreatedShop(MiraklCreatedShops createdShops) {
         return createdShops.getShopReturns()
             .stream()
             .map(MiraklCreatedShopReturn::getShopCreated)
             .map(AbstractMiraklShop::getId)
-            .findFirst().orElse(null);
-    }
-
-    protected MiraklShop retrieveMiraklShopFromCreatedShops(MiraklCreatedShops createdShops) {
-        return createdShops.getShopReturns()
-            .stream()
-            .map(MiraklCreatedShopReturn::getShopCreated)
             .findFirst().orElse(null);
     }
 }
