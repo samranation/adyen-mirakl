@@ -64,29 +64,6 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         });
     }
 
-    @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
-    public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() {
-        MiraklShop createdShop = (MiraklShop)cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopsApi.updateShopToAddBankDetails(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient);
-
-        // map needs to be cleared as we've updated the shop
-        cucumberMap.remove("createdShop");
-        cucumberMap.put("createdShop", updatedMiraklShop);
-    }
-
-    @When("^the IBAN has been modified in Mirakl$")
-    public void theIBANHasBeenModifiedInMirakl(DataTable table) {
-        cucumberTable.put("table", table);
-        cucumberMap.put("iban", rows().get(0).get("iban"));
-
-        MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopsApi.updateShopsIbanNumberOnly(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
-
-        // map needs to be cleared as we've updated the shop
-        cucumberMap.remove("createdShop");
-        cucumberMap.put("createdShop", updatedMiraklShop);
-    }
-
     @And("^the previous BankAccountDetail will be removed$")
     public void thePreviousBankAccountDetailWillBeRemoved() {
         Map<String, Object> content = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails[0]");
@@ -123,14 +100,5 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
                 .read("verification.accountHolder.checks[0].status").toString()).isEqualTo(status);
         });
-    }
-
-    @And("^Mirakl has been updated with a taxId$")
-    public void miraklHasBeenUpdatedWithATaxId() {
-        MiraklShop createdShop = (MiraklShop)cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopsApi.updateShopToIncludeVATNumber(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient);
-        // map needs to be cleared as we've updated the shop
-        cucumberMap.remove("createdShop");
-        cucumberMap.put("createdShop", updatedMiraklShop);
     }
 }
