@@ -1,0 +1,33 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "to",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "subject",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "content",
+            "fieldType": "byte[]",
+            "fieldTypeBlobContent": "text"
+        },
+        {
+            "fieldName": "isMultipart",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "isHtml",
+            "fieldType": "Boolean"
+        }
+    ],
+    "changelogDate": "20180308114122",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "process_email",
+    "jpaMetamodelFiltering": false,
+    "pagination": "no"
+}

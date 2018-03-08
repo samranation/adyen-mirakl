@@ -1,0 +1,64 @@
+<div>
+    <h2 data-translate="adyenMiraklConnectorApp.processEmail.home.title">Process Emails</h2>
+    <jhi-alert></jhi-alert>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4 no-padding-left">
+                <button class="btn btn-primary" ui-sref="process-email.new" >
+                    <span class="glyphicon glyphicon-plus"></span>
+                    <span  data-translate="adyenMiraklConnectorApp.processEmail.home.createLabel">
+                        Create new Process Email
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="jh-table table table-striped">
+            <thead>
+                <tr>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="adyenMiraklConnectorApp.processEmail.to">To</span></th>
+                    <th><span data-translate="adyenMiraklConnectorApp.processEmail.subject">Subject</span></th>
+                    <th><span data-translate="adyenMiraklConnectorApp.processEmail.content">Content</span></th>
+                    <th><span data-translate="adyenMiraklConnectorApp.processEmail.isMultipart">Is Multipart</span></th>
+                    <th><span data-translate="adyenMiraklConnectorApp.processEmail.isHtml">Is Html</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="processEmail in vm.processEmails track by processEmail.id">
+                    <td><a ui-sref="process-email-detail({id:processEmail.id})">{{processEmail.id}}</a></td>
+                    <td>{{processEmail.to}}</td>
+                    <td>{{processEmail.subject}}</td>
+                    <td>{{processEmail.content}}</td>
+                    <td>{{processEmail.isMultipart}}</td>
+                    <td>{{processEmail.isHtml}}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="process-email-detail({id:processEmail.id})"
+                                    class="btn btn-info btn-sm">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="process-email.edit({id:processEmail.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="process-email.delete({id:processEmail.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

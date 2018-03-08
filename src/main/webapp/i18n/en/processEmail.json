@@ -1,0 +1,26 @@
+
+{
+    "adyenMiraklConnectorApp": {
+        "processEmail" : {
+            "home": {
+                "title": "Process Emails",
+                "createLabel": "Create a new Process Email",
+                "createOrEditLabel": "Create or edit a Process Email"
+            },
+            "created": "A new Process Email is created with identifier {{ param }}",
+            "updated": "A Process Email is updated with identifier {{ param }}",
+            "deleted": "A Process Email is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Process Email {{ id }}?"
+            },
+            "detail": {
+                "title": "Process Email"
+            },
+            "to": "To",
+            "subject": "Subject",
+            "content": "Content",
+            "isMultipart": "Is Multipart",
+            "isHtml": "Is Html"
+        }
+    }
+}
