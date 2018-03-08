@@ -22,6 +22,11 @@
         {
             "fieldName": "isHtml",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "state",
+            "fieldType": "EmailState",
+            "fieldValues": "PROCESSING,SENT,FAILED"
         }
     ],
     "changelogDate": "20180308114122",

@@ -8,6 +8,8 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.adyen.mirakl.domain.enumeration.EmailState;
+
 /**
  * A ProcessEmail.
  */
@@ -37,6 +39,10 @@ public class ProcessEmail implements Serializable {
 
     @Column(name = "is_html")
     private Boolean isHtml;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state")
+    private EmailState state;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -111,6 +117,19 @@ public class ProcessEmail implements Serializable {
     public void setIsHtml(Boolean isHtml) {
         this.isHtml = isHtml;
     }
+
+    public EmailState getState() {
+        return state;
+    }
+
+    public ProcessEmail state(EmailState state) {
+        this.state = state;
+        return this;
+    }
+
+    public void setState(EmailState state) {
+        this.state = state;
+    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
@@ -142,6 +161,7 @@ public class ProcessEmail implements Serializable {
             ", content='" + getContent() + "'" +
             ", isMultipart='" + isIsMultipart() + "'" +
             ", isHtml='" + isIsHtml() + "'" +
+            ", state='" + getState() + "'" +
             "}";
     }
 }
