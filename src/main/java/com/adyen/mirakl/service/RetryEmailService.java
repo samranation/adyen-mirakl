@@ -2,6 +2,7 @@ package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.domain.ProcessEmail;
 import com.adyen.mirakl.domain.enumeration.EmailState;
+import com.adyen.mirakl.repository.EmailErrorsRepository;
 import com.adyen.mirakl.repository.ProcessEmailRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -14,6 +15,8 @@ public class RetryEmailService {
 
     @Resource
     private ProcessEmailRepository processEmailRepository;
+    @Resource
+    private EmailErrorsRepository emailErrorsRepository;
     @Resource
     private MailService mailService;
 
@@ -30,7 +33,10 @@ public class RetryEmailService {
         if(CollectionUtils.isEmpty(sentEmails)){
             return;
         }
-        processEmailRepository.delete(sentEmails);
+        sentEmails.forEach(email ->{
+            emailErrorsRepository.delete(email.getEmailErrors());
+            processEmailRepository.delete(email);
+        });
     }
 
 }

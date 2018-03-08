@@ -1,8 +1,10 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.domain.EmailError;
 import com.adyen.mirakl.domain.ProcessEmail;
 import com.adyen.mirakl.domain.enumeration.EmailState;
+import com.adyen.mirakl.repository.EmailErrorsRepository;
 import com.adyen.mirakl.repository.ProcessEmailRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -31,6 +33,9 @@ public class RetryEmailServiceTest {
     @Autowired
     private ProcessEmailRepository processEmailRepository;
 
+    @Autowired
+    private EmailErrorsRepository emailErrorsRepository;
+
     @MockBean
     private MailService mailService;
 
@@ -58,9 +63,32 @@ public class RetryEmailServiceTest {
     }
 
     @Test
-    public void shouldRemoveSentEmails(){
-        createProcessEmail("to1", "subject", "content", false, false, EmailState.SENT);
-        createProcessEmail("to2", "subject", "content", false, false, EmailState.FAILED);
+    public void shouldRemoveSentEmailsAndErrors(){
+        final ProcessEmail processEmail = createProcessEmail("to1", "subject", "content", false, false, EmailState.SENT);
+
+        final EmailError emailError1 = new EmailError();
+        final EmailError emailError2 = new EmailError();
+        final EmailError emailError3 = new EmailError();
+        emailError1.setError("error1");
+        emailError2.setError("error2");
+        emailError3.setError("error3");
+        processEmail.addEmailErrors(emailError1);
+        processEmail.addEmailErrors(emailError2);
+        processEmail.addEmailErrors(emailError3);
+        emailErrorsRepository.saveAndFlush(emailError1);
+        emailErrorsRepository.saveAndFlush(emailError2);
+        emailErrorsRepository.saveAndFlush(emailError3);
+
+        processEmailRepository.saveAndFlush(processEmail);
+
+        final ProcessEmail processEmail2 = createProcessEmail("to2", "subject", "content", false, false, EmailState.FAILED);
+        final EmailError emailError4 = new EmailError();
+        emailError4.setError("error4");
+
+        processEmail2.addEmailErrors(emailError4);
+        emailErrorsRepository.saveAndFlush(emailError4);
+        processEmailRepository.saveAndFlush(processEmail2);
+
         createProcessEmail("to3", "subject", "content", false, false, EmailState.PROCESSING);
         createProcessEmail("to4", "subject", "content", false, false, EmailState.SENT);
 
@@ -72,13 +100,19 @@ public class RetryEmailServiceTest {
         final ProcessEmail remaining1 = processEmailRepository.findExisting("to2", "subject", "content", false, false).orElse(null);
         final ProcessEmail remaining2 = processEmailRepository.findExisting("to3", "subject", "content", false, false).orElse(null);
         Assertions.assertThat(remaining1).isNotNull();
-        Assertions.assertThat(remaining2).isNotNull();
         Assertions.assertThat(remaining1.getState()).isEqualTo(EmailState.FAILED);
+        Assertions.assertThat(remaining1.getEmailErrors().size()).isOne();
+
+        Assertions.assertThat(remaining2).isNotNull();
         Assertions.assertThat(remaining2.getState()).isEqualTo(EmailState.PROCESSING);
+
+        final List<EmailError> allErrors = emailErrorsRepository.findAll();
+        Assertions.assertThat(allErrors.size()).isOne();
+        Assertions.assertThat(allErrors.iterator().next().getError()).isEqualTo("error4");
     }
 
 
-    public void createProcessEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml, EmailState emailState){
+    public ProcessEmail createProcessEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml, EmailState emailState){
         final ProcessEmail processEmail = new ProcessEmail();
         processEmail.setTo(to);
         processEmail.setSubject(subject);
@@ -86,7 +120,7 @@ public class RetryEmailServiceTest {
         processEmail.isMultipart(isMultipart);
         processEmail.isHtml(isHtml);
         processEmail.setState(emailState);
-        processEmailRepository.saveAndFlush(processEmail);
+        return processEmailRepository.saveAndFlush(processEmail);
     }
 
 }
