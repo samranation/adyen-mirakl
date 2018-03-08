@@ -51,8 +51,8 @@ spring:
     mail:
         host: ${MAIL_HOST}
         port: ${MAIL_PORT}
-        username: ${MAIL_TRAP_USER}
-        password: ${MAIL_TRAP_PASS}
+        username: ${MAIL_USER}
+        password: ${MAIL_PASS}
 
 security:
     basic:
