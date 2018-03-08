@@ -45,6 +45,7 @@ public class CacheConfiguration {
             cm.createCache(com.adyen.mirakl.domain.AdyenNotification.class.getName(), jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.MiraklDelta.class.getName(), jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.ProcessEmail.class.getName(), jcacheConfiguration);
+            cm.createCache(com.adyen.mirakl.domain.EmailErrors.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
         };
     }
