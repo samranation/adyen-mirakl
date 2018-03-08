@@ -37,11 +37,11 @@ public class ProcessEmail implements Serializable {
     @Column(name = "content")
     private String content;
 
-    @Column(name = "is_multipart")
-    private Boolean isMultipart;
+    @Column(name = "multipart")
+    private Boolean multipart;
 
-    @Column(name = "is_html")
-    private Boolean isHtml;
+    @Column(name = "html")
+    private Boolean html;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
@@ -50,7 +50,7 @@ public class ProcessEmail implements Serializable {
     @OneToMany(mappedBy = "processEmail")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<EmailErrors> emailErrors = new HashSet<>();
+    private Set<EmailError> emailErrors = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -100,30 +100,30 @@ public class ProcessEmail implements Serializable {
         this.content = content;
     }
 
-    public Boolean isIsMultipart() {
-        return isMultipart;
+    public Boolean isMultipart() {
+        return multipart;
     }
 
-    public ProcessEmail isMultipart(Boolean isMultipart) {
-        this.isMultipart = isMultipart;
+    public ProcessEmail isMultipart(Boolean multipart) {
+        this.multipart = multipart;
         return this;
     }
 
-    public void setIsMultipart(Boolean isMultipart) {
-        this.isMultipart = isMultipart;
+    public void setIsMultipart(Boolean multipart) {
+        this.multipart = multipart;
     }
 
-    public Boolean isIsHtml() {
-        return isHtml;
+    public Boolean isHtml() {
+        return html;
     }
 
-    public ProcessEmail isHtml(Boolean isHtml) {
-        this.isHtml = isHtml;
+    public ProcessEmail isHtml(Boolean html) {
+        this.html = html;
         return this;
     }
 
-    public void setIsHtml(Boolean isHtml) {
-        this.isHtml = isHtml;
+    public void setIsHtml(Boolean html) {
+        this.html = html;
     }
 
     public EmailState getState() {
@@ -139,28 +139,28 @@ public class ProcessEmail implements Serializable {
         this.state = state;
     }
 
-    public Set<EmailErrors> getEmailErrors() {
+    public Set<EmailError> getEmailErrors() {
         return emailErrors;
     }
 
-    public ProcessEmail emailErrors(Set<EmailErrors> emailErrors) {
+    public ProcessEmail emailErrors(Set<EmailError> emailErrors) {
         this.emailErrors = emailErrors;
         return this;
     }
 
-    public ProcessEmail addEmailErrors(EmailErrors emailErrors) {
+    public ProcessEmail addEmailErrors(EmailError emailErrors) {
         this.emailErrors.add(emailErrors);
         emailErrors.setProcessEmail(this);
         return this;
     }
 
-    public ProcessEmail removeEmailErrors(EmailErrors emailErrors) {
+    public ProcessEmail removeEmailErrors(EmailError emailErrors) {
         this.emailErrors.remove(emailErrors);
         emailErrors.setProcessEmail(null);
         return this;
     }
 
-    public void setEmailErrors(Set<EmailErrors> emailErrors) {
+    public void setEmailErrors(Set<EmailError> emailErrors) {
         this.emailErrors = emailErrors;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -192,8 +192,8 @@ public class ProcessEmail implements Serializable {
             ", to='" + getTo() + "'" +
             ", subject='" + getSubject() + "'" +
             ", content='" + getContent() + "'" +
-            ", isMultipart='" + isIsMultipart() + "'" +
-            ", isHtml='" + isIsHtml() + "'" +
+            ", multipart='" + isMultipart() + "'" +
+            ", html='" + isHtml() + "'" +
             ", state='" + getState() + "'" +
             "}";
     }

@@ -1,6 +1,6 @@
 package com.adyen.mirakl.repository;
 
-import com.adyen.mirakl.domain.EmailErrors;
+import com.adyen.mirakl.domain.EmailError;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.*;
@@ -11,6 +11,6 @@ import org.springframework.data.jpa.repository.*;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface EmailErrorsRepository extends JpaRepository<EmailErrors, Long> {
+public interface EmailErrorsRepository extends JpaRepository<EmailError, Long> {
 
 }

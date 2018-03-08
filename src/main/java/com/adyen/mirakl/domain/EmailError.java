@@ -9,12 +9,12 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * A EmailErrors.
+ * A EmailError.
  */
 @Entity
-@Table(name = "email_errors")
+@Table(name = "email_error")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class EmailErrors implements Serializable {
+public class EmailError implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -22,8 +22,8 @@ public class EmailErrors implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "errors")
-    private String errors;
+    @Column(name = "error")
+    private String error;
 
     @ManyToOne
     private ProcessEmail processEmail;
@@ -37,24 +37,24 @@ public class EmailErrors implements Serializable {
         this.id = id;
     }
 
-    public String getErrors() {
-        return errors;
+    public String getError() {
+        return error;
     }
 
-    public EmailErrors errors(String errors) {
-        this.errors = errors;
+    public EmailError error(String error) {
+        this.error = error;
         return this;
     }
 
-    public void setErrors(String errors) {
-        this.errors = errors;
+    public void setError(String error) {
+        this.error = error;
     }
 
     public ProcessEmail getProcessEmail() {
         return processEmail;
     }
 
-    public EmailErrors processEmail(ProcessEmail processEmail) {
+    public EmailError processEmail(ProcessEmail processEmail) {
         this.processEmail = processEmail;
         return this;
     }
@@ -72,11 +72,11 @@ public class EmailErrors implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        EmailErrors emailErrors = (EmailErrors) o;
-        if (emailErrors.getId() == null || getId() == null) {
+        EmailError emailError = (EmailError) o;
+        if (emailError.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(getId(), emailErrors.getId());
+        return Objects.equals(getId(), emailError.getId());
     }
 
     @Override
@@ -86,9 +86,9 @@ public class EmailErrors implements Serializable {
 
     @Override
     public String toString() {
-        return "EmailErrors{" +
+        return "EmailError{" +
             "id=" + getId() +
-            ", errors='" + getErrors() + "'" +
+            ", error='" + getError() + "'" +
             "}";
     }
 }

@@ -28,7 +28,9 @@ public class RetryConfiguration {
 
         @Override
         public <T, E extends Throwable> void close(final RetryContext context, final RetryCallback<T, E> callback, final Throwable throwable) {
-            log.error("Email was not sent, we can clean up here - e.g. save to DB");
+            if(throwable!=null){
+                log.error("Email was not sent");
+            }
             super.close(context, callback, throwable);
         }
 

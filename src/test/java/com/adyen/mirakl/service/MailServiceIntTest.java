@@ -3,10 +3,13 @@ package com.adyen.mirakl.service;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.User;
+import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
 import io.github.jhipster.config.JHipsterProperties;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +58,9 @@ public class MailServiceIntTest {
 
     @Captor
     private ArgumentCaptor messageCaptor;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private MailService mailService;
 
@@ -195,7 +201,8 @@ public class MailServiceIntTest {
     }
 
     @Test
-    public void testSendEmailWithException() throws Exception {
+    public void testSendEmailWithException() {
+        thrown.expect(UnexpectedMailFailureException.class);
         doThrow(MailSendException.class).when(javaMailSender).send(any(MimeMessage.class));
         mailService.sendEmail("john.doe@example.com", "testSubject", "testContent", false, false);
     }

@@ -7,9 +7,9 @@
         Added the constraints for entity EmailErrors.
     -->
     <changeSet id="20180308121927-2" author="jhipster">
-        
+
         <addForeignKeyConstraint baseColumnNames="process_email_id"
-                                 baseTableName="email_errors"
+                                 baseTableName="email_error"
                                  constraintName="fk_email_errors_process_email_id"
                                  referencedColumnNames="id"
                                  referencedTableName="process_email"/>
