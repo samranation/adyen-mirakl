@@ -113,6 +113,8 @@ shops:
     shopIds:
         Cottons Shop: 2000
         Samras Supermarket: 2001
+        PayoutShop01: 4222
+        PayoutShop02: 4316
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}

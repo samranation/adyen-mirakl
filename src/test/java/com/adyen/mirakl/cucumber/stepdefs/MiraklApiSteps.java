@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberTable;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
 
 public class MiraklApiSteps extends StepDefsHelper {
 
@@ -37,13 +39,13 @@ public class MiraklApiSteps extends StepDefsHelper {
 
 
     @Given("^the operator has specified that the (.*) is an (.*)")
-    public void theOperatorHasSpecifiedThatTheSellerIsAnLegalEntity(String seller, String legalEntity) throws Throwable {
+    public void theOperatorHasSpecifiedThatTheSellerIsAnLegalEntity(String seller, String legalEntity) {
         this.seller = shopConfiguration.shopIds.get(seller).toString();
         this.legalEntity = legalEntity;
     }
 
     @When("^the operator views the shop information using S20 Mirakl API call$")
-    public void theOperatorViewsTheShopInformationUsingSMiraklAPICall() throws Throwable {
+    public void theOperatorViewsTheShopInformationUsingSMiraklAPICall() {
         MiraklShop miraklShop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, seller);
 
         additionalFieldName = miraklShop.getAdditionalFieldValues().stream()
@@ -55,12 +57,12 @@ public class MiraklApiSteps extends StepDefsHelper {
     }
 
     @Then("^the sellers legal entity will be displayed as (.*)$")
-    public void theSellersLegalEntityWillBeDisplayedAsLegalEntity(String legalEntity) throws Throwable {
+    public void theSellersLegalEntityWillBeDisplayedAsLegalEntity(String legalEntity) {
         Assertions.assertThat(additionalFieldName).isEqualToIgnoringCase(legalEntity);
     }
 
     @Given("^a shop exists in Mirakl with the following fields$")
-    public void aShopExistsInMirakl(DataTable table) throws Throwable {
+    public void aShopExistsInMirakl(DataTable table) {
         List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
 
         this.seller = shopConfiguration.shopIds.get(rows.get(0).get("seller").toString()).toString();
@@ -77,8 +79,8 @@ public class MiraklApiSteps extends StepDefsHelper {
     }
 
     @When("^the Mirakl Shop Details have been updated as the same as before$")
-    public void theMiraklShopDetailsHaveBeenUpdatedAsTheSameAsBefore(DataTable table) throws Throwable {
-        List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
-        miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows);
+    public void theMiraklShopDetailsHaveBeenUpdatedAsTheSameAsBefore(DataTable table) {
+        cucumberTable.put("table", table);
+        miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
     }
 }

@@ -36,6 +36,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
             String bankName;
             String iban;
             String bic;
+            String city;
 
             if (row.get("bank name") == null) {
                 log.info("Bank account information will not be created in this test.");
@@ -44,7 +45,8 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
                 bankName = row.get("bank name").toString();
                 iban = row.get("iban").toString();
                 bic = faker.finance().bic();
-                createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic));
+                city = "PASSED";
+                createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic, city));
             }
         });
     }
@@ -68,12 +70,24 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
     }
 
     protected void populateAddFieldsLegalAndHouseNumber(String legalEntity, MiraklCreateShop createShop) {
-        createShop.setAdditionalFieldValues(ImmutableList.of(createAdditionalField("adyen-individual-housenumber", faker.address().streetAddressNumber()),
-            createAdditionalField("adyen-legal-entity-type", legalEntity)));
+
+        createShop.setAdditionalFieldValues(ImmutableList.of(
+            createAdditionalField("adyen-individual-housenumber", faker.address().streetAddressNumber()),
+            createAdditionalField("adyen-legal-entity-type", legalEntity),
+            createAdditionalField("adyen-individual-dob", "1989-03-15T23:00:00Z"),
+            createAdditionalField("adyen-individual-idnumber", "01234567890")
+        ));
     }
 
-    protected void populateUserEmailAndShopName(MiraklCreateShop createShop) {
-        String shopName = companyName.concat("-").concat(RandomStringUtils.randomAlphanumeric(8)).toLowerCase();
+    protected void populateUserEmailAndShopName(MiraklCreateShop createShop, List<Map<Object, Object>> rows) {
+
+        String shopName;
+        if (rows.get(0).get("companyName") == null) {
+            shopName = companyName.concat("-").concat(RandomStringUtils.randomAlphanumeric(8)).toLowerCase();
+        } else {
+            shopName = rows.get(0).get("companyName").toString();
+        }
+
         MiraklCreateShopNewUser newUser = new MiraklCreateShopNewUser();
         String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com");
         newUser.setEmail(email);
@@ -127,13 +141,14 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
         log.info(String.format("Mirakl Shop Id: [%s]", shopId));
     }
 
-    protected MiraklIbanBankAccountInformation miraklIbanBankAccountInformation(String owner, String bankName, String iban, String bic) {
+    protected MiraklIbanBankAccountInformation miraklIbanBankAccountInformation(String owner, String bankName, String iban, String bic, String city) {
 
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = new MiraklIbanBankAccountInformation();
         miraklIbanBankAccountInformation.setOwner(owner);
         miraklIbanBankAccountInformation.setBankName(bankName);
         miraklIbanBankAccountInformation.setIban(iban);
         miraklIbanBankAccountInformation.setBic(bic);
+        miraklIbanBankAccountInformation.setBankCity(city);
         return miraklIbanBankAccountInformation;
     }
 }
