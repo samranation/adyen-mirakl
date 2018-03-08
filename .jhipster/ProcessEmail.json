@@ -1,6 +1,13 @@
 {
     "fluentMethods": true,
-    "relationships": [],
+    "relationships": [
+        {
+            "relationshipName": "emailErrors",
+            "otherEntityName": "emailErrors",
+            "relationshipType": "one-to-many",
+            "otherEntityRelationshipName": "processEmail"
+        }
+    ],
     "fields": [
         {
             "fieldName": "to",

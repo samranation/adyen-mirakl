@@ -1,11 +1,14 @@
 package com.adyen.mirakl.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Objects;
 
 import com.adyen.mirakl.domain.enumeration.EmailState;
@@ -43,6 +46,11 @@ public class ProcessEmail implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
     private EmailState state;
+
+    @OneToMany(mappedBy = "processEmail")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<EmailErrors> emailErrors = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -129,6 +137,31 @@ public class ProcessEmail implements Serializable {
 
     public void setState(EmailState state) {
         this.state = state;
+    }
+
+    public Set<EmailErrors> getEmailErrors() {
+        return emailErrors;
+    }
+
+    public ProcessEmail emailErrors(Set<EmailErrors> emailErrors) {
+        this.emailErrors = emailErrors;
+        return this;
+    }
+
+    public ProcessEmail addEmailErrors(EmailErrors emailErrors) {
+        this.emailErrors.add(emailErrors);
+        emailErrors.setProcessEmail(this);
+        return this;
+    }
+
+    public ProcessEmail removeEmailErrors(EmailErrors emailErrors) {
+        this.emailErrors.remove(emailErrors);
+        emailErrors.setProcessEmail(null);
+        return this;
+    }
+
+    public void setEmailErrors(Set<EmailErrors> emailErrors) {
+        this.emailErrors = emailErrors;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
