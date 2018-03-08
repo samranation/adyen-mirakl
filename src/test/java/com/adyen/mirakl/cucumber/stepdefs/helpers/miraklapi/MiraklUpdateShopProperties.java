@@ -41,7 +41,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         URL url = Resources.getResource("fileuploads/BankStatement.jpg");
 
         MiraklUploadDocument element = new MiraklUploadDocument();
-        element.setFile(new File(url.toString()));
+        element.setFile(new File(url.getPath()));
         element.setFileName("BankStatement.jpg");
         element.setTypeCode("adyen-bankproof");
 
