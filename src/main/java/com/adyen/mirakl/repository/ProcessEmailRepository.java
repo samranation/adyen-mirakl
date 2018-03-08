@@ -1,10 +1,12 @@
 package com.adyen.mirakl.repository;
 
 import com.adyen.mirakl.domain.ProcessEmail;
+import com.adyen.mirakl.domain.enumeration.EmailState;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.*;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -17,5 +19,7 @@ public interface ProcessEmailRepository extends JpaRepository<ProcessEmail, Long
 
     @Query("select e from ProcessEmail e where e.to = ?1 and e.subject = ?2 and e.content = ?3 and e.multipart = ?4 and e.html = ?5")
     Optional<ProcessEmail> findExisting(String to, String subject, String content, boolean isMultipart, boolean isHtml);
+
+    List<ProcessEmail> findByState(EmailState emailState);
 
 }

@@ -116,6 +116,7 @@ jhipster:
 
 application:
     shopUpdaterCron: "0 */5 * * * ?"
+    emailRetryCron: "0 */10 * * * ?"
 
 shops:
     shopIds:

@@ -1,6 +1,7 @@
 package com.adyen.mirakl.scheduling;
 
 
+import com.adyen.mirakl.service.RetryEmailService;
 import com.adyen.mirakl.service.ShopService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,12 +16,18 @@ public class SchedulerTrigger {
     @Resource
     private ShopService shopService;
 
+    @Resource
+    private RetryEmailService retryEmailService;
+
     @Scheduled(cron = "${application.shopUpdaterCron}")
     public void runShopUpdates(){
         shopService.retrieveUpdatedShops();
     }
 
-    public void setShopService(final ShopService shopService) {
-        this.shopService = shopService;
+    @Scheduled(cron = "${application.emailRetryCron}")
+    public void retryEmails(){
+        retryEmailService.retryFailedEmails();
     }
+
+
 }
