@@ -6,6 +6,7 @@ import com.adyen.mirakl.domain.ProcessEmail;
 import com.adyen.mirakl.domain.enumeration.EmailState;
 import com.adyen.mirakl.repository.EmailErrorsRepository;
 import com.adyen.mirakl.repository.ProcessEmailRepository;
+import liquibase.util.MD5Util;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -48,8 +49,8 @@ public class FailSafeEmailAspectTest {
     @Test
     public void shouldSaveEmailSuccessfully() throws Throwable {
         failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);
-
-        final ProcessEmail existing = processEmailRepository.findExisting(to, subject, content, isMultipart, isHtml).orElse(null);
+        String emailIdentifier = MD5Util.computeMD5(to + subject + content + isMultipart + isHtml);
+        final ProcessEmail existing = processEmailRepository.findOneByEmailIdentifier(emailIdentifier).orElse(null);
         Assertions.assertThat(existing).isNotNull();
         Assertions.assertThat(existing.getTo()).isEqualTo(to);
         Assertions.assertThat(existing.getSubject()).isEqualTo(subject);
@@ -71,7 +72,8 @@ public class FailSafeEmailAspectTest {
         failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);//error1
         failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);//error2
 
-        final ProcessEmail existing = processEmailRepository.findExisting(to, subject, content, isMultipart, isHtml).orElse(null);
+        String emailIdentifier = MD5Util.computeMD5(to + subject + content + isMultipart + isHtml);
+        final ProcessEmail existing = processEmailRepository.findOneByEmailIdentifier(emailIdentifier).orElse(null);
         Assertions.assertThat(existing).isNotNull();
         Assertions.assertThat(existing.getTo()).isEqualTo(to);
         Assertions.assertThat(existing.getSubject()).isEqualTo(subject);
@@ -95,7 +97,8 @@ public class FailSafeEmailAspectTest {
 
         System.out.println(processEmailRepository.findAll().size());
 
-        final ProcessEmail existing = processEmailRepository.findExisting(to, subject, content, isMultipart, isHtml).orElse(null);
+        String emailIdentifier = MD5Util.computeMD5(to + subject + content + isMultipart + isHtml);
+        final ProcessEmail existing = processEmailRepository.findOneByEmailIdentifier(emailIdentifier).orElse(null);
         Assertions.assertThat(existing).isNotNull();
         Assertions.assertThat(existing.getTo()).isEqualTo(to);
         Assertions.assertThat(existing.getSubject()).isEqualTo(subject);
@@ -109,7 +112,8 @@ public class FailSafeEmailAspectTest {
         final List<String> errors = allErrors.stream().map(EmailError::getError).collect(Collectors.toList());
         Assertions.assertThat(errors).containsExactlyInAnyOrder("error1");
 
-        final ProcessEmail existing2 = processEmailRepository.findExisting("anotherPerson", subject, content, isMultipart, isHtml).orElse(null);
+        String emailIdentifier2 = MD5Util.computeMD5("anotherPerson" + subject + content + isMultipart + isHtml);
+        final ProcessEmail existing2 = processEmailRepository.findOneByEmailIdentifier(emailIdentifier2).orElse(null);
         Assertions.assertThat(existing2).isNotNull();
         Assertions.assertThat(existing2.getTo()).isEqualTo("anotherPerson");
         Assertions.assertThat(existing2.getSubject()).isEqualTo(subject);

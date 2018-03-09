@@ -5,6 +5,7 @@ import com.adyen.mirakl.domain.ProcessEmail;
 import com.adyen.mirakl.domain.enumeration.EmailState;
 import com.adyen.mirakl.repository.EmailErrorsRepository;
 import com.adyen.mirakl.repository.ProcessEmailRepository;
+import liquibase.util.MD5Util;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -27,9 +28,12 @@ public class FailSafeEmailAspect {
     @Around("execution(* com.adyen.mirakl.service.MailService.sendEmail(String, String, String, boolean, boolean)) && args(to, subject, content, isMultipart, isHtml)")
     public Object logAround(ProceedingJoinPoint joinPoint, String to, String subject, String content, boolean isMultipart, boolean isHtml) throws Throwable {
 
-        final ProcessEmail email = processEmailRepository.findExisting(to, subject, content, isMultipart, isHtml)
+        String toHash = to + subject + content + isMultipart + isHtml;
+        String emailIdentifier = MD5Util.computeMD5(toHash);
+        final ProcessEmail email = processEmailRepository.findOneByEmailIdentifier(emailIdentifier)
             .orElseGet(() -> {
                 final ProcessEmail processEmail = new ProcessEmail();
+                processEmail.setEmailIdentifier(emailIdentifier);
                 processEmail.setTo(to);
                 processEmail.setSubject(subject);
                 processEmail.setContent(content);
