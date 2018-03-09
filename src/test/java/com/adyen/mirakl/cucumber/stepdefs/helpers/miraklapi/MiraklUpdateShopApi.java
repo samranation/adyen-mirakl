@@ -29,11 +29,11 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return builder;
     }
 
-    public void updateExistingShopsContactInfoWithTableData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows) {
+    public void updateExistingShopsContactInfoWithTableData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, Map<Object, Object> row) {
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
 
         // update shop contact information
-        MiraklShopAddress address = updateMiraklShopAddress(miraklShop, rows);
+        MiraklShopAddress address = updateMiraklShopAddress(miraklShop, row);
         miraklUpdateShop.setAddress(address);
 
         miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
@@ -76,7 +76,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
     // required for any update we do to Mirakl
     private MiraklUpdateShop populateAllMandatoryFields(MiraklShop miraklShop, String shopId) {
         miraklUpdateShop.setShopId(Long.valueOf(shopId));
-        MiraklIbanBankAccountInformation paymentInformation = populateMiraklIbanBankAccountInformation();
+        MiraklIbanBankAccountInformation paymentInformation = populateMiraklIbanBankAccountInformation(miraklShop);
         miraklUpdateShop.setPaymentInformation(paymentInformation);
         MiraklShopAddress address = populateMiraklShopAddress(miraklShop);
         miraklUpdateShop.setAddress(address);

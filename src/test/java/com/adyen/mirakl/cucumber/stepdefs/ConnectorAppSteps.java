@@ -4,6 +4,7 @@ import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cuc
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class MiraklPaymentVoucherSteps extends StepDefs{
+public class ConnectorAppSteps extends StepDefs {
 
     @Autowired
     private MiraklNotificationsResource miraklNotificationsResource;

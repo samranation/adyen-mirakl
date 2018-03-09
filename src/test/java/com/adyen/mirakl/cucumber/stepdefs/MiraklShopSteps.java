@@ -60,10 +60,4 @@ public class MiraklShopSteps extends StepDefsHelper {
             Assertions.assertThat(row.get("city")).isEqualTo(miraklShop.getContactInformation().getCity());
         });
     }
-
-    @When("^the Mirakl Shop Details have been updated as the same as before$")
-    public void theMiraklShopDetailsHaveBeenUpdatedAsTheSameAsBefore(DataTable table) {
-        cucumberTable.put("table", table);
-        miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(miraklShop, miraklShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
-    }
 }

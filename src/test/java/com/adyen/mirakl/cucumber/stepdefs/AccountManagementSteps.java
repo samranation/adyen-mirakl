@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -108,7 +109,9 @@ public class AccountManagementSteps extends StepDefsHelper {
     public void theMiraklShopDetailsHaveBeenUpdated(DataTable table) {
         cucumberTable.put("table", table);
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        miraklUpdateShopsApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
+        rows().forEach(row ->
+            miraklUpdateShopsApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
+        );
     }
 
     @And("^a notification of (.*) will not be sent$")
