@@ -8,9 +8,9 @@ import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
 import org.assertj.core.api.Assertions;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +19,6 @@ import static org.awaitility.Awaitility.await;
 
 public class AccountHolderVerificationSteps extends StepDefsHelper {
 
-    private Map<String, Object> adyenNotificationBody;
-
     @Then("^the (.*) notification is sent by Adyen comprising of (.*) and (.*)")
     public void theACCOUNT_HOLDER_VERIFICATIONNotificationIsSentByAdyenComprisingOfBANK_ACCOUNT_VERIFICATIONAndPASSED(String notification,
                                                                                                                       String verificationType,
@@ -28,7 +26,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         MiraklShop createdShop = (MiraklShop)cucumberMap.get("createdShop");
         waitForNotification();
         await().untilAsserted(() -> {
-            adyenNotificationBody = restAssuredAdyenApi
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), createdShop.getId(), notification, verificationType);
 
             Assertions.assertThat(adyenNotificationBody).withFailMessage("No data received from notification endpoint").isNotNull();
@@ -46,11 +44,12 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         waitForNotification();
         await().untilAsserted(() -> {
             String eventType = rows().get(0).get("eventType").toString();
-            adyenNotificationBody = restAssuredAdyenApi
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), createdShop.getId(), eventType, null);
 
             Assertions.assertThat(adyenNotificationBody).withFailMessage("Notification has not been sent yet.").isNotNull();
 
+            cucumberMap.put("adyenNotificationBody", adyenNotificationBody);
             List<Map<Object, Object>> bankAccountDetails = JsonPath.parse(adyenNotificationBody
                 .get("content")).read("accountHolderDetails.bankAccountDetails");
 
@@ -66,6 +65,10 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @And("^the previous BankAccountDetail will be removed$")
     public void thePreviousBankAccountDetailWillBeRemoved() {
+        Map<String, Object> adyenNotificationBody = new HashMap<>();
+        if (cucumberMap.get("adyenNotificationBody") instanceof HashMap){
+            adyenNotificationBody = (HashMap<String, Object>)cucumberMap.get("adyenNotificationBody");
+        }
         Map<String, Object> content = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails[0]");
         Assertions.assertThat(content).hasSize(1);
     }
@@ -76,7 +79,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
         waitForNotification();
         await().untilAsserted(() -> {
-            adyenNotificationBody = restAssuredAdyenApi
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), createdShop.getId(), eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
@@ -92,7 +95,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
         waitForNotification();
         await().untilAsserted(() -> {
-            adyenNotificationBody = restAssuredAdyenApi
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), createdShop.getId(), eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
