@@ -44,10 +44,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         waitForNotification();
         await().untilAsserted(() -> {
             String eventType = rows().get(0).get("eventType").toString();
-            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), createdShop.getId(), eventType, null);
-
-            Assertions.assertThat(adyenNotificationBody).withFailMessage("Notification has not been sent yet.").isNotNull();
+            Map<String, Object> adyenNotificationBody = getAdyenNotificationBody(eventType, createdShop.getId());
 
             cucumberMap.put("adyenNotificationBody", adyenNotificationBody);
             List<Map<Object, Object>> bankAccountDetails = JsonPath.parse(adyenNotificationBody
@@ -64,13 +61,17 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     }
 
     @And("^the previous BankAccountDetail will be removed$")
-    public void thePreviousBankAccountDetailWillBeRemoved() {
-        Map<String, Object> adyenNotificationBody = new HashMap<>();
-        if (cucumberMap.get("adyenNotificationBody") instanceof HashMap){
-            adyenNotificationBody = (HashMap<String, Object>)cucumberMap.get("adyenNotificationBody");
-        }
-        Map<String, Object> content = JsonPath.parse(adyenNotificationBody.get("content")).read("accountHolderDetails.bankAccountDetails[0]");
-        Assertions.assertThat(content).hasSize(1);
+    public void thePreviousBankAccountDetailWillBeRemoved(DataTable table) {
+        cucumberTable.put("table", table);
+        String eventType = rows().get(0).get("eventType").toString();
+        String reason = rows().get(0).get("reason").toString();
+        MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
+
+        await().untilAsserted(()->{
+            DocumentContext adyenNotificationBody = JsonPath.parse(getAdyenNotificationBody(eventType, createdShop.getId()));
+            Assertions.assertThat(adyenNotificationBody.read("content.reason").toString())
+                .isEqualTo(reason);
+        });
     }
 
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
