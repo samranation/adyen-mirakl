@@ -430,7 +430,7 @@ public class ShopServiceTest {
         miraklShopList.add(miraklShop);
 
         FileWrapper fileWrapper = mock(FileWrapper.class);
-        URL url = Resources.getResource("adyenRequests/adyenRequestExample.json");
+        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
         File file = new File(url.getPath());
 
         ArrayList<MiraklShopDocument> miraklShopDocumentList = new ArrayList();
