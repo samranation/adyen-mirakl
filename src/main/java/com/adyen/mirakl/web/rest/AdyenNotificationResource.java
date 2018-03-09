@@ -47,7 +47,6 @@ public class AdyenNotificationResource {
     @PostMapping("/adyen-notifications")
     @Timed
     public ResponseEntity<AdyenNotification> createAdyenNotification(@RequestBody String adyenNotification) throws URISyntaxException {
-        log.debug("REST request to save AdyenNotification : {}", adyenNotification);
         final AdyenNotification entity = new AdyenNotification();
         entity.setRawAdyenNotification(adyenNotification);
         AdyenNotification result = adyenNotificationRepository.save(entity);

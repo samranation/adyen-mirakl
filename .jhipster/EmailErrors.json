@@ -1,0 +1,23 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipName": "processEmail",
+            "otherEntityName": "processEmail",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "errors",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180308121927",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "email_errors",
+    "jpaMetamodelFiltering": false,
+    "pagination": "no"
+}

@@ -1,0 +1,49 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipName": "emailError",
+            "otherEntityName": "emailError",
+            "relationshipType": "one-to-many",
+            "otherEntityRelationshipName": "processEmail"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "to",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "subject",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "content",
+            "fieldType": "byte[]",
+            "fieldTypeBlobContent": "text"
+        },
+        {
+            "fieldName": "multipart",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "html",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "state",
+            "fieldType": "EmailState",
+            "fieldValues": "PROCESSING,SENT,FAILED"
+        },
+        {
+            "fieldName": "emailIdentifier",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180308114122",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "process_email",
+    "jpaMetamodelFiltering": false,
+    "pagination": "no"
+}

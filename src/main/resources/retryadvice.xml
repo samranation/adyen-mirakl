@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/aop
+                           http://www.springframework.org/schema/aop/spring-aop.xsd
+                           http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <aop:config>
+        <aop:pointcut id="transactional"
+                      expression="execution(* org.springframework.mail.javamail.JavaMailSenderImpl.send(..))"/>
+        <aop:advisor pointcut-ref="transactional"
+                     advice-ref="taskRetryAdvice" order="-1"/>
+    </aop:config>
+
+    <bean id="taskRetryAdvice" class="org.springframework.retry.interceptor.RetryOperationsInterceptor">
+        <property name="RetryOperations" ref="taskRetryTemplate"/>
+    </bean>
+
+    <bean id="taskRetryTemplate"
+          class="org.springframework.retry.support.RetryTemplate">
+        <property name="retryPolicy" ref="taskRetryPolicy"/>
+        <property name="backOffPolicy" ref="exponentialBackOffPolicy"/>
+        <property name="listeners" ref="retryListeners"/>
+    </bean>
+
+    <util:list id="retryListeners">
+        <ref bean="mailSupportListener" />
+    </util:list>
+
+    <bean id="mailSupportListener" class="com.adyen.mirakl.config.RetryConfiguration$MailSupportListener"/>
+
+    <bean id="taskRetryPolicy" class="org.springframework.retry.policy.SimpleRetryPolicy">
+        <property name="maxAttempts" value="${mail.max.retries}"/>
+    </bean>
+
+    <bean id="exponentialBackOffPolicy" class="org.springframework.retry.backoff.ExponentialRandomBackOffPolicy" />
+
+</beans>

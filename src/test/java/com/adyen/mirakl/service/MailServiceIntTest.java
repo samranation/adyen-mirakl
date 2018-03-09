@@ -1,21 +1,26 @@
 package com.adyen.mirakl.service;
-import com.adyen.mirakl.config.Constants;
 
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.User;
+import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
 import io.github.jhipster.config.JHipsterProperties;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.retry.backoff.BackOffPolicy;
+import org.springframework.retry.backoff.NoBackOffPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 
@@ -42,19 +47,36 @@ public class MailServiceIntTest {
     @Autowired
     private SpringTemplateEngine templateEngine;
 
-    @Spy
-    private JavaMailSenderImpl javaMailSender;
+    //cannot use @SpyBean as spring AOP makes JavaMailSender methods final and stops: doNothing().when(..)
+    @Autowired
+    private RetryTemplate taskRetryTemplate;
+    @Autowired
+    private BackOffPolicy exponentialBackOffPolicy;
+
+    @SpyBean
+    private JavaMailSender javaMailSender;
 
     @Captor
     private ArgumentCaptor messageCaptor;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private MailService mailService;
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
+        taskRetryTemplate.setBackOffPolicy(new NoBackOffPolicy());
+
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        MockitoAnnotations.initMocks(this);
         mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
+    }
+
+    //See comments on RetryTemplate
+    @After
+    public void resetBackoffPolicyForOtherTests(){
+        taskRetryTemplate.setBackOffPolicy(exponentialBackOffPolicy);
     }
 
     @Test
@@ -179,7 +201,8 @@ public class MailServiceIntTest {
     }
 
     @Test
-    public void testSendEmailWithException() throws Exception {
+    public void testSendEmailWithException() {
+        thrown.expect(UnexpectedMailFailureException.class);
         doThrow(MailSendException.class).when(javaMailSender).send(any(MimeMessage.class));
         mailService.sendEmail("john.doe@example.com", "testSubject", "testContent", false, false);
     }
