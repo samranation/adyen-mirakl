@@ -47,6 +47,9 @@ public class ProcessEmail implements Serializable {
     @Column(name = "state")
     private EmailState state;
 
+    @Column(name = "email_identifier")
+    private String emailIdentifier;
+
     @OneToMany(mappedBy = "processEmail")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -104,12 +107,12 @@ public class ProcessEmail implements Serializable {
         return multipart;
     }
 
-    public ProcessEmail isMultipart(Boolean multipart) {
+    public ProcessEmail multipart(Boolean multipart) {
         this.multipart = multipart;
         return this;
     }
 
-    public void setIsMultipart(Boolean multipart) {
+    public void setMultipart(Boolean multipart) {
         this.multipart = multipart;
     }
 
@@ -117,12 +120,12 @@ public class ProcessEmail implements Serializable {
         return html;
     }
 
-    public ProcessEmail isHtml(Boolean html) {
+    public ProcessEmail html(Boolean html) {
         this.html = html;
         return this;
     }
 
-    public void setIsHtml(Boolean html) {
+    public void setHtml(Boolean html) {
         this.html = html;
     }
 
@@ -139,6 +142,19 @@ public class ProcessEmail implements Serializable {
         this.state = state;
     }
 
+    public String getEmailIdentifier() {
+        return emailIdentifier;
+    }
+
+    public ProcessEmail emailIdentifier(String emailIdentifier) {
+        this.emailIdentifier = emailIdentifier;
+        return this;
+    }
+
+    public void setEmailIdentifier(String emailIdentifier) {
+        this.emailIdentifier = emailIdentifier;
+    }
+
     public Set<EmailError> getEmailErrors() {
         return emailErrors;
     }
@@ -148,15 +164,15 @@ public class ProcessEmail implements Serializable {
         return this;
     }
 
-    public ProcessEmail addEmailErrors(EmailError emailErrors) {
-        this.emailErrors.add(emailErrors);
-        emailErrors.setProcessEmail(this);
+    public ProcessEmail addEmailError(EmailError emailError) {
+        this.emailErrors.add(emailError);
+        emailError.setProcessEmail(this);
         return this;
     }
 
-    public ProcessEmail removeEmailErrors(EmailError emailErrors) {
-        this.emailErrors.remove(emailErrors);
-        emailErrors.setProcessEmail(null);
+    public ProcessEmail removeEmailError(EmailError emailError) {
+        this.emailErrors.remove(emailError);
+        emailError.setProcessEmail(null);
         return this;
     }
 
@@ -195,6 +211,7 @@ public class ProcessEmail implements Serializable {
             ", multipart='" + isMultipart() + "'" +
             ", html='" + isHtml() + "'" +
             ", state='" + getState() + "'" +
+            ", emailIdentifier='" + getEmailIdentifier() + "'" +
             "}";
     }
 }

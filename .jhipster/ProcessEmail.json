@@ -2,8 +2,8 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "emailErrors",
-            "otherEntityName": "emailErrors",
+            "relationshipName": "emailError",
+            "otherEntityName": "emailError",
             "relationshipType": "one-to-many",
             "otherEntityRelationshipName": "processEmail"
         }
@@ -23,17 +23,21 @@
             "fieldTypeBlobContent": "text"
         },
         {
-            "fieldName": "isMultipart",
+            "fieldName": "multipart",
             "fieldType": "Boolean"
         },
         {
-            "fieldName": "isHtml",
+            "fieldName": "html",
             "fieldType": "Boolean"
         },
         {
             "fieldName": "state",
             "fieldType": "EmailState",
             "fieldValues": "PROCESSING,SENT,FAILED"
+        },
+        {
+            "fieldName": "emailIdentifier",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20180308114122",

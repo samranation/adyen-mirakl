@@ -33,8 +33,8 @@ public class FailSafeEmailAspect {
                 processEmail.setTo(to);
                 processEmail.setSubject(subject);
                 processEmail.setContent(content);
-                processEmail.setIsMultipart(isMultipart);
-                processEmail.setIsHtml(isHtml);
+                processEmail.setMultipart(isMultipart);
+                processEmail.setHtml(isHtml);
                 return processEmail;
             });
 
@@ -60,7 +60,7 @@ public class FailSafeEmailAspect {
         emailError.setError(e.getMessage());
 
         email.setState(EmailState.FAILED);
-        email.addEmailErrors(emailError);
+        email.addEmailError(emailError);
 
         processEmailRepository.saveAndFlush(email);
         emailErrorsRepository.saveAndFlush(emailError);
