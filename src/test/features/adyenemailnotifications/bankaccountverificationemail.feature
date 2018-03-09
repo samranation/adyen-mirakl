@@ -1,6 +1,6 @@
 Feature: Bank Account Verification email notification
 
-    @ADY-23
+    @ADY-23 @exclude
     Scenario: KYCCheckSummary - Bank Statement message is sent to seller and operator (BCC)
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city        | bank name | iban                   | bankOwnerName | lastName |
