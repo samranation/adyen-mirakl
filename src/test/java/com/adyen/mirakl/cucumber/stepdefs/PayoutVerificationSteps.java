@@ -1,18 +1,16 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
-import com.adyen.mirakl.service.PayoutService;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.Then;
 import org.assertj.core.api.Assertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
+import static org.awaitility.Awaitility.await;
 
 public class PayoutVerificationSteps extends StepDefsHelper {
 
@@ -22,20 +20,22 @@ public class PayoutVerificationSteps extends StepDefsHelper {
         String accountHolderCode = cucumberMap.get("accountHolderCode").toString();
 
         waitForNotification();
-        Map<String, Object> adyenNotificationBody = getAdyenNotificationBody(notification, accountHolderCode);
-        DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
-        rows().forEach(row-> {
-            Assertions.assertThat(row.get("currency"))
-                .isEqualTo(content.read("amounts[0].Amount.currency"));
+        await().untilAsserted(()->{
+            Map<String, Object> adyenNotificationBody = getAdyenNotificationBody(notification, accountHolderCode);
+            DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
+            rows().forEach(row-> {
+                Assertions.assertThat(row.get("currency"))
+                    .isEqualTo(content.read("amounts[0].Amount.currency"));
 
-            Assertions.assertThat(row.get("amount"))
-                .isEqualTo(Double.toString(content.read("amounts[0].Amount.value")));
+                Assertions.assertThat(row.get("amount"))
+                    .isEqualTo(Double.toString(content.read("amounts[0].Amount.value")));
 
-            Assertions.assertThat(row.get("iban"))
-                .isEqualTo(content.read("bankAccountDetail.iban"));
+                Assertions.assertThat(row.get("iban"))
+                    .isEqualTo(content.read("bankAccountDetail.iban"));
 
-            Assertions.assertThat(row.get("statusCode"))
-                .isEqualTo(content.read("status.statusCode"));
+                Assertions.assertThat(row.get("statusCode"))
+                    .isEqualTo(content.read("status.statusCode"));
+            });
         });
     }
 

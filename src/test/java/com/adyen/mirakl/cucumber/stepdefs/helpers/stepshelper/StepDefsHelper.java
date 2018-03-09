@@ -19,6 +19,7 @@ import org.assertj.core.api.Assertions;
 import org.awaitility.Duration;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -60,9 +61,21 @@ public class StepDefsHelper {
 
     // use for scenarios which don't require eventType verification
     protected Map<String, Object> getAdyenNotificationBody(String notification, String accountHolderCode) {
-        Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-            .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), accountHolderCode, notification, null);
-        Assertions.assertThat(adyenNotificationBody).withFailMessage("No data in endpoint.").isNotNull();
+        Map<String, Object> adyenNotificationBody = new HashMap<>();
+        await().untilAsserted(() -> {
+            Map<String, Object> notificationBody = restAssuredAdyenApi
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(),
+                    accountHolderCode, notification, null);
+
+            Assertions.assertThat(adyenNotificationBody).withFailMessage("No data in endpoint.").isNotNull();
+            if (notificationBody != null) {
+                adyenNotificationBody.putAll(notificationBody);
+            } else {
+                Assertions.fail(String
+                    .format("Notification: [%s] was not found for accountHolderCode: [%s] in endpoint: [%s]",
+                        notification, accountHolderCode, startUpTestingHook.getBaseRequestBinUrlPath()));
+            }
+        });
         return adyenNotificationBody;
     }
 
