@@ -1,3 +1,4 @@
+@exclude
 Feature: Bank Account Verification email notification
 
     @ADY-23 @exclude

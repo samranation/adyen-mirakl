@@ -1,7 +1,5 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.UpdateAccountHolderRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.mirakl.client.domain.common.error.ErrorBean;
@@ -127,7 +125,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
 
         //update requires bank details for some reason
-        if (!miraklShop.getPaymentInformation().getOwner().isEmpty()) {
+        if (miraklShop.getPaymentInformation() != null) {
             if (miraklShop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
                 MiraklIbanBankAccountInformation ibanBankAccountInformation = (MiraklIbanBankAccountInformation) miraklShop.getPaymentInformation();
                 paymentInformation.setIban(ibanBankAccountInformation.getIban());
@@ -142,7 +140,6 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
             paymentInformation.setOwner(FAKER.name().firstName() + " " + FAKER.name().lastName());
             paymentInformation.setBankName("RBS");
             paymentInformation.setBankCity("PASSED");
-
         }
         return paymentInformation;
     }
