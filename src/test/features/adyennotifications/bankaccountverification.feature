@@ -1,3 +1,4 @@
+@exclude
 Feature: Bank Account Verification
 
     @ADY-13 @ADY-77
@@ -44,6 +45,8 @@ Feature: Bank Account Verification
             | eventType              |
             | ACCOUNT_HOLDER_UPDATED |
         And the previous BankAccountDetail will be removed
+            | eventType                    | reason                |
+            | ACCOUNT_HOLDER_STATUS_CHANGE | Bank account deletion |
 
     @ADY-15 @exclude
     Scenario: Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen

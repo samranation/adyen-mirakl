@@ -1,3 +1,4 @@
+@exclude
 Feature: Seller Account Management
 
     @ADY-6

@@ -5,10 +5,10 @@ import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.DataTable;
-import cucumber.api.PendingException;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -26,8 +26,6 @@ import static org.awaitility.Awaitility.await;
 public class AccountManagementSteps extends StepDefsHelper {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private String notification;
-    private Map<String, Object> mappedAdyenNotificationResponse;
 
     @Then("^we process the data and push to Adyen$")
     public void adyenWillProcessTheData() {
@@ -51,15 +49,17 @@ public class AccountManagementSteps extends StepDefsHelper {
 
     @And("^a notification will be sent pertaining to (.*)$")
     public void aNotificationWillBeSentPertainingToACCOUNT_HOLDER_CREATED(String notification) {
-        this.notification = notification;
         waitForNotification();
         await().untilAsserted(() -> {
             MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-            mappedAdyenNotificationResponse = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), createdShop.getId(), notification, null);
-            Assertions.assertThat(getMappedAdyenNotificationResponse()).isNotNull();
-            Assertions.assertThat(((Map)getMappedAdyenNotificationResponse().get("content")).get("accountHolderCode")).isEqualTo(createdShop.getId());
-            Assertions.assertThat(getMappedAdyenNotificationResponse().get("eventType")).isEqualTo(this.notification);
+            Map<String, Object> mappedAdyenNotificationResponse = getAdyenNotificationBody(notification, createdShop.getId());
+            Assertions.assertThat(mappedAdyenNotificationResponse).isNotNull();
+            DocumentContext notificationResponse = JsonPath.parse(mappedAdyenNotificationResponse);
+            cucumberMap.put("notificationResponse", notificationResponse);
+            Assertions.assertThat(notificationResponse.read("content.accountHolderCode").toString())
+                .isEqualTo(createdShop.getId());
+            Assertions.assertThat(notificationResponse.read("eventType").toString())
+                .isEqualTo(notification);
         });
     }
 
@@ -82,27 +82,26 @@ public class AccountManagementSteps extends StepDefsHelper {
     @And("^the shop data is correctly mapped to the Adyen Account$")
     public void theShopDataIsCorrectlyMappedToTheAdyenAccount() {
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        ImmutableList<String> adyen = assertionHelper.adyenAccountDataBuilder(getMappedAdyenNotificationResponse()).build();
+        DocumentContext notificationResponse = (DocumentContext)cucumberMap.get("notificationResponse");
+        ImmutableList<String> adyen = assertionHelper.adyenAccountDataBuilder(notificationResponse).build();
         ImmutableList<String> mirakl = assertionHelper.miraklShopDataBuilder(createdShop.getContactInformation().getEmail(), createdShop).build();
         Assertions.assertThat(adyen).containsAll(mirakl);
     }
 
     @And("^the account holder is created in Adyen with status Active$")
     public void theAccountHolderIsCreatedInAdyenWithStatusActive()  {
-        Assertions.assertThat(JsonPath.parse(getMappedAdyenNotificationResponse().get("content"))
-            .read("accountHolderStatus.status").toString()).isEqualTo("Active");
+        DocumentContext notificationResponse = (DocumentContext)cucumberMap.get("notificationResponse");
+        Assertions.assertThat(notificationResponse.read("content.accountHolderStatus.status").toString())
+            .isEqualTo("Active");
     }
 
     @And("^the shop data is correctly mapped to the Adyen Business Account$")
     public void theShopDataIsCorrectlyMappedToTheAdyenBusinessAccount()  {
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        ImmutableList<String> adyen = assertionHelper.adyenShareHolderAccountDataBuilder(getMappedAdyenNotificationResponse()).build();
+        DocumentContext notificationResponse = (DocumentContext)cucumberMap.get("notificationResponse");
+        ImmutableList<String> adyen = assertionHelper.adyenShareHolderAccountDataBuilder(notificationResponse).build();
         ImmutableList<String> mirakl = assertionHelper.miraklShopShareHolderDataBuilder(createdShop).build();
         Assertions.assertThat(adyen).containsAll(mirakl);
-    }
-
-    public Map<String, Object> getMappedAdyenNotificationResponse() {
-        return this.mappedAdyenNotificationResponse;
     }
 
     @When("^the Mirakl Shop Details have been updated$")
@@ -119,8 +118,9 @@ public class AccountManagementSteps extends StepDefsHelper {
         waitForNotification();
         await().untilAsserted(() -> {
             MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-            mappedAdyenNotificationResponse = restAssuredAdyenApi.getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), createdShop.getId(), notification, null);
-            Assertions.assertThat(getMappedAdyenNotificationResponse()).isNull();
+            Map<String, Object> response = restAssuredAdyenApi
+                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), createdShop.getId(), notification, null);
+            Assertions.assertThat(response).isNull();
         });
     }
 

@@ -29,10 +29,12 @@ public class CucumberHooks {
         cucumberTable = new HashMap<>();
     }
 
-    // rows() should never be a @Before hook
-    // createNewTableMap() will retrieve the DataTable from cucumber Scenario
-    // we can get the table as shown below with .get("table")
-    // the table can then be converted into a Map
+    /**
+     * rows() method should not be a @Before as createNewTableMap() will initialise
+     * a new HashMap before each scenario.
+     *
+     * @return converted cucumber table map for each cucumber table row
+     */
     public static List<Map<Object, Object>> rows(){
         DataTable table = (DataTable) cucumberTable.get("table");
         return table.getTableConverter().toMaps(table, String.class, String.class);
