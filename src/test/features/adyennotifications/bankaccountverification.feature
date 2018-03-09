@@ -1,3 +1,4 @@
+@exclude
 Feature: Bank Account Verification
 
     @ADY-13 @ADY-77
