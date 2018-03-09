@@ -329,6 +329,7 @@ public class ShopService {
         // check if PaymentInformation is object MiraklIbanBankAccountInformation
         miraklIbanBankAccountInformation.getIban();
         bankAccountDetail.setIban(miraklIbanBankAccountInformation.getIban());
+        bankAccountDetail.setBankCity(miraklIbanBankAccountInformation.getBankCity());
         bankAccountDetail.setBankBicSwift(miraklIbanBankAccountInformation.getBic());
         bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
         bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());

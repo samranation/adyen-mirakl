@@ -164,6 +164,7 @@ public class ShopServiceTest {
         Assertions.assertThat(bankDetails.getOwnerHouseNumberOrName()).isEqualTo("1");
         Assertions.assertThat(bankDetails.getIban()).isEqualTo("GB00IBAN");
         Assertions.assertThat(bankDetails.getCurrencyCode()).isEqualTo("EUR");
+        Assertions.assertThat(bankDetails.getBankCity()).isEqualTo("bankCity");
 
     }
 
@@ -346,6 +347,7 @@ public class ShopServiceTest {
         miraklIbanBankAccountInformation.setIban("GB00IBAN");
         miraklIbanBankAccountInformation.setBic("BIC");
         miraklIbanBankAccountInformation.setOwner("owner");
+        miraklIbanBankAccountInformation.setBankCity("bankCity");
         return miraklIbanBankAccountInformation;
     }
 
