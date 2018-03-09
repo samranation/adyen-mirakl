@@ -52,7 +52,13 @@
 
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here, do not remove-->
         </createTable>
-        
+
+        <createIndex indexName="idx_process_email_identifier"
+                     tableName="process_email"
+                     unique="true">
+            <column name="email_identifier" type="varchar(255)"/>
+        </createIndex>
+
     </changeSet>
     <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here, do not remove-->
 </databaseChangeLog>
