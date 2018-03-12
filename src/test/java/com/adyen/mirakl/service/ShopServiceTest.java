@@ -1,19 +1,16 @@
 package com.adyen.mirakl.service;
 
-import com.adyen.mirakl.startup.MiraklStartupValidator;
-import com.adyen.model.Address;
-import com.adyen.model.Name;
-import com.adyen.model.marketpay.*;
-import com.adyen.service.Account;
-import com.google.common.collect.ImmutableList;
-import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
-import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
-import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
-import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.domain.shop.MiraklShops;
-import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
-import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
-import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import java.io.File;
+import java.net.URL;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,15 +19,43 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import com.adyen.mirakl.startup.MiraklStartupValidator;
+import com.adyen.model.Address;
+import com.adyen.model.Name;
+import com.adyen.model.marketpay.AccountHolderDetails;
+import com.adyen.model.marketpay.BankAccountDetail;
+import com.adyen.model.marketpay.BusinessDetails;
+import com.adyen.model.marketpay.CreateAccountHolderRequest;
+import com.adyen.model.marketpay.DeleteBankAccountRequest;
+import com.adyen.model.marketpay.DocumentDetail;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.IndividualDetails;
+import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
+import com.adyen.model.marketpay.UploadDocumentRequest;
+import com.adyen.service.Account;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
+import com.mirakl.client.mmp.domain.common.FileWrapper;
+import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
+import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
+import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
+import static com.google.common.io.Files.toByteArray;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
@@ -55,7 +80,9 @@ public class ShopServiceTest {
     @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
     @Captor
-    private ArgumentCaptor<GetAccountHolderResponse> getAccountHolderResponseCaptor;
+    private ArgumentCaptor<UploadDocumentRequest> uploadDocumentRequestCaptor;
+    @Captor
+    private ArgumentCaptor<MiraklGetShopDocumentsRequest> miraklGetShopDocumentsRequestArgumentCaptor;
 
 
     @Test
@@ -246,7 +273,6 @@ public class ShopServiceTest {
         });
 
 
-
         // Update with the same IBAN
         GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
 
@@ -307,12 +333,12 @@ public class ShopServiceTest {
         verify(deltaService).createNewShopDelta(any(ZonedDateTime.class));
 
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
-            .stream()
-            .map(CreateAccountHolderRequest::getAccountHolderDetails)
-            .map(AccountHolderDetails::getBusinessDetails)
-            .map(BusinessDetails::getShareholders)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
+                                                                                .stream()
+                                                                                .map(CreateAccountHolderRequest::getAccountHolderDetails)
+                                                                                .map(AccountHolderDetails::getBusinessDetails)
+                                                                                .map(BusinessDetails::getShareholders)
+                                                                                .flatMap(Collection::stream)
+                                                                                .collect(Collectors.toList());
 
         Set<String> firstNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getFirstName).collect(Collectors.toSet());
         Set<String> lastNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getLastName).collect(Collectors.toSet());
@@ -395,4 +421,7 @@ public class ShopServiceTest {
         when(miraklMarketplacePlatformOperatorApiClientMock.getShops(any())).thenReturn(miraklShops);
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponseMock);
     }
+
+
 }
+
