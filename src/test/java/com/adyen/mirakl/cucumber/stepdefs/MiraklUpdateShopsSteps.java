@@ -61,14 +61,4 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
             miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
         );
     }
-
-    @When("^Invalid data is provided to Mirakl and pushed to Adyen multiple times$")
-    public void invaliddataIsProvidedToAdyenMultipleTimes(DataTable table) {
-        cucumberTable.put("table", table);
-        MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        rows().forEach(row -> {
-            miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row);
-            shopService.retrieveUpdatedShops();
-        });
-    }
 }

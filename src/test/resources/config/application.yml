@@ -190,3 +190,9 @@ miraklConfig:
     createDocDeltaAtStartup: true
 
 mail.max.retries: 10
+
+mailtrapConfig:
+    baseMailTrapUrl: https://heroku.mailtrap.io/api/v1/inboxes/
+    mailTrapInboxId: 343861
+    apiToken: ${MAILTRAP_API_TOKEN}
+
