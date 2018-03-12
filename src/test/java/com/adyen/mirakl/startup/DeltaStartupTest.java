@@ -30,6 +30,7 @@ public class DeltaStartupTest {
     @Test
     public void shouldCreateDeltaIfConfigSaysSo(){
         testObj.setCreateShopDeltaAtStartup(true);
+        testObj.setCreateDocDeltaAtStartup(false);
 
         testObj.onApplicationEvent(eventMock);
 
@@ -40,10 +41,32 @@ public class DeltaStartupTest {
     @Test
     public void shouldNoCreateDeltaIfConfigSaysSo(){
         testObj.setCreateShopDeltaAtStartup(false);
+        testObj.setCreateDocDeltaAtStartup(false);
 
         testObj.onApplicationEvent(eventMock);
 
         verify(deltaService, never()).createNewShopDelta(any(ZonedDateTime.class));
+    }
+
+    @Test
+    public void shouldCreateDocDeltaIfConfigSaysSo(){
+        testObj.setCreateShopDeltaAtStartup(false);
+        testObj.setCreateDocDeltaAtStartup(true);
+
+        testObj.onApplicationEvent(eventMock);
+
+        verify(deltaService).createNewDocumentDelta(any(ZonedDateTime.class));
+    }
+
+
+    @Test
+    public void shouldNoCreateDocDeltaIfConfigSaysSo(){
+        testObj.setCreateShopDeltaAtStartup(false);
+        testObj.setCreateDocDeltaAtStartup(false);
+
+        testObj.onApplicationEvent(eventMock);
+
+        verify(deltaService, never()).createNewDocumentDelta(any(ZonedDateTime.class));
     }
 
 }

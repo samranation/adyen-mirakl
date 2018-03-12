@@ -1,11 +1,37 @@
 package com.adyen.mirakl.service;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Resource;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.adyen.mirakl.service.util.ShopUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.AccountHolderDetails;
+import com.adyen.model.marketpay.BankAccountDetail;
+import com.adyen.model.marketpay.BusinessDetails;
+import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
+import com.adyen.model.marketpay.CreateAccountHolderResponse;
+import com.adyen.model.marketpay.DeleteBankAccountRequest;
+import com.adyen.model.marketpay.DeleteBankAccountResponse;
+import com.adyen.model.marketpay.GetAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.IndividualDetails;
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
+import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
@@ -17,16 +43,6 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import java.time.ZonedDateTime;
-import java.util.*;
 
 @Service
 @Transactional
@@ -77,7 +93,7 @@ public class ShopService {
 
     private void processUpdateAccountHolder(final MiraklShop shop, final GetAccountHolderResponse getAccountHolderResponse) throws Exception {
         Optional<UpdateAccountHolderRequest> updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        if(updateAccountHolderRequest.isPresent()){
+        if (updateAccountHolderRequest.isPresent()) {
             UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest.get());
             log.debug("UpdateAccountHolderResponse: {}", response);
 
@@ -314,7 +330,7 @@ public class ShopService {
     }
 
     private BankAccountDetail createBankAccountDetail(MiraklShop shop) {
-        if(!(shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)){
+        if (! (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
             log.debug("No IBAN bank account details, not creating bank account detail");
             return null;
         }
@@ -398,4 +414,5 @@ public class ShopService {
         }
         return countryCodes;
     }
+
 }

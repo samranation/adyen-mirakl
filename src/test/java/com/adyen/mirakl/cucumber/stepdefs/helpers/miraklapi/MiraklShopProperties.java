@@ -25,7 +25,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     Faker faker = new Faker(new Locale("en-GB"));
 
-    private String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com");
+    private String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailtrap.com");
     private String companyName = faker.company().name();
     private String firstName = faker.name().firstName();
 
@@ -89,7 +89,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
         }
 
         MiraklCreateShopNewUser newUser = new MiraklCreateShopNewUser();
-        String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailinator.com");
+        String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailtrap.com");
         newUser.setEmail(email);
         createShop.setNewUser(newUser);
         createShop.setEmail(email);

@@ -4,7 +4,6 @@ import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import cucumber.api.DataTable;
-import cucumber.api.PendingException;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;

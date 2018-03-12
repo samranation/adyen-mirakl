@@ -7,6 +7,7 @@
     <include file="config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20180220102201_added_entity_AdyenNotification.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20180301162902_added_entity_MiraklDelta.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20180301162902_added_entity_MiraklDocumentDelta.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20180308114122_added_entity_ProcessEmail.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20180308121927_added_entity_EmailErrors.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
