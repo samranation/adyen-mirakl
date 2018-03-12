@@ -1,9 +1,9 @@
 package com.adyen.mirakl.listeners;
 
+import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.mirakl.service.MailService;
 import com.adyen.notification.NotificationHandler;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +40,7 @@ public class AdyenNotificationListenerTest {
     @Mock
     private AdyenNotification adyenNotificationMock;
     @Mock
-    private MailService mailServiceMock;
+    private MailTemplateService mailTemplateServiceMock;
     @Mock
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
     @Mock
@@ -52,7 +52,7 @@ public class AdyenNotificationListenerTest {
 
     @Before
     public void setup(){
-        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailServiceMock, miraklMarketplacePlatformOperatorApiClient);
+        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailTemplateServiceMock, miraklMarketplacePlatformOperatorApiClient);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class AdyenNotificationListenerTest {
 
         final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
         Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("2146");
-        verify(mailServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 

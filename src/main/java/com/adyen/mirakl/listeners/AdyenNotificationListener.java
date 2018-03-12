@@ -1,9 +1,9 @@
 package com.adyen.mirakl.listeners;
 
+import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.mirakl.service.MailService;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.notification.NotificationHandler;
@@ -28,13 +28,13 @@ public class AdyenNotificationListener {
 
     private NotificationHandler notificationHandler;
     private AdyenNotificationRepository adyenNotificationRepository;
-    private MailService mailService;
+    private MailTemplateService mailTemplateService;
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
-    public AdyenNotificationListener(final NotificationHandler notificationHandler, final AdyenNotificationRepository adyenNotificationRepository, final MailService mailService, MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient) {
+    public AdyenNotificationListener(final NotificationHandler notificationHandler, final AdyenNotificationRepository adyenNotificationRepository, final MailTemplateService mailTemplateService, MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient) {
         this.notificationHandler = notificationHandler;
         this.adyenNotificationRepository = adyenNotificationRepository;
-        this.mailService = mailService;
+        this.mailTemplateService = mailTemplateService;
         this.miraklMarketplacePlatformOperatorApiClient = miraklMarketplacePlatformOperatorApiClient;
     }
 
@@ -53,7 +53,7 @@ public class AdyenNotificationListener {
             log.info("Sending bank verification email");
             final String shopId = ((AccountHolderVerificationNotification) genericNotification).getContent().getAccountHolderCode();
             final MiraklShop shop = getShop(shopId);
-            mailService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
         }
     }
 

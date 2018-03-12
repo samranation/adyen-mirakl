@@ -78,8 +78,7 @@ public class MailServiceIntTest {
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         MockitoAnnotations.initMocks(this);
-        mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
-        mailService.setMiraklEnvUrl("miraklEnvUrl");
+        mailService = new MailService(jHipsterProperties, javaMailSender);
     }
 
     //See comments on RetryTemplate
@@ -146,87 +145,6 @@ public class MailServiceIntTest {
         assertThat(message.getContent()).isInstanceOf(Multipart.class);
         assertThat(aos.toString()).isEqualTo("\r\ntestContent");
         assertThat(part.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
-    }
-
-    @Test
-    public void testSendEmailFromTemplate() throws Exception {
-        User user = new User();
-        user.setLogin("john");
-        user.setEmail("john.doe@example.com");
-        user.setLangKey("en");
-        mailService.sendEmailFromTemplate(user, "testEmail", "email.test.title");
-        verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
-        MimeMessage message = (MimeMessage) messageCaptor.getValue();
-        assertThat(message.getSubject()).isEqualTo("test title");
-        assertThat(message.getAllRecipients()[0].toString()).isEqualTo(user.getEmail());
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080, john</html>\n");
-        assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
-    }
-
-    @Test
-    public void testSendEmailFromTemplateNoUser() throws Exception {
-        final URL url = Resources.getResource("miraklRequests/miraklShopsMock.json");
-
-        final CustomObjectMapper objectMapper = new CustomObjectMapper();
-
-        final MiraklShop miraklShop = objectMapper.readValue(url, MiraklShops.class).getShops().iterator().next();
-
-        miraklShop.getContactInformation().getFirstname();
-
-        mailService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.ENGLISH, "testMiraklShopEmail", "email.test.title");
-        verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
-        MimeMessage message = (MimeMessage) messageCaptor.getValue();
-        assertThat(message.getSubject()).isEqualTo("test title");
-        assertThat(message.getAllRecipients()[0].toString()).isEqualTo("adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com");
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData, miraklEnvUrl/mmp/shop/account/shop/5073</html>\n");
-        assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
-    }
-
-    @Test
-    public void testSendActivationEmail() throws Exception {
-        User user = new User();
-        user.setLangKey(Constants.DEFAULT_LANGUAGE);
-        user.setLogin("john");
-        user.setEmail("john.doe@example.com");
-        mailService.sendActivationEmail(user);
-        verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
-        MimeMessage message = (MimeMessage) messageCaptor.getValue();
-        assertThat(message.getAllRecipients()[0].toString()).isEqualTo(user.getEmail());
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isNotEmpty();
-        assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
-    }
-
-    @Test
-    public void testCreationEmail() throws Exception {
-        User user = new User();
-        user.setLangKey(Constants.DEFAULT_LANGUAGE);
-        user.setLogin("john");
-        user.setEmail("john.doe@example.com");
-        mailService.sendCreationEmail(user);
-        verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
-        MimeMessage message = (MimeMessage) messageCaptor.getValue();
-        assertThat(message.getAllRecipients()[0].toString()).isEqualTo(user.getEmail());
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isNotEmpty();
-        assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
-    }
-
-    @Test
-    public void testSendPasswordResetMail() throws Exception {
-        User user = new User();
-        user.setLangKey(Constants.DEFAULT_LANGUAGE);
-        user.setLogin("john");
-        user.setEmail("john.doe@example.com");
-        mailService.sendPasswordResetMail(user);
-        verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
-        MimeMessage message = (MimeMessage) messageCaptor.getValue();
-        assertThat(message.getAllRecipients()[0].toString()).isEqualTo(user.getEmail());
-        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isNotEmpty();
-        assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
     }
 
     @Test
