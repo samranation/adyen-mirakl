@@ -1,3 +1,4 @@
+@cucumber
 Feature: Custom field validation
 
     As an Operator I would like to specify if the Seller is an Individual or a

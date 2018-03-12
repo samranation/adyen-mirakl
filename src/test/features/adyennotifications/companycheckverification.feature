@@ -1,4 +1,4 @@
-@exclude
+@cucumber
 Feature: Company Verification check
 
     @ADY-14 @ADY-84
