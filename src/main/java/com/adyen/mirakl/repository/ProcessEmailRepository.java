@@ -17,8 +17,10 @@ import java.util.Optional;
 @Repository
 public interface ProcessEmailRepository extends JpaRepository<ProcessEmail, Long> {
 
+    @Query("select distinct e from ProcessEmail as e left join fetch e.emailErrors where e.emailIdentifier = ?1")
     Optional<ProcessEmail> findOneByEmailIdentifier(String emailIdentifier);
 
+    @Query("select distinct e from ProcessEmail as e left join fetch e.emailErrors where e.state = ?1")
     List<ProcessEmail> findByState(EmailState emailState);
 
 }

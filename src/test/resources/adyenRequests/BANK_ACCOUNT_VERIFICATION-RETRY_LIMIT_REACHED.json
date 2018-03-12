@@ -1,0 +1,23 @@
+{
+    "eventDate": "2018-03-09T08:21:10+01:00",
+    "eventType": "ACCOUNT_HOLDER_VERIFICATION",
+    "executingUserKey": "Account Holder Update",
+    "live": "false",
+    "pspReference": "8815208551296708",
+    "content": {
+        "accountHolderCode": "2146",
+        "bankAccountUUID": "e2d92677-1472-4e82-b8f5-54137bfd609c",
+        "statusSummary": {
+            "code": 1606,
+            "description": "The maximum amount of retries has been surpassed, please provide a document."
+        },
+        "statusSummaryItems": [{
+            "KYCCheckDataSummaryItem": {
+                "itemCode": 1606,
+                "itemDescription": "The maximum amount of retries has been surpassed, please provide a document."
+            }
+        }],
+        "verificationStatus": "RETRY_LIMIT_REACHED",
+        "verificationType": "BANK_ACCOUNT_VERIFICATION"
+    }
+}

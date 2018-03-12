@@ -1,5 +1,6 @@
 package com.adyen.mirakl.config;
 
+import com.adyen.notification.NotificationHandler;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -80,5 +81,10 @@ public class AdyenConfiguration {
     @Bean
     public Fund createFundService() {
         return new Fund(adyenClient());
+    }
+
+    @Bean
+    public NotificationHandler notificationHandler(){
+        return new NotificationHandler();
     }
 }

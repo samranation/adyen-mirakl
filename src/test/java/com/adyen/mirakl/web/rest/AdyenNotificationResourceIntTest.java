@@ -9,6 +9,7 @@ import com.google.common.io.Resources;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +26,8 @@ import java.util.List;
 
 import static com.adyen.mirakl.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +44,6 @@ public class AdyenNotificationResourceIntTest {
     private AdyenNotificationRepository adyenNotificationRepository;
 
     @Autowired
-    private ApplicationEventPublisher publisher;
-
-    @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Autowired
@@ -52,12 +52,15 @@ public class AdyenNotificationResourceIntTest {
     @Autowired
     private ExceptionTranslator exceptionTranslator;
 
+    @Mock
+    private ApplicationEventPublisher publisherMock;
+
     private MockMvc restAdyenNotificationMockMvc;
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final AdyenNotificationResource adyenNotificationResource = new AdyenNotificationResource(adyenNotificationRepository, publisher);
+        final AdyenNotificationResource adyenNotificationResource = new AdyenNotificationResource(adyenNotificationRepository, publisherMock);
         this.restAdyenNotificationMockMvc = MockMvcBuilders.standaloneSetup(adyenNotificationResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -85,6 +88,8 @@ public class AdyenNotificationResourceIntTest {
         AdyenNotification testAdyenNotification = adyenNotificationList.get(adyenNotificationList.size() - 1);
         assertThat(testAdyenNotification.getRawAdyenNotification()).isEqualTo(adyenRequestJson);
         assertThat(testAdyenNotification.isProcessed()).isFalse();
+
+        verify(publisherMock).publishEvent(any());
     }
 
     @Test
