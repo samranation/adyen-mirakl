@@ -1,9 +1,9 @@
 package com.adyen.mirakl.repository;
 
-import com.adyen.mirakl.domain.MiraklDocumentDelta;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import org.springframework.data.jpa.repository.*;
+import com.adyen.mirakl.domain.MiraklDocumentDelta;
 
 
 /**
@@ -13,4 +13,5 @@ import org.springframework.data.jpa.repository.*;
 @Repository
 public interface MiraklDocumentDeltaRepository extends JpaRepository<MiraklDocumentDelta, Long> {
 
+    Optional<MiraklDocumentDelta> findFirstByOrderByIdDesc();
 }

@@ -113,6 +113,7 @@ jhipster:
 
 application:
     shopUpdaterCron: "0 */5 * * * ?"
+    docsUpdaterCron: "0 */5 * * * ?"
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
 
@@ -171,5 +172,6 @@ shopService:
 
 miraklConfig:
     createShopDeltaAtStartup: true
+    createDocDeltaAtStartup: true
 
 mail.max.retries: 10

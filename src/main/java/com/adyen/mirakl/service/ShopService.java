@@ -3,7 +3,6 @@ package com.adyen.mirakl.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -16,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
 import com.adyen.mirakl.service.util.ShopUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
@@ -29,29 +27,22 @@ import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.model.marketpay.CreateAccountHolderResponse;
 import com.adyen.model.marketpay.DeleteBankAccountRequest;
 import com.adyen.model.marketpay.DeleteBankAccountResponse;
-import com.adyen.model.marketpay.DocumentDetail;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.IndividualDetails;
 import com.adyen.model.marketpay.UpdateAccountHolderRequest;
 import com.adyen.model.marketpay.UpdateAccountHolderResponse;
-import com.adyen.model.marketpay.UploadDocumentRequest;
-import com.adyen.model.marketpay.UploadDocumentResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
-import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
-import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsRequest;
-import static com.google.common.io.Files.toByteArray;
 
 @Service
 @Transactional
@@ -422,89 +413,6 @@ public class ShopService {
             countryCodes.put(locale.getISO3Country(), locale.getCountry());
         }
         return countryCodes;
-    }
-
-    /**
-     * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
-     */
-    public void retrieveBankproofAndUpload() {
-        List<MiraklShopDocument> miraklShopDocumentList = retrieveUpdatedDocs();
-        for (MiraklShopDocument document : miraklShopDocumentList) {
-            if (document.getTypeCode().equals("adyen-bankproof")) {
-                FileWrapper fileWrapper = downloadSelectedDocument(document);
-                try {
-                    uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT, fileWrapper, document.getShopId());
-                } catch (ApiException e) {
-                    log.error("MarketPay Api Exception: {}", e.getError(), e);
-                } catch (Exception e) {
-                    log.error("Exception: {}", e.getMessage(), e);
-                }
-            }
-        }
-    }
-
-    /**
-     * Retrieve documents from Mirakl(S30)
-     */
-    private List<MiraklShopDocument> retrieveUpdatedDocs() {
-        //To replace with MiraklGetShopDocumentsRequest when fixed
-        GetShopDocumentsRequest request = new GetShopDocumentsRequest();
-        request.setUpdatedSince(deltaService.getShopDelta());
-        return miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
-    }
-
-    /**
-     * Download one document from Mirakl(S31), it will always be a single document, this prevents mirakl from returning a zip file, which is not supported on Adyen
-     */
-    private FileWrapper downloadSelectedDocument(MiraklShopDocument document) {
-        MiraklDownloadShopsDocumentsRequest request = new MiraklDownloadShopsDocumentsRequest();
-        ArrayList<String> documentIds = new ArrayList();
-        documentIds.add(document.getId());
-        request.setDocumentIds(documentIds);
-        FileWrapper fileWrapper = miraklMarketplacePlatformOperatorApiClient.downloadShopsDocuments(request);
-        return fileWrapper;
-    }
-
-    /**
-     * Encode document retrieved from Mirakl in Base64 and push it to Adyen, if the document type is BANK_STATEMENT/adyen-bankproof, a bank account is needed
-     */
-    private void uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum documentType, FileWrapper fileWrapper, String shopId) throws Exception {
-        UploadDocumentRequest request = new UploadDocumentRequest();
-        request.setAccountHolderCode(shopId);
-
-        //Encode file Base64
-        byte[] bytes = toByteArray(fileWrapper.getFile());
-        Base64.Encoder encoder = Base64.getEncoder();
-        String encoded = encoder.encodeToString(bytes);
-        request.setDocumentContent(encoded);
-        //If document is a bank statement, the bankaccountUUID is required
-        if (documentType.equals(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT)) {
-            String UUID = retrieveBankAccountUUID(shopId);
-            if (UUID != null && ! UUID.isEmpty()) {
-                request.setBankAccountUUID(UUID);
-            } else {
-                throw new IllegalStateException("No bank accounts are associated with this shop, a bank account is needed to upload a bank statement");
-            }
-        }
-        DocumentDetail documentDetail = new DocumentDetail();
-        documentDetail.setFilename(fileWrapper.getFilename());
-        documentDetail.setDocumentType(documentType);
-        request.setDocumentDetail(documentDetail);
-        UploadDocumentResponse response = adyenAccountService.uploadDocument(request);
-        log.debug("UploadDocumentResponse: ", response);
-    }
-
-    /**
-     * Call to Adyen to retrieve the (first)bankaccountUUID
-     */
-    private String retrieveBankAccountUUID(String shopID) throws Exception {
-        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
-        getAccountHolderRequest.setAccountHolderCode(shopID);
-        GetAccountHolderResponse getAccountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
-        if (! getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().isEmpty()) {
-            return getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).getBankAccountUUID();
-        }
-        return null;
     }
 
 }

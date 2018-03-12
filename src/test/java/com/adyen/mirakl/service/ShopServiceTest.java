@@ -422,49 +422,6 @@ public class ShopServiceTest {
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponseMock);
     }
 
-    @Test
-    public void testRetrieveBankproofAndUpload() throws Exception {
-        ArrayList<MiraklShop> miraklShopList = new ArrayList();
-        MiraklShop miraklShop = new MiraklShop();
-        miraklShop.setId("1234");
-        miraklShopList.add(miraklShop);
-
-        FileWrapper fileWrapper = mock(FileWrapper.class);
-        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
-        File file = new File(url.getPath());
-
-        ArrayList<MiraklShopDocument> miraklShopDocumentList = new ArrayList();
-        MiraklShopDocument fakeDocument = new MiraklShopDocument();
-        fakeDocument.setFileName(file.getName());
-        fakeDocument.setTypeCode("adyen-bankproof");
-        fakeDocument.setShopId("1234");
-        miraklShopDocumentList.add(fakeDocument);
-
-        GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
-        BankAccountDetail bankAccountDetail = new BankAccountDetail();
-        bankAccountDetail.setIban("ibansomething");
-        bankAccountDetail.setBankAccountUUID("uuid");
-        AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
-        accountHolderDetails.addBankAccountDetail(bankAccountDetail);
-        getAccountHolderResponse.setAccountHolderDetails(accountHolderDetails);
-
-        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(miraklShopDocumentList);
-        when(miraklMarketplacePlatformOperatorApiClientMock.downloadShopsDocuments(any())).thenReturn(fileWrapper);
-        when(fileWrapper.getFile()).thenReturn(file);
-        when(fileWrapper.getFilename()).thenReturn(file.getName());
-        when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponse);
-        when(adyenAccountServiceMock.uploadDocument(uploadDocumentRequestCaptor.capture())).thenReturn(null);
-
-        shopService.retrieveBankproofAndUpload();
-
-        UploadDocumentRequest uploadDocumentRequest = uploadDocumentRequestCaptor.getValue();
-        assertEquals("1234", uploadDocumentRequest.getAccountHolderCode());
-        assertEquals("uuid", uploadDocumentRequest.getBankAccountUUID());
-        assertEquals(file.getName(), uploadDocumentRequest.getDocumentDetail().getFilename());
-        assertEquals(Base64.getEncoder().encodeToString(toByteArray(file)), uploadDocumentRequest.getDocumentContent());
-        assertEquals(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT, uploadDocumentRequest.getDocumentDetail().getDocumentType());
-
-    }
 
 }
 
