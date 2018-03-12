@@ -2,6 +2,7 @@ package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.domain.User;
 import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import io.github.jhipster.config.JHipsterProperties;
 import org.apache.commons.lang3.CharEncoding;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import java.util.Locale;
 @Service
 public class MailService {
 
+    private static final String MIRAKL_SHOP = "miraklShop";
     private final Logger log = LoggerFactory.getLogger(MailService.class);
 
     private static final String USER = "user";
@@ -82,13 +84,13 @@ public class MailService {
     }
 
     @Async
-    public void sendEmailFromTemplateNoUser(Locale locale, String to, String templateName, String titleKey) {
+    public void sendMiraklShopEmailFromTemplate(MiraklShop miraklShop, Locale locale, String templateName, String titleKey) {
         Context context = new Context(locale);
+        context.setVariable(MIRAKL_SHOP, miraklShop);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, locale);
-        sendEmail(to, subject, content, false, true);
-
+        sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
     @Async

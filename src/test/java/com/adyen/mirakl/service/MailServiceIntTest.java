@@ -4,6 +4,10 @@ import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.domain.User;
 import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
+import com.google.common.io.Resources;
+import com.mirakl.client.core.internal.mapper.CustomObjectMapper;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import io.github.jhipster.config.JHipsterProperties;
 import org.junit.After;
 import org.junit.Before;
@@ -11,7 +15,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -29,6 +35,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.ByteArrayOutputStream;
+import java.net.URL;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -158,13 +165,21 @@ public class MailServiceIntTest {
 
     @Test
     public void testSendEmailFromTemplateNoUser() throws Exception {
-        mailService.sendEmailFromTemplateNoUser(Locale.ENGLISH, "toEmail", "testEmailNoUser", "email.test.title");
+        final URL url = Resources.getResource("miraklRequests/miraklShopsMock.json");
+
+        final CustomObjectMapper objectMapper = new CustomObjectMapper();
+
+        final MiraklShop miraklShop = objectMapper.readValue(url, MiraklShops.class).getShops().iterator().next();
+
+        miraklShop.getContactInformation().getFirstname();
+
+        mailService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.ENGLISH, "testMiraklShopEmail", "email.test.title");
         verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
         MimeMessage message = (MimeMessage) messageCaptor.getValue();
         assertThat(message.getSubject()).isEqualTo("test title");
-        assertThat(message.getAllRecipients()[0].toString()).isEqualTo("toEmail");
+        assertThat(message.getAllRecipients()[0].toString()).isEqualTo("adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com");
         assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080</html>\n");
+        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData</html>\n");
         assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
     }
 

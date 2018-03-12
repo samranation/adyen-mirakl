@@ -6,10 +6,18 @@ import com.adyen.mirakl.repository.AdyenNotificationRepository;
 import com.adyen.mirakl.service.MailService;
 import com.adyen.notification.NotificationHandler;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -33,24 +41,37 @@ public class AdyenNotificationListenerTest {
     private AdyenNotification adyenNotificationMock;
     @Mock
     private MailService mailServiceMock;
+    @Mock
+    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
+    @Mock
+    private MiraklShop miraklShopMock;
+    @Mock
+    private MiraklShops miraklShopsMock;
+    @Captor
+    private ArgumentCaptor<MiraklGetShopsRequest> miraklShopsRequestCaptor;
 
     @Before
     public void setup(){
-        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailServiceMock);
+        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailServiceMock, miraklMarketplacePlatformOperatorApiClient);
     }
 
     @Test
-    public void doThing() throws IOException {
+    public void sendEmail() throws IOException {
         URL url = Resources.getResource("adyenRequests/adyenRequestExample.json");
         final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
 
         when(eventMock.getDbId()).thenReturn(1L);
         when(adyenNotificationRepositoryMock.findOneById(1L)).thenReturn(adyenNotificationMock);
         when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
 
         adyenNotificationListener.handleContextRefresh(eventMock);
 
-        verify(mailServiceMock).sendEmailFromTemplateNoUser(Locale.ENGLISH, "todoFindOutEmail", "bankAccountVerificationEmail", "email.bank.verification.title");
+        final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("2146");
+        verify(mailServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
 

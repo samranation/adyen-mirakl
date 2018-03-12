@@ -7,12 +7,18 @@ import com.adyen.mirakl.service.MailService;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.notification.NotificationHandler;
+import com.google.common.collect.ImmutableSet;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import java.util.List;
 import java.util.Locale;
 
 @Component
@@ -23,30 +29,42 @@ public class AdyenNotificationListener {
     private NotificationHandler notificationHandler;
     private AdyenNotificationRepository adyenNotificationRepository;
     private MailService mailService;
+    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
-    public AdyenNotificationListener(final NotificationHandler notificationHandler, final AdyenNotificationRepository adyenNotificationRepository, final MailService mailService) {
+    public AdyenNotificationListener(final NotificationHandler notificationHandler, final AdyenNotificationRepository adyenNotificationRepository, final MailService mailService, MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient) {
         this.notificationHandler = notificationHandler;
         this.adyenNotificationRepository = adyenNotificationRepository;
         this.mailService = mailService;
+        this.miraklMarketplacePlatformOperatorApiClient = miraklMarketplacePlatformOperatorApiClient;
     }
 
     @Async
     @EventListener
     public void handleContextRefresh(AdyenNotifcationEvent event) {
         log.info(String.format("Received notification DB id: [%d]", event.getDbId()));
-
         final AdyenNotification notification = adyenNotificationRepository.findOneById(event.getDbId());
-
         final GenericNotification genericNotification = notificationHandler.handleMarketpayNotificationJson(notification.getRawAdyenNotification());
-
         processNotification(genericNotification);
+        adyenNotificationRepository.delete(event.getDbId());
     }
 
     private void processNotification(final GenericNotification genericNotification) {
         if(genericNotification instanceof AccountHolderVerificationNotification){
             log.info("Sending bank verification email");
-            mailService.sendEmailFromTemplateNoUser(Locale.ENGLISH, "todoFindOutEmail", "bankAccountVerificationEmail", "email.bank.verification.title");
+            final String shopId = ((AccountHolderVerificationNotification) genericNotification).getContent().getAccountHolderCode();
+            final MiraklShop shop = getShop(shopId);
+            mailService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
         }
+    }
+
+    private MiraklShop getShop(String shopId){
+        final MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
+        miraklGetShopsRequest.setShopIds(ImmutableSet.of(shopId));
+        final List<MiraklShop> shops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest).getShops();
+        if(CollectionUtils.isEmpty(shops)){
+            throw new IllegalStateException("Cannot find shop: "+shopId);
+        }
+        return shops.iterator().next();
     }
 
 }
