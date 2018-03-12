@@ -13,4 +13,6 @@ import org.springframework.data.jpa.repository.*;
 @Repository
 public interface AdyenNotificationRepository extends JpaRepository<AdyenNotification, Long> {
 
+    AdyenNotification findOneById(Long id);
+
 }

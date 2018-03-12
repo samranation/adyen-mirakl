@@ -29,6 +29,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.ByteArrayOutputStream;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -152,6 +153,18 @@ public class MailServiceIntTest {
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo(user.getEmail());
         assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
         assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080, john</html>\n");
+        assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
+    }
+
+    @Test
+    public void testSendEmailFromTemplateNoUser() throws Exception {
+        mailService.sendEmailFromTemplateNoUser(Locale.ENGLISH, "toEmail", "testEmailNoUser", "email.test.title");
+        verify(javaMailSender).send((MimeMessage) messageCaptor.capture());
+        MimeMessage message = (MimeMessage) messageCaptor.getValue();
+        assertThat(message.getSubject()).isEqualTo("test title");
+        assertThat(message.getAllRecipients()[0].toString()).isEqualTo("toEmail");
+        assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
+        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080</html>\n");
         assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
     }
 
