@@ -1,6 +1,7 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
 import com.adyen.mirakl.config.AdyenConfiguration;
+import com.adyen.mirakl.config.MailTrapConfiguration;
 import com.adyen.mirakl.config.ShopConfiguration;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
@@ -51,6 +52,8 @@ public class StepDefsHelper {
     protected AdyenConfiguration adyenConfiguration;
     @Resource
     protected MiraklUpdateShopApi miraklUpdateShopApi;
+    @Resource
+    protected MailTrapConfiguration mailTrapConfiguration;
 
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
