@@ -8,7 +8,6 @@ Feature: Create payout shops which will be KYC'ed for seller payout tests
 #    PayoutShop01 will have a corresponding PayoutVoucher file in resources directory
 #    PayoutShop02 will be used for failure scenario see ADY-9 failure scenario
 
-    @exclude
     Scenario Outline: Create shops which are KYC for Payout
         Given a shop has been created in Mirakl for an Individual with mandatory KYC data
             | companyName   | city   | bank name   | iban   | bankOwnerName   | lastName   |

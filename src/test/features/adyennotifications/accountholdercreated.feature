@@ -1,4 +1,4 @@
-@exclude
+@cucumber
 Feature: Seller Account Management
 
     @ADY-6

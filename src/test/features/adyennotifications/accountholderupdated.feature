@@ -1,4 +1,4 @@
-@exclude
+@cucumber
 Feature: Account Holder Updated notification upon Mirakl shop changes
 
     @ADY-11 @ADY-71 @ADY-83 @bug
