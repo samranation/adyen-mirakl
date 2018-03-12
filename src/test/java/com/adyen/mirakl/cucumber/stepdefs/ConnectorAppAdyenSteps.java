@@ -2,8 +2,6 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.TestUtil;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.When;
@@ -16,7 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-public class ConnectorAppAdyenSteps extends StepDefs{
+public class ConnectorAppAdyenSteps extends StepDefs {
 
     @Autowired
     private AdyenNotificationResource adyenNotificationResource;
@@ -29,15 +27,12 @@ public class ConnectorAppAdyenSteps extends StepDefs{
     }
 
     @When("^a RETRY_LIMIT_REACHED verificationStatus has been sent to the Connector$")
-    public void aRETRY_LIMIT_REACHEDVerificationStatusHasBeenSentToTheConnector(String notification) throws Throwable {
+    public void aRETRY_LIMIT_REACHEDVerificationStatusHasBeenSentToTheConnector(String notificationTemplate) throws Throwable {
         MiraklShop createdShop = (MiraklShop)cucumberMap.get("createdShop");
-        DocumentContext updatedNotification = JsonPath.parse(notification)
-            .set("accountHolderCode", createdShop.getId());
-
-        // Create the AdyenNotification
+        String notification = notificationTemplate.replaceAll("\\$shopId\\$", createdShop.getId());
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(updatedNotification.toString())))
-            .andExpect(status().isCreated());
+            .content(notification))
+            .andExpect(status().is(201));
     }
 }
