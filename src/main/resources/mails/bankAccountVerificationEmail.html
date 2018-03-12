@@ -1,18 +1,24 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="|Account verification|"></title>
+    <title th:text="'Account verification'"></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="shortcut icon" th:href="@{|${baseUrl}/favicon.ico|}" />
 </head>
 <body>
-<p th:text="|Dear ${miraklShop.contactInformation.civility} ${miraklShop.contactInformation.firstname} ${miraklShop.contactInformation.lastname},|">
+<p th:text="|Hello ${miraklShop.contactInformation.civility} ${miraklShop.contactInformation.firstname} ${miraklShop.contactInformation.lastname},|">
 </p>
-<p th:text="|Please following the link below to add your documents:|">
+<p th:text="'In order to complete your bank account setup, we will need you to upload a bank proof (such as a bank statement) to validate your accounts.'">
+</p>
+<p th:text="'Please click on the following link:'">
 </p>
 <p>
     <a th:href="|${miraklCallBackShopUrl}|"
        th:text="|${miraklCallBackShopUrl}|"></a>
+</p>
+<p th:text="'Valid formats accepted by our Processor are (pdf/jpeg etc)'">
+</p>
+<p th:text="'Kind Regards'">
 </p>
 </body>
 </html>

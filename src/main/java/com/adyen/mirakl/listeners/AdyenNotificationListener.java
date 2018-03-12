@@ -4,6 +4,7 @@ import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.model.marketpay.KYCCheckStatusData;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.notification.NotificationHandler;
@@ -50,8 +51,16 @@ public class AdyenNotificationListener {
 
     private void processNotification(final GenericNotification genericNotification) {
         if(genericNotification instanceof AccountHolderVerificationNotification){
-            log.info("Sending bank verification email");
-            final String shopId = ((AccountHolderVerificationNotification) genericNotification).getContent().getAccountHolderCode();
+            processAccountholderVerificationNotification((AccountHolderVerificationNotification) genericNotification);
+        }
+    }
+
+    private void processAccountholderVerificationNotification(final AccountHolderVerificationNotification genericNotification) {
+        final KYCCheckStatusData.CheckStatusEnum verificationStatus = genericNotification.getContent().getVerificationStatus();
+        final KYCCheckStatusData.CheckTypeEnum verificationType = genericNotification.getContent().getVerificationType();
+        if(KYCCheckStatusData.CheckStatusEnum.RETRY_LIMIT_REACHED.equals(verificationStatus) &&
+            KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)){
+            final String shopId = genericNotification.getContent().getAccountHolderCode();
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
         }

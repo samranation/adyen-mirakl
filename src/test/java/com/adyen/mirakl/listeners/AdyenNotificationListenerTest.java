@@ -57,7 +57,7 @@ public class AdyenNotificationListenerTest {
 
     @Test
     public void sendEmail() throws IOException {
-        URL url = Resources.getResource("adyenRequests/adyenRequestExample.json");
+        URL url = Resources.getResource("adyenRequests/BANK_ACCOUNT_VERIFICATION-RETRY_LIMIT_REACHED.json");
         final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
 
         when(eventMock.getDbId()).thenReturn(1L);
