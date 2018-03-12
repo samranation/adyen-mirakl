@@ -1,0 +1,131 @@
+{
+    "shops": [
+        {
+            "approval_delay": null,
+            "approval_rate": null,
+            "banner": null,
+            "billing_info": {
+                "bank_city": "PASSED",
+                "bank_name": "RBS",
+                "bank_street": null,
+                "bic": "GCBHNCPO",
+                "iban": "GB26TEST40051512347366",
+                "owner": "Kelly Koelpin",
+                "zip_code": null
+            },
+            "channels": [
+                "INIT"
+            ],
+            "closed_from": null,
+            "closed_to": null,
+            "contact_informations": {
+                "city": "New Sherman",
+                "civility": "Mr",
+                "country": "GBR",
+                "email": "adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com",
+                "fax": null,
+                "firstname": "Ford",
+                "lastname": "TestData",
+                "phone": null,
+                "phone_secondary": null,
+                "state": null,
+                "street1": "640 Brown Crescent",
+                "street2": null,
+                "web_site": null,
+                "zip_code": "GO4 9RA"
+            },
+            "currency_iso_code": "EUR",
+            "date_created": "2018-03-12T10:30:02Z",
+            "description": null,
+            "evaluations_count": 0,
+            "free_shipping": false,
+            "grade": null,
+            "immunity_date": null,
+            "is_professional": true,
+            "last_updated_date": "2018-03-12T10:30:04Z",
+            "logo": null,
+            "offers_count": 0,
+            "operator_internal_id": null,
+            "order_messages_response_delay": null,
+            "orders_count": 0,
+            "payment_details": {
+                "paid_balance": 0,
+                "pay_subscription": true,
+                "payable_balance": 0,
+                "payment_blocked": false,
+                "pending_balance": 0,
+                "subscription_free_from": null,
+                "subscription_free_to": null
+            },
+            "payment_info": {
+                "@type": "IBAN",
+                "bank_city": "PASSED",
+                "bank_name": "RBS",
+                "bic": "GCBHNCPO",
+                "iban": "GB26TEST40051512347366",
+                "owner": "Kelly Koelpin"
+            },
+            "premium": false,
+            "premium_state": "DEFAULT",
+            "pro_details": {
+                "VAT_number": null,
+                "corporate_name": "Hane, Hane and Hane",
+                "identification_number": "cf4aeaac-4944-4c8b-bb3a-c838ebf27487",
+                "tax_identification_number": null
+            },
+            "return_policy": null,
+            "shipping_country": null,
+            "shipping_types": [
+                "EXPRESS",
+                "STANDARD"
+            ],
+            "shipping_zones": [
+                "EUROPE"
+            ],
+            "shippings": [
+                {
+                    "additional_fields": [],
+                    "shipping_free_amount": null,
+                    "shipping_type_code": "EXPRESS",
+                    "shipping_type_label": "Express",
+                    "shipping_zone_code": "EUROPE",
+                    "shipping_zone_label": "Europe"
+                },
+                {
+                    "additional_fields": [],
+                    "shipping_free_amount": null,
+                    "shipping_type_code": "STANDARD",
+                    "shipping_type_label": "Standard",
+                    "shipping_zone_code": "EUROPE",
+                    "shipping_zone_label": "Europe"
+                }
+            ],
+            "shop_additional_fields": [
+                {
+                    "code": "adyen-individual-dob",
+                    "type": "DATE",
+                    "value": "1989-03-15T23:00:00Z"
+                },
+                {
+                    "code": "adyen-individual-housenumber",
+                    "type": "STRING",
+                    "value": "24"
+                },
+                {
+                    "code": "adyen-individual-idnumber",
+                    "type": "STRING",
+                    "value": "01234567890"
+                },
+                {
+                    "code": "adyen-legal-entity-type",
+                    "type": "LIST",
+                    "value": "Individual"
+                }
+            ],
+            "shop_id": 5073,
+            "shop_name": "hane, hane and hane-xyk0oxzf",
+            "shop_state": "OPEN"
+        }
+    ],
+    "total_count": 1
+}

@@ -17,6 +17,6 @@ public class MiraklOperatorConfiguration extends MiraklProperties {
 
     @Bean
     public MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient(){
-        return new MiraklMarketplacePlatformOperatorApiClient(getMiraklEnvUrl(), miraklOperatorCredential());
+        return new MiraklMarketplacePlatformOperatorApiClient(getMiraklEnvUrl() + "/api", miraklOperatorCredential());
     }
 }
