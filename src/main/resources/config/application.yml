@@ -48,6 +48,12 @@ spring:
             enabled: false
     thymeleaf:
         mode: XHTML
+    mail:
+        host: ${MAIL_HOST}
+        port: ${MAIL_PORT}
+        username: ${MAIL_USER}
+        password: ${MAIL_PASS}
+
 security:
     basic:
         enabled: false
@@ -107,6 +113,8 @@ jhipster:
 
 application:
     shopUpdaterCron: "0 */5 * * * ?"
+    emailRetryCron: "0 */10 * * * ?"
+    removeSentEmailsCron: "0 0 2 * * ?"
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
@@ -163,3 +171,5 @@ shopService:
 
 miraklConfig:
     createShopDeltaAtStartup: true
+
+mail.max.retries: 10

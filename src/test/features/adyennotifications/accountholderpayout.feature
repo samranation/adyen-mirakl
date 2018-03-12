@@ -1,3 +1,4 @@
+@exclude
 Feature: Payout notifications for seller payout
 
     @ADY-9 @ADY-86

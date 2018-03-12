@@ -1,9 +1,8 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.domain.User;
-
+import com.adyen.mirakl.exceptions.UnexpectedMailFailureException;
 import io.github.jhipster.config.JHipsterProperties;
-
 import org.apache.commons.lang3.CharEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ public class MailService {
     private final SpringTemplateEngine templateEngine;
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender,
-            MessageSource messageSource, SpringTemplateEngine templateEngine) {
+                       MessageSource messageSource, SpringTemplateEngine templateEngine) {
 
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
@@ -65,11 +64,8 @@ public class MailService {
             javaMailSender.send(mimeMessage);
             log.debug("Sent email to User '{}'", to);
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.warn("Email could not be sent to user '{}'", to, e);
-            } else {
-                log.warn("Email could not be sent to user '{}': {}", to, e.getMessage());
-            }
+            log.warn("Email could not be sent to user '{}': {}", to, e.getMessage());
+            throw new UnexpectedMailFailureException("Failure to send email", e);
         }
     }
 

@@ -25,22 +25,21 @@ public class AssertionHelper {
         .put("Mrs", "FEMALE")
         .put("Miss", "FEMALE").build();
 
-    public ImmutableList.Builder<String> adyenAccountDataBuilder(Map<String, Object> mappedAdyenNotificationResponse) {
+    public ImmutableList.Builder<String> adyenAccountDataBuilder(DocumentContext notificationResponse) {
         ImmutableList.Builder<String> adyenShopData = new ImmutableList.Builder<>();
-
-        adyenShopData.add(JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("['accountHolderCode']").toString());
-        adyenShopData.add(JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("['accountHolderDetails']['individualDetails']['name']['firstName']").toString());
-        adyenShopData.add(JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("['accountHolderDetails']['individualDetails']['name']['lastName']").toString());
-        adyenShopData.add(JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("['accountHolderDetails']['individualDetails']['name']['gender']").toString());
-        adyenShopData.add(JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("['accountHolderDetails']['email']").toString());
-        adyenShopData.add(JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("['legalEntity']").toString());
+        adyenShopData.add(notificationResponse.read("content.accountHolderCode").toString());
+        adyenShopData.add(notificationResponse.read("content.accountHolderDetails.individualDetails.name.firstName").toString());
+        adyenShopData.add(notificationResponse.read("content.accountHolderDetails.individualDetails.name.lastName").toString());
+        adyenShopData.add(notificationResponse.read("content.accountHolderDetails.individualDetails.name.gender").toString());
+        adyenShopData.add(notificationResponse.read("content.accountHolderDetails.email").toString());
+        adyenShopData.add(notificationResponse.read("content.legalEntity").toString());
         return adyenShopData;
     }
 
-    public ImmutableList.Builder<String> adyenShareHolderAccountDataBuilder(Map<String, Object> mappedAdyenNotificationResponse) {
+    public ImmutableList.Builder<String> adyenShareHolderAccountDataBuilder(DocumentContext notificationResponse) {
         ImmutableList.Builder<String> adyenShopData = new ImmutableList.Builder<>();
 
-        JSONArray uboArray = JsonPath.parse(mappedAdyenNotificationResponse.get("content")).read("accountHolderDetails.businessDetails.shareholders[*]");
+        JSONArray uboArray = notificationResponse.read("content.accountHolderDetails.businessDetails.shareholders[*]");
 
         for (Object ubo : uboArray) {
             adyenShopData.add(JsonPath.parse(ubo).read("ShareholderContact.name.firstName").toString());

@@ -11,6 +11,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
     private String shopUpdaterCron;
+    private String emailRetryCron;
+    private String removeSentEmailsCron;
 
     public String getShopUpdaterCron() {
         return shopUpdaterCron;
@@ -18,5 +20,21 @@ public class ApplicationProperties {
 
     public void setShopUpdaterCron(final String shopUpdaterCron) {
         this.shopUpdaterCron = shopUpdaterCron;
+    }
+
+    public String getEmailRetryCron() {
+        return emailRetryCron;
+    }
+
+    public void setEmailRetryCron(final String emailRetryCron) {
+        this.emailRetryCron = emailRetryCron;
+    }
+
+    public String getRemoveSentEmailsCron() {
+        return removeSentEmailsCron;
+    }
+
+    public void setRemoveSentEmailsCron(final String removeSentEmailsCron) {
+        this.removeSentEmailsCron = removeSentEmailsCron;
     }
 }
