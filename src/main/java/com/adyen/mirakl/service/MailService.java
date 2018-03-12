@@ -7,6 +7,7 @@ import io.github.jhipster.config.JHipsterProperties;
 import org.apache.commons.lang3.CharEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,6 +28,7 @@ import java.util.Locale;
 public class MailService {
 
     private static final String MIRAKL_SHOP = "miraklShop";
+    private static final String MIRAKL_CALL_BACK_SHOP_URL = "miraklCallBackShopUrl";
     private final Logger log = LoggerFactory.getLogger(MailService.class);
 
     private static final String USER = "user";
@@ -40,6 +42,9 @@ public class MailService {
     private final MessageSource messageSource;
 
     private final SpringTemplateEngine templateEngine;
+
+    @Value("${miraklOperator.miraklEnvUrl}")
+    private String miraklEnvUrl;
 
     public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender,
                        MessageSource messageSource, SpringTemplateEngine templateEngine) {
@@ -87,6 +92,7 @@ public class MailService {
     public void sendMiraklShopEmailFromTemplate(MiraklShop miraklShop, Locale locale, String templateName, String titleKey) {
         Context context = new Context(locale);
         context.setVariable(MIRAKL_SHOP, miraklShop);
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId()));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, locale);
@@ -109,5 +115,13 @@ public class MailService {
     public void sendPasswordResetMail(User user) {
         log.debug("Sending password reset email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "passwordResetEmail", "email.reset.title");
+    }
+
+    public String getMiraklEnvUrl() {
+        return miraklEnvUrl;
+    }
+
+    public void setMiraklEnvUrl(final String miraklEnvUrl) {
+        this.miraklEnvUrl = miraklEnvUrl;
     }
 }

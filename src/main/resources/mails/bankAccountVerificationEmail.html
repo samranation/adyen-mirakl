@@ -6,7 +6,13 @@
     <link rel="shortcut icon" th:href="@{|${baseUrl}/favicon.ico|}" />
 </head>
 <body>
-<p th:text="|Dear ${miraklShop.contactInformation.civility} ${miraklShop.contactInformation.firstname} ${miraklShop.contactInformation.lastname}|">
+<p th:text="|Dear ${miraklShop.contactInformation.civility} ${miraklShop.contactInformation.firstname} ${miraklShop.contactInformation.lastname},|">
+</p>
+<p th:text="|Please following the link below to add your documents:|">
+</p>
+<p>
+    <a th:href="|${miraklCallBackShopUrl}|"
+       th:text="|${miraklCallBackShopUrl}|"></a>
 </p>
 </body>
 </html>

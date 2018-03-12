@@ -79,6 +79,7 @@ public class MailServiceIntTest {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         MockitoAnnotations.initMocks(this);
         mailService = new MailService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
+        mailService.setMiraklEnvUrl("miraklEnvUrl");
     }
 
     //See comments on RetryTemplate
@@ -179,7 +180,7 @@ public class MailServiceIntTest {
         assertThat(message.getSubject()).isEqualTo("test title");
         assertThat(message.getAllRecipients()[0].toString()).isEqualTo("adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com");
         assertThat(message.getFrom()[0].toString()).isEqualTo("test@localhost");
-        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData</html>\n");
+        assertThat(message.getContent().toString()).isEqualTo("<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData, miraklEnvUrl/mmp/shop/account/shop/5073</html>\n");
         assertThat(message.getDataHandler().getContentType()).isEqualTo("text/html;charset=UTF-8");
     }
 

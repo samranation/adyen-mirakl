@@ -17,7 +17,7 @@ public class MiraklFrontConfiguration extends MiraklProperties {
 
     @Bean
     public MiraklMarketplacePlatformFrontApiClient miraklMarketplacePlatformFrontApiClient(){
-        return new MiraklMarketplacePlatformFrontApiClient(getMiraklEnvUrl(), miraklFrontCredential());
+        return new MiraklMarketplacePlatformFrontApiClient(getMiraklEnvUrl() + "/api", miraklFrontCredential());
     }
 
 }
