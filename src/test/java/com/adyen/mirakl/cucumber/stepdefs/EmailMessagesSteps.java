@@ -48,5 +48,7 @@ public class EmailMessagesSteps extends StepDefsHelper {
             .contains(createdShop.getContactInformation().getCivility())
             .contains(createdShop.getContactInformation().getFirstname())
             .contains(createdShop.getContactInformation().getLastname());
+
+        Assertions.assertThat(parsedBody.title()).isEqualTo("Account verification");
     }
 }
