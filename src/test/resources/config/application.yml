@@ -180,7 +180,7 @@ adyenNotificationsConfig:
               includeMode: INCLUDE
 
 requestbin:
-    baseRequestbinUrl: https://damp-headland-48158.herokuapp.com/
+    baseRequestbinUrl: https://adyen-requestbin.herokuapp.com/
 
 shopService:
     maxUbos: 4
