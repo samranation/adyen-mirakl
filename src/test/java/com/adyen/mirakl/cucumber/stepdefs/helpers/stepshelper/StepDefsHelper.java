@@ -39,8 +39,6 @@ public class StepDefsHelper {
     @Resource
     protected AssertionHelper assertionHelper;
     @Resource
-    protected MiraklUpdateShopApi miraklUpdateShopsApi;
-    @Resource
     protected ShopService shopService;
     @Resource
     protected StartUpTestingHook startUpCucumberHook;
@@ -63,7 +61,7 @@ public class StepDefsHelper {
     }
 
     // use for scenarios which don't require eventType verification
-    protected Map<String, Object> getAdyenNotificationBody(String notification, String accountHolderCode) {
+    protected Map<String, Object> retrieveAdyenNotificationBody(String notification, String accountHolderCode) {
         Map<String, Object> adyenNotificationBody = new HashMap<>();
         await().untilAsserted(() -> {
             Map<String, Object> notificationBody = restAssuredAdyenApi

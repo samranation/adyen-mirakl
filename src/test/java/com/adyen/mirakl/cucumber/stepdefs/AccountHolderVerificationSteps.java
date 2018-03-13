@@ -10,7 +10,6 @@ import cucumber.api.java.en.And;
 import cucumber.api.java.en.Then;
 import org.assertj.core.api.Assertions;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +43,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         waitForNotification();
         await().untilAsserted(() -> {
             String eventType = rows().get(0).get("eventType").toString();
-            Map<String, Object> adyenNotificationBody = getAdyenNotificationBody(eventType, createdShop.getId());
+            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(eventType, createdShop.getId());
 
             cucumberMap.put("adyenNotificationBody", adyenNotificationBody);
             List<Map<Object, Object>> bankAccountDetails = JsonPath.parse(adyenNotificationBody
@@ -68,7 +67,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
 
         await().untilAsserted(()->{
-            DocumentContext adyenNotificationBody = JsonPath.parse(getAdyenNotificationBody(eventType, createdShop.getId()));
+            DocumentContext adyenNotificationBody = JsonPath.parse(retrieveAdyenNotificationBody(eventType, createdShop.getId()));
             Assertions.assertThat(adyenNotificationBody.read("content.reason").toString())
                 .isEqualTo(reason);
         });

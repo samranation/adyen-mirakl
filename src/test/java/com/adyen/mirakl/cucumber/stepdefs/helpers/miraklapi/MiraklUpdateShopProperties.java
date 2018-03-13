@@ -15,6 +15,7 @@ import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
+import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.common.document.MiraklUploadDocument;
 import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -24,8 +25,29 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
+
+    protected ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> addMiraklShopUbos(List<Map<Object, Object>> rows){
+
+        ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> builder = ImmutableList.builder();
+        rows.forEach(row -> {
+            if (row.get("maxUbos") != null) {
+                /* adding more ubos to a shop is dictated by the number of UBOs to update (as defined in Cucumber table)
+                 example:- 3 UBOs to add. (4 - 3) + 1 = 2
+                 so the method will start at UBO 2 until 4*/
+                int noOfUbos = Integer.valueOf(row.get("maxUbos").toString());
+                for (noOfUbos = (4 - noOfUbos) + 1; noOfUbos <= 4; noOfUbos++) {
+                    builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-civility", "Mr"));
+                    builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-firstname", FAKER.name().firstName()));
+                    builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-lastname", FAKER.name().lastName()));
+                    builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-email", "adyen-mirakl@"+UUID.randomUUID()+"@mailtrap.com"));
+                }
+            }
+        });
+        return builder;
+    }
 
     protected MiraklProfessionalInformation updateMiraklShopTaxId(MiraklShop miraklShop) {
         MiraklProfessionalInformation miraklProfessionalInformation = new MiraklProfessionalInformation();
@@ -144,32 +166,46 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         return paymentInformation;
     }
 
-    protected void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop, Map<String, String> fieldsToUpdate) {
+    protected void populateMiraklAdditionalFields(MiraklUpdateShop miraklUpdateShop, MiraklShop miraklShop,
+                                                  ImmutableList<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate) {
+
         final List<MiraklAdditionalFieldValue> addFields = new LinkedList<>(miraklShop.getAdditionalFieldValues());
+        final ImmutableList.Builder<MiraklRequestAdditionalFieldValue> updatedFields = new ImmutableList.Builder<>();
 
-        for (String fieldCode : fieldsToUpdate.keySet()) {
-            MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue result = addFields.stream()
-                .filter(x -> fieldCode.equals(x.getCode()))
-                .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
-                .map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::cast)
-                .findFirst().orElseThrow(() -> new IllegalStateException("Field: '" + fieldCode + "' was not found."));
+        for (MiraklSimpleRequestAdditionalFieldValue additionalFieldVal : fieldsToUpdate) {
+            Stream<MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue> valueStream = addFields.stream()
+                .filter(x -> additionalFieldVal.getCode().equals(x.getCode()))
+                .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
+                .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast);
 
-            result.setValue(fieldsToUpdate.get(fieldCode));
+            // if fields are present then update them
+            // else create them
+            if (valueStream.findFirst().isPresent()) {
+                valueStream
+                    .findFirst()
+                    .get()
+                    .setValue(additionalFieldVal.getValue());
+            } else {
+                updatedFields.add(additionalFieldVal);
+            }
         }
 
-        final List<MiraklRequestAdditionalFieldValue> updatedAddFields = new LinkedList<>();
+        // update patch
+
+        final List<MiraklRequestAdditionalFieldValue> patchedUpdatedFields = new LinkedList<>();
         for (MiraklAdditionalFieldValue field : addFields) {
             if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) {
-                updatedAddFields.add(new MiraklRequestAdditionalFieldValue.MiraklMultipleRequestAdditionalFieldValue(field.getCode(),
+                patchedUpdatedFields.add(new MiraklRequestAdditionalFieldValue.MiraklMultipleRequestAdditionalFieldValue(field.getCode(),
                     ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithMultipleValues) field).getValues()));
             } else if (field instanceof MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) {
-                updatedAddFields.add(new MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue(field.getCode(),
+                patchedUpdatedFields.add(new MiraklSimpleRequestAdditionalFieldValue(field.getCode(),
                     ((MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue) field).getValue()));
             } else {
                 Assertions.fail("unexpected additional field type {0} ", field.getClass());
             }
         }
-        miraklUpdateShop.setAdditionalFieldValues(updatedAddFields);
+        updatedFields.addAll(patchedUpdatedFields);
+        miraklUpdateShop.setAdditionalFieldValues(updatedFields.build());
     }
 
     protected void throwErrorIfShopFailedToUpdate(MiraklUpdatedShops miraklUpdatedShopsResponse) {
