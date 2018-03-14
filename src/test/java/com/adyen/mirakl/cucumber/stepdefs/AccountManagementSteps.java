@@ -33,6 +33,11 @@ public class AccountManagementSteps extends StepDefsHelper {
         shopService.processUpdatedShops();
     }
 
+    @And("^we process the document data and push to Adyen$")
+    public void weProcessTheDocumentDataAndPushToAdyen() {
+        docService.retrieveBankproofAndUpload();
+    }
+
     @And("^an AccountHolder will be created in Adyen with status Active$")
     public void anAccountHolderWillBeCreatedInAdyenWithStatusActive() throws Throwable {
         GetAccountHolderRequest accountHolderRequest = new GetAccountHolderRequest();

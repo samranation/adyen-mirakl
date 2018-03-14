@@ -7,6 +7,7 @@ import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
+import com.adyen.mirakl.service.DocService;
 import com.adyen.mirakl.service.ShopService;
 import com.adyen.service.Account;
 import com.mirakl.client.mmp.domain.shop.AbstractMiraklShop;
@@ -40,6 +41,8 @@ public class StepDefsHelper {
     protected AssertionHelper assertionHelper;
     @Resource
     protected ShopService shopService;
+    @Resource
+    protected DocService docService;
     @Resource
     protected StartUpTestingHook startUpCucumberHook;
     @Resource
