@@ -13,9 +13,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberTable;
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ConnectorAppSteps extends StepDefs {
@@ -32,8 +32,8 @@ public class ConnectorAppSteps extends StepDefs {
 
     @When("^a payment voucher is sent to the Connector$")
     public void aPaymentVoucherIsSentToAdyen(DataTable table) throws Exception {
-        cucumberTable.put("table", table);
-        String paymentVoucher = rows().get(0).get("paymentVoucher").toString();
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        String paymentVoucher = cucumberTable.get(0).get("paymentVoucher");
         URL url = Resources.getResource("paymentvouchers/"+paymentVoucher);
         final String csvFile = Resources.toString(url, Charsets.UTF_8);
 

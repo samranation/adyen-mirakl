@@ -38,11 +38,11 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @Then("^a new bankAccountDetail will be created for the existing Account Holder$")
     public void aNewBankAccountDetailWillBeCreatedForTheExistingAccountHolder(DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
         waitForNotification();
         await().untilAsserted(() -> {
-            String eventType = rows().get(0).get("eventType").toString();
+            String eventType = cucumberTable.get(0).get("eventType");
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(eventType, createdShop.getId());
 
             cucumberMap.put("adyenNotificationBody", adyenNotificationBody);
@@ -61,9 +61,9 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
 
     @And("^the previous BankAccountDetail will be removed$")
     public void thePreviousBankAccountDetailWillBeRemoved(DataTable table) {
-        cucumberTable.put("table", table);
-        String eventType = rows().get(0).get("eventType").toString();
-        String reason = rows().get(0).get("reason").toString();
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        String eventType = cucumberTable.get(0).get("eventType");
+        String reason = cucumberTable.get(0).get("reason");
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
 
         await().untilAsserted(()->{

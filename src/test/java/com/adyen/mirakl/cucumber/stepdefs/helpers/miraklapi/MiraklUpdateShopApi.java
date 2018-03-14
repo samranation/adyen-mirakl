@@ -29,7 +29,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return builder;
     }
 
-    public MiraklShop updateShopUbos(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows) {
+    public MiraklShop updateShopUbos(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
         // add Ubos
         ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> additionalUbosList = addMiraklShopUbos(rows);
@@ -38,7 +38,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
-    public void updateExistingShopsContactInfoWithTableData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, Map<Object, Object> row) {
+    public void updateExistingShopsContactInfoWithTableData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, Map<String, String> row) {
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
 
         // update shop contact information
@@ -64,7 +64,7 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
-    public MiraklShop updateShopsIbanNumberOnly(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows) {
+    public MiraklShop updateShopsIbanNumberOnly(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
 
         // update new iban number only:

@@ -8,16 +8,20 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.When;
 
+import java.util.List;
+import java.util.Map;
+
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
 
 public class MiraklCreateNewShopSteps extends StepDefsHelper {
 
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+
         // create shop
         MiraklCreatedShops shopForIndividualWithBankDetails = miraklShopApi
-            .createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, rows(), legalEntity);
+            .createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
 
         // get created shop
         MiraklShop createdShop = shopForIndividualWithBankDetails.getShopReturns()
@@ -27,8 +31,8 @@ public class MiraklCreateNewShopSteps extends StepDefsHelper {
 
     @Given("^a new shop has been created in Mirakl for an (.*)$")
     public void aNewShopHasBeenCreatedInMiraklForAnIndividual(String legalEntity, DataTable table) {
-        cucumberTable.put("table", table);
-        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, rows(), legalEntity);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
 
         MiraklShop createdShop = shopForIndividual.getShopReturns()
             .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
@@ -37,8 +41,8 @@ public class MiraklCreateNewShopSteps extends StepDefsHelper {
 
     @Given("^a shop has been created in Mirakl for an (.*) with mandatory KYC data$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithMandatoryKYCData(String legalEntity, DataTable table) {
-        cucumberTable.put("table", table);
-        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividualWithFullKYCData(miraklMarketplacePlatformOperatorApiClient, rows(), legalEntity);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividualWithFullKYCData(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
 
         MiraklShop createdShop = shopForIndividual.getShopReturns()
             .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
@@ -47,8 +51,8 @@ public class MiraklCreateNewShopSteps extends StepDefsHelper {
 
     @When("^a new shop has been created in Mirakl for a (.*)")
     public void aNewShopHasBeenCreatedInMiraklForABusiness(String legalEntity, DataTable table) {
-        cucumberTable.put("table", table);
-        MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithUbos(miraklMarketplacePlatformOperatorApiClient, rows(), legalEntity);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithUbos(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
 
         MiraklShop createdShop = businessShopWithUbos.getShopReturns()
             .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);

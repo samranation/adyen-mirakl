@@ -17,6 +17,7 @@ import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
@@ -96,19 +97,21 @@ public class AccountManagementSteps extends StepDefsHelper {
     }
 
     @And("^the shop data is correctly mapped to the Adyen Business Account$")
-    public void theShopDataIsCorrectlyMappedToTheAdyenBusinessAccount()  {
+    public void theShopDataIsCorrectlyMappedToTheAdyenBusinessAccount(DataTable table)  {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
         DocumentContext notificationResponse = (DocumentContext)cucumberMap.get("notificationResponse");
         ImmutableList<String> adyen = assertionHelper.adyenShareHolderAccountDataBuilder(notificationResponse).build();
-        ImmutableList<String> mirakl = assertionHelper.miraklShopShareHolderDataBuilder(createdShop).build();
+        ImmutableList<String> mirakl = assertionHelper.miraklShopShareHolderDataBuilder(createdShop, cucumberTable).build();
         Assertions.assertThat(adyen).containsAll(mirakl);
     }
 
     @When("^the Mirakl Shop Details have been updated$")
     public void theMiraklShopDetailsHaveBeenUpdated(DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        rows().forEach(row ->
+        cucumberTable.forEach(row ->
             miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
         );
     }
@@ -126,8 +129,8 @@ public class AccountManagementSteps extends StepDefsHelper {
 
     @Given("^a AccountHolder exists who (?:is not|is) eligible for payout$")
     public void aAccountHolderExistsWhoHasPassedKYCChecksAndIsEligibleForPayout(DataTable table) throws Throwable {
-        cucumberTable.put("table", table);
-        String seller = rows().get(0).get("seller").toString();
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        String seller = cucumberTable.get(0).get("seller");
         String accountHolderCode = shopConfiguration.shopIds.get(seller).toString();
         cucumberMap.put("accountHolderCode", accountHolderCode);
 
@@ -144,6 +147,6 @@ public class AccountManagementSteps extends StepDefsHelper {
 
         Assertions.assertThat(allowPayout)
             .withFailMessage("Payout status is not true for accountHolderCode: <%s> (seller: <%s>)", accountHolderCode, seller)
-            .isEqualTo(Boolean.parseBoolean(rows().get(0).get("allowPayout").toString()));
+            .isEqualTo(Boolean.parseBoolean(cucumberTable.get(0).get("allowPayout")));
     }
 }
