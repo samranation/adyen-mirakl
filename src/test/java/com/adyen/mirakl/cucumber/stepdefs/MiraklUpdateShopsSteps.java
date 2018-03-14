@@ -4,13 +4,10 @@ import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import cucumber.api.DataTable;
-import cucumber.api.PendingException;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.When;
 
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberTable;
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
 
 public class MiraklUpdateShopsSteps extends StepDefsHelper {
 
@@ -26,7 +23,7 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
         cucumberMap.put("iban", rows().get(0).get("iban"));
 
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopsApi.updateShopsIbanNumberOnly(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
+        MiraklShop updatedMiraklShop = miraklUpdateShopApi.updateShopsIbanNumberOnly(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
 
         // map needs to be cleared as we've updated the shop
         cucumberMap.remove("createdShop");
@@ -36,7 +33,7 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
     @And("^a new IBAN has been provided by the seller in Mirakl and the mandatory IBAN fields have been provided$")
     public void aNewIBANHasBeenProvidedByTheSellerInMiraklAndTheMandatoryIBANFieldsHaveBeenProvided() {
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopsApi.updateShopToAddBankDetails(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient);
+        MiraklShop updatedMiraklShop = miraklUpdateShopApi.updateShopToAddBankDetails(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient);
 
         // map needs to be cleared as we've updated the shop
         cucumberMap.remove("createdShop");
@@ -46,7 +43,7 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
     @And("^Mirakl has been updated with a taxId$")
     public void miraklHasBeenUpdatedWithATaxId() {
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopsApi.updateShopToIncludeVATNumber(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient);
+        MiraklShop updatedMiraklShop = miraklUpdateShopApi.updateShopToIncludeVATNumber(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient);
         // map needs to be cleared as we've updated the shop
         cucumberMap.remove("createdShop");
         cucumberMap.put("createdShop", updatedMiraklShop);
@@ -59,5 +56,18 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
         rows().forEach(row ->
             miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
         );
+    }
+
+    @When("^we update the shop by adding more shareholder data$")
+    public void weUpdateTheShopByAddingMoreShareholderData(DataTable table) {
+        cucumberTable.put("table", table);
+        MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
+
+        MiraklShop updatedMiraklShop = miraklUpdateShopApi
+            .updateShopUbos(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
+
+        // map needs to be cleared as we've updated the shop
+        cucumberMap.remove("createdShop");
+        cucumberMap.put("createdShop", updatedMiraklShop);
     }
 }

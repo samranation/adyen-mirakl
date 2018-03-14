@@ -21,7 +21,7 @@ public class PayoutVerificationSteps extends StepDefsHelper {
 
         waitForNotification();
         await().untilAsserted(()->{
-            Map<String, Object> adyenNotificationBody = getAdyenNotificationBody(notification, accountHolderCode);
+            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             rows().forEach(row-> {
                 Assertions.assertThat(row.get("currency"))
@@ -43,7 +43,7 @@ public class PayoutVerificationSteps extends StepDefsHelper {
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationWithStatusCode(String notification, DataTable table) {
         cucumberTable.put("table", table);
         waitForNotification();
-        Map<String, Object> adyenNotificationBody = getAdyenNotificationBody(notification, cucumberMap.get("accountHolderCode").toString());
+        Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, cucumberMap.get("accountHolderCode").toString());
         DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
         Assertions.assertThat(rows().get(0).get("statusCode"))
             .withFailMessage("Status was not correct.")

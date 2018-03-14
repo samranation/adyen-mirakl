@@ -10,10 +10,10 @@ import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdateShop;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShopReturn;
 import com.mirakl.client.mmp.operator.domain.shop.update.MiraklUpdatedShops;
 import com.mirakl.client.mmp.operator.request.shop.MiraklUpdateShopsRequest;
+import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue.MiraklSimpleRequestAdditionalFieldValue;
 import com.mirakl.client.mmp.request.shop.document.MiraklUploadShopDocumentsRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +27,15 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         ImmutableList.Builder<MiraklUpdateShop> builder = new ImmutableList.Builder<>();
         builder.add(miraklUpdateShop);
         return builder;
+    }
+
+    public MiraklShop updateShopUbos(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows) {
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
+        // add Ubos
+        ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> additionalUbosList = addMiraklShopUbos(rows);
+        populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, additionalUbosList.build());
+        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
     public void updateExistingShopsContactInfoWithTableData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, Map<Object, Object> row) {
@@ -84,10 +93,9 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         populateMiraklChannel(miraklShop, miraklUpdateShop);
         populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(miraklShop, miraklUpdateShop);
 
-        // map will be used to define additional fields that require updates/changes
-        Map<String, String> fieldsToUpdate = new HashMap<>();
-
-        populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate);
+        // List will be used to define additional fields that require updates/changes
+        ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> fieldsToUpdate = new ImmutableList.Builder<>();
+        populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, fieldsToUpdate.build());
         return miraklUpdateShop;
     }
 
