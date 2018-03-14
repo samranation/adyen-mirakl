@@ -20,8 +20,6 @@ import java.util.Map;
 public class MiraklShopApi extends MiraklShopProperties {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
-    private ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder;
 
     private ImmutableList.Builder<MiraklCreateShop> miraklShopCreateBuilder(MiraklCreateShop miraklCreateShop) {
         ImmutableList.Builder<MiraklCreateShop> builder = new ImmutableList.Builder<>();
@@ -31,37 +29,32 @@ public class MiraklShopApi extends MiraklShopProperties {
 
     // Individual Shop
     public MiraklCreatedShops createShopForIndividual(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
-        miraklCreateShop = populateMiraklShop(rows, legalEntity);
-        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
-        return createMiraklShopRequest(client);
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
     // Individual Shop with Bank Details
     public MiraklCreatedShops createShopForIndividualWithBankDetails(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
-        miraklCreateShop = populateMiraklShop(rows, legalEntity);
-        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         populatePaymentInformation(rows, miraklCreateShop);
-        return createMiraklShopRequest(client);
-    }
-
-    // Individual Shop with full KYC data including bank account details and identity check data
-    public MiraklCreatedShops createShopForIndividualWithFullKYCData(MiraklMarketplacePlatformOperatorApiClient client,  List<Map<String, String>> rows, String legalEntity) {
-        miraklCreateShop = populateMiraklShop(rows, legalEntity);
-        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
-        populatePaymentInformation(rows, miraklCreateShop);
-        return createMiraklShopRequest(client);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
     // Business with UBOs populated, amount of UBOs come from Cucumber tables
     public MiraklCreatedShops createBusinessShopWithUbos(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
-        miraklCreateShop = populateMiraklShop(rows, legalEntity);
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
         populateShareHolderData(legalEntity, rows, miraklCreateShop);
-        miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
-        return createMiraklShopRequest(client);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
     // Mandatory for any type of shop creation
-    public MiraklCreateShop populateMiraklShop(List<Map<String, String>> rows, String legalEntity){
+    public MiraklCreateShop populateMiraklShop(List<Map<String, String>> rows, String legalEntity, MiraklCreateShop miraklCreateShop){
         populateMiraklAddress(rows, miraklCreateShop);
         populateMiraklProfessionalInformation(miraklCreateShop);
         populateUserEmailAndShopName(miraklCreateShop, rows);
@@ -69,7 +62,7 @@ public class MiraklShopApi extends MiraklShopProperties {
         return miraklCreateShop;
     }
 
-    public MiraklCreatedShops createMiraklShopRequest(MiraklMarketplacePlatformOperatorApiClient client) {
+    public MiraklCreatedShops createMiraklShopRequest(MiraklMarketplacePlatformOperatorApiClient client, ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder) {
         MiraklCreateShopsRequest miraklCreateShopsRequest = new MiraklCreateShopsRequest(miraklCreateShopBuilder.build());
         MiraklCreatedShops shops = client.createShops(miraklCreateShopsRequest);
         throwErrorIfShopIsNotCreated(shops);
@@ -77,12 +70,14 @@ public class MiraklShopApi extends MiraklShopProperties {
         return shops;
     }
 
+    @Deprecated
     private MiraklShops getAllMiraklShops(MiraklMarketplacePlatformOperatorApiClient client) {
         MiraklGetShopsRequest request = new MiraklGetShopsRequest();
         request.setPaginate(false);
         return client.getShops(request);
     }
 
+    @Deprecated
     public MiraklShop filterMiraklShopsByEmailAndReturnShop(MiraklMarketplacePlatformOperatorApiClient client, String email) {
         MiraklShops shops = getAllMiraklShops(client);
         return shops.getShops()
