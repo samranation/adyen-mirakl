@@ -4,6 +4,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -53,7 +54,12 @@ public class RestAssuredAdyenApi {
         return !"[]".equals(getResponseBody(endpoint).asString());
     }
 
-    public ResponseBody getResponseBody(String endpoint) {
-        return RestAssured.get(endpoint).getBody();
+    private ResponseBody getResponseBody(String endpoint) {
+        ResponseBody body = RestAssured.get(endpoint).getBody();
+
+        if (body.jsonPath().get("error").equals("Bin not found")) {
+            throw new IllegalStateException(String.format("Bin no longer exists. Endpoint is showing: [%s]", body.jsonPath().get("error").toString()));
+        }
+        return body;
     }
 }
