@@ -52,7 +52,7 @@ public class AccountManagementSteps extends StepDefsHelper {
         waitForNotification();
         await().untilAsserted(() -> {
             MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-            Map<String, Object> mappedAdyenNotificationResponse = getAdyenNotificationBody(notification, createdShop.getId());
+            Map<String, Object> mappedAdyenNotificationResponse = retrieveAdyenNotificationBody(notification, createdShop.getId());
             Assertions.assertThat(mappedAdyenNotificationResponse).isNotNull();
             DocumentContext notificationResponse = JsonPath.parse(mappedAdyenNotificationResponse);
             cucumberMap.put("notificationResponse", notificationResponse);
@@ -109,7 +109,7 @@ public class AccountManagementSteps extends StepDefsHelper {
         cucumberTable.put("table", table);
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
         rows().forEach(row ->
-            miraklUpdateShopsApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
+            miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
         );
     }
 

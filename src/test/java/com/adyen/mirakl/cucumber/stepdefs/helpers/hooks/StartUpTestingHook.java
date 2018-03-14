@@ -1,7 +1,6 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.hooks;
 
 import com.adyen.mirakl.domain.MiraklDelta;
-import com.adyen.mirakl.repository.MiraklDeltaRepository;
 import com.adyen.model.marketpay.notification.*;
 import com.adyen.service.Notification;
 import com.google.common.collect.ImmutableList;

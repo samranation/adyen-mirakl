@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.rows;
 
 @Service
 public class AssertionHelper {
@@ -81,8 +82,8 @@ public class AssertionHelper {
         ImmutableList.Builder<String> miraklShopData = new ImmutableList.Builder<>();
 
         List<String> shopAdditionalFields = new ArrayList<>();
-
-        for (int i = 1; i < 4; i++) {
+        int maxUbos = Integer.parseInt(rows().get(0).get("maxUbos").toString());
+        for (int i = 1; i < maxUbos; i++) {
             shopAdditionalFields.add("adyen-ubo" + i + "-firstname");
             shopAdditionalFields.add("adyen-ubo" + i + "-lastname");
             shopAdditionalFields.add("adyen-ubo" + i + "-civility");
