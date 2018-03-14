@@ -48,15 +48,16 @@ Feature: Bank Account Verification
             | eventType                    | reason                |
             | ACCOUNT_HOLDER_STATUS_CHANGE | Bank account deletion |
 
-    @ADY-15 @ADY-89 @bug
+    @ADY-15 @ADY-89
     Scenario: Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city   | bank name | iban                   | bankOwnerName | lastName |
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And we process the data and push to Adyen
         When the seller uploads a Bank Statement in Mirakl
-        And we process the data and push to Adyen
-        Then the ACCOUNT_HOLDER_UPDATED notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and PASSED
-
+        And we process the document data and push to Adyen
+        And the document is successfully uploaded to Adyen
+            | documentType   | filename          |
+            | BANK_STATEMENT | BankStatement.jpg |
 
 
