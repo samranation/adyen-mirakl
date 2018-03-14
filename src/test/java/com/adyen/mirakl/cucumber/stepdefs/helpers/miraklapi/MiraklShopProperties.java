@@ -29,7 +29,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
     private String companyName = faker.company().name();
     private String firstName = faker.name().firstName();
 
-    protected void populatePaymentInformation(List<Map<Object, Object>> rows, MiraklCreateShop createShop) {
+    protected void populatePaymentInformation(List<Map<String, String>> rows, MiraklCreateShop createShop) {
 
         rows.forEach(row -> {
             String owner;
@@ -41,22 +41,22 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
             if (row.get("bank name") == null) {
                 log.info("Bank account information will not be created in this test.");
             } else {
-                owner = row.get("bankOwnerName").toString();
-                bankName = row.get("bank name").toString();
-                iban = row.get("iban").toString();
+                owner = row.get("bankOwnerName");
+                bankName = row.get("bank name");
+                iban = row.get("iban");
                 bic = faker.finance().bic();
-                city = row.get("city").toString();
+                city = row.get("city");
                 createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic, city));
             }
         });
     }
 
-    protected void populateShareHolderData(String legalEntity, List<Map<Object, Object>> rows, MiraklCreateShop createShop) {
+    protected void populateShareHolderData(String legalEntity, List<Map<String, String>> rows, MiraklCreateShop createShop) {
 
         rows.forEach(row -> {
             if (row.get("maxUbos") != null) {
                 ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder = ImmutableList.builder();
-                for (int i = 1; i <= Integer.valueOf(row.get("maxUbos").toString()); i++) {
+                for (int i = 1; i <= Integer.valueOf(row.get("maxUbos")); i++) {
                     builder.add(createAdditionalField("adyen-ubo" + i + "-civility", "Mr"));
                     builder.add(createAdditionalField("adyen-ubo" + i + "-firstname", faker.name().firstName()));
                     builder.add(createAdditionalField("adyen-ubo" + i + "-lastname", faker.name().lastName()));
@@ -79,13 +79,13 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
         ));
     }
 
-    protected void populateUserEmailAndShopName(MiraklCreateShop createShop, List<Map<Object, Object>> rows) {
+    protected void populateUserEmailAndShopName(MiraklCreateShop createShop, List<Map<String, String>> rows) {
 
         String shopName;
         if (rows.get(0).get("companyName") == null) {
             shopName = companyName.concat("-").concat(RandomStringUtils.randomAlphanumeric(8)).toLowerCase();
         } else {
-            shopName = rows.get(0).get("companyName").toString();
+            shopName = rows.get(0).get("companyName");
         }
 
         MiraklCreateShopNewUser newUser = new MiraklCreateShopNewUser();
@@ -106,14 +106,14 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
         createShop.setProfessionalInformation(professionalInformation);
     }
 
-    protected void populateMiraklAddress(List<Map<Object, Object>> rows, MiraklCreateShop createShop) {
+    protected void populateMiraklAddress(List<Map<String, String>> rows, MiraklCreateShop createShop) {
         rows.forEach(row -> {
             String city;
 
-            if (row.get("city") == null || StringUtils.isEmpty(row.get("city").toString())) {
+            if (row.get("city") == null || StringUtils.isEmpty(row.get("city"))) {
                 city = faker.address().city();
             } else {
-                city = row.get("city").toString();
+                city = row.get("city");
             }
 
             MiraklCreateShopAddress address = new MiraklCreateShopAddress();
@@ -121,7 +121,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
             address.setCivility("Mr");
             address.setCountry("GBR");
             address.setFirstname(firstName);
-            address.setLastname(row.get("lastName").toString());
+            address.setLastname(row.get("lastName"));
             address.setStreet1(faker.address().streetAddress());
             address.setZipCode(faker.address().zipCode());
             createShop.setAddress(address);

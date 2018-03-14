@@ -7,6 +7,7 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Then;
 import org.assertj.core.api.Assertions;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
@@ -16,14 +17,14 @@ public class PayoutVerificationSteps extends StepDefsHelper {
 
     @Then("^adyen will send the (.*) notification$")
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotification(String notification, DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         String accountHolderCode = cucumberMap.get("accountHolderCode").toString();
 
         waitForNotification();
         await().untilAsserted(()->{
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
-            rows().forEach(row-> {
+            cucumberTable.forEach(row-> {
                 Assertions.assertThat(row.get("currency"))
                     .isEqualTo(content.read("amounts[0].Amount.currency"));
 
@@ -41,15 +42,15 @@ public class PayoutVerificationSteps extends StepDefsHelper {
 
     @Then("^adyen will send the (.*) notification with status$")
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationWithStatusCode(String notification, DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         waitForNotification();
         Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, cucumberMap.get("accountHolderCode").toString());
         DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
-        Assertions.assertThat(rows().get(0).get("statusCode"))
+        Assertions.assertThat(cucumberTable.get(0).get("statusCode"))
             .withFailMessage("Status was not correct.")
             .isEqualTo(content.read("status.statusCode"));
 
-        String message = rows().get(0).get("message").toString();
+        String message = cucumberTable.get(0).get("message");
         String messageWithAccountCode = String.format("%s %s", message, cucumberMap.get("accountCode").toString());
 
         Assertions.assertThat(content.read("status.message ").toString())

@@ -30,14 +30,14 @@ public class MiraklShopApi extends MiraklShopProperties {
     }
 
     // Individual Shop
-    public MiraklCreatedShops createShopForIndividual(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
+    public MiraklCreatedShops createShopForIndividual(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         miraklCreateShop = populateMiraklShop(rows, legalEntity);
         miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         return createMiraklShopRequest(client);
     }
 
     // Individual Shop with Bank Details
-    public MiraklCreatedShops createShopForIndividualWithBankDetails(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
+    public MiraklCreatedShops createShopForIndividualWithBankDetails(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         miraklCreateShop = populateMiraklShop(rows, legalEntity);
         miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         populatePaymentInformation(rows, miraklCreateShop);
@@ -45,7 +45,7 @@ public class MiraklShopApi extends MiraklShopProperties {
     }
 
     // Individual Shop with full KYC data including bank account details and identity check data
-    public MiraklCreatedShops createShopForIndividualWithFullKYCData(MiraklMarketplacePlatformOperatorApiClient client,  List<Map<Object, Object>> rows, String legalEntity) {
+    public MiraklCreatedShops createShopForIndividualWithFullKYCData(MiraklMarketplacePlatformOperatorApiClient client,  List<Map<String, String>> rows, String legalEntity) {
         miraklCreateShop = populateMiraklShop(rows, legalEntity);
         miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         populatePaymentInformation(rows, miraklCreateShop);
@@ -53,7 +53,7 @@ public class MiraklShopApi extends MiraklShopProperties {
     }
 
     // Business with UBOs populated, amount of UBOs come from Cucumber tables
-    public MiraklCreatedShops createBusinessShopWithUbos(MiraklMarketplacePlatformOperatorApiClient client, List<Map<Object, Object>> rows, String legalEntity) {
+    public MiraklCreatedShops createBusinessShopWithUbos(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         miraklCreateShop = populateMiraklShop(rows, legalEntity);
         populateShareHolderData(legalEntity, rows, miraklCreateShop);
         miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
@@ -61,7 +61,7 @@ public class MiraklShopApi extends MiraklShopProperties {
     }
 
     // Mandatory for any type of shop creation
-    public MiraklCreateShop populateMiraklShop(List<Map<Object, Object>> rows, String legalEntity){
+    public MiraklCreateShop populateMiraklShop(List<Map<String, String>> rows, String legalEntity){
         populateMiraklAddress(rows, miraklCreateShop);
         populateMiraklProfessionalInformation(miraklCreateShop);
         populateUserEmailAndShopName(miraklCreateShop, rows);

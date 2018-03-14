@@ -2,12 +2,14 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.When;
 
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
+import java.util.List;
+import java.util.Map;
+
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
 
 public class MiraklUpdateShopsSteps extends StepDefsHelper {
 
@@ -19,11 +21,11 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
 
     @When("^the IBAN has been modified in Mirakl$")
     public void theIBANHasBeenModifiedInMirakl(DataTable table) {
-        cucumberTable.put("table", table);
-        cucumberMap.put("iban", rows().get(0).get("iban"));
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        cucumberMap.put("iban", cucumberTable.get(0).get("iban"));
 
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        MiraklShop updatedMiraklShop = miraklUpdateShopApi.updateShopsIbanNumberOnly(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
+        MiraklShop updatedMiraklShop = miraklUpdateShopApi.updateShopsIbanNumberOnly(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
 
         // map needs to be cleared as we've updated the shop
         cucumberMap.remove("createdShop");
@@ -51,20 +53,20 @@ public class MiraklUpdateShopsSteps extends StepDefsHelper {
 
     @When("^the Mirakl Shop Details have been updated as the same as before$")
     public void theMiraklShopDetailsHaveBeenUpdatedAsTheSameAsBefore(DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
-        rows().forEach(row ->
+        cucumberTable.forEach(row ->
             miraklUpdateShopApi.updateExistingShopsContactInfoWithTableData(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
         );
     }
 
     @When("^we update the shop by adding more shareholder data$")
     public void weUpdateTheShopByAddingMoreShareholderData(DataTable table) {
-        cucumberTable.put("table", table);
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklShop createdShop = (MiraklShop) cucumberMap.get("createdShop");
 
         MiraklShop updatedMiraklShop = miraklUpdateShopApi
-            .updateShopUbos(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, rows());
+            .updateShopUbos(createdShop, createdShop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
 
         // map needs to be cleared as we've updated the shop
         cucumberMap.remove("createdShop");

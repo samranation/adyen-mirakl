@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 
 public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
 
-    protected ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> addMiraklShopUbos(List<Map<Object, Object>> rows){
+    protected ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> addMiraklShopUbos(List<Map<String, String>> rows){
 
         ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> builder = ImmutableList.builder();
         rows.forEach(row -> {
@@ -37,7 +37,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
                 /* adding more ubos to a shop is dictated by the number of UBOs to update (as defined in Cucumber table)
                  example:- 3 UBOs to add. (4 - 3) + 1 = 2
                  so the method will start at UBO 2 until 4*/
-                int noOfUbos = Integer.valueOf(row.get("maxUbos").toString());
+                int noOfUbos = Integer.valueOf(row.get("maxUbos"));
                 for (noOfUbos = (4 - noOfUbos) + 1; noOfUbos <= 4; noOfUbos++) {
                     builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-civility", "Mr"));
                     builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-firstname", FAKER.name().firstName()));
@@ -72,7 +72,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         return miraklUploadShopDocumentsRequest(shopId, docUploadRequestBuilder.build());
     }
 
-    protected MiraklIbanBankAccountInformation updateNewMiraklIbanOnly(MiraklShop miraklShop, List<Map<Object, Object>> rows) {
+    protected MiraklIbanBankAccountInformation updateNewMiraklIbanOnly(MiraklShop miraklShop, List<Map<String, String>> rows) {
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
         MiraklPaymentInformation miraklPaymentInformation = miraklShop.getPaymentInformation();
         if (miraklPaymentInformation instanceof MiraklIbanBankAccountInformation) {
@@ -84,7 +84,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         return paymentInformation;
     }
 
-    protected MiraklShopAddress updateMiraklShopAddress(MiraklShop miraklShop, Map<Object, Object> row) {
+    protected MiraklShopAddress updateMiraklShopAddress(MiraklShop miraklShop, Map<String, String> row) {
         MiraklShopAddress address = new MiraklShopAddress();
 
         address.setCity(row.get("city").toString());
