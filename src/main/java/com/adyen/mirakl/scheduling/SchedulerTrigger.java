@@ -1,14 +1,14 @@
 package com.adyen.mirakl.scheduling;
 
 
-import javax.annotation.Resource;
+import com.adyen.mirakl.service.DocService;
 import com.adyen.mirakl.service.RetryEmailService;
 import com.adyen.mirakl.service.ShopService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import com.adyen.mirakl.service.DocService;
-import com.adyen.mirakl.service.ShopService;
+
+import javax.annotation.Resource;
 
 @Service
 @Profile({"dev", "prod"})
@@ -25,7 +25,7 @@ public class SchedulerTrigger {
 
     @Scheduled(cron = "${application.shopUpdaterCron}")
     public void runShopUpdates() {
-        shopService.retrieveUpdatedShops();
+        shopService.processUpdatedShops();
     }
 
     @Scheduled(cron = "${application.docsUpdaterCron}")
