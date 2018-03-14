@@ -48,7 +48,7 @@ Feature: Bank Account Verification
             | eventType                    | reason                |
             | ACCOUNT_HOLDER_STATUS_CHANGE | Bank account deletion |
 
-    @ADY-15
+    @ADY-15 @ADY-89 @bug
     Scenario: Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city   | bank name | iban                   | bankOwnerName | lastName |
