@@ -83,7 +83,7 @@ public class ShopService {
         log.debug("CreateAccountHolderResponse: {}", response);
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
-            log.error("Invalid fields when trying to create a shop: {}", invalidFields);
+            log.warn("Invalid fields when trying to create a shop: {}", invalidFields);
         }
     }
 
