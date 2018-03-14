@@ -78,20 +78,26 @@ public final class ShopUtil {
                 name.setGender(CIVILITY_TO_GENDER.getOrDefault(civility, Name.GenderEnum.UNKNOWN));
                 shareholderContact.setName(name);
                 shareholderContact.setEmail(email);
-                final PhoneNumber phoneNumberWrapper = new PhoneNumber();
-                phoneNumberWrapper.setPhoneNumber(phoneNumber);
-                shareholderContact.setPhoneNumber(phoneNumberWrapper);
-                final Address address = new Address();
-                address.setCountry(country);
-                address.setStreet(street);
-                address.setHouseNumberOrName(houseNumberOrName);
-                address.setCity(city);
-                address.setPostalCode(postalCode);
-                address.setStateOrProvince(stateOrProvince);
-                shareholderContact.setAddress(address);
-                final PersonalData personalData = new PersonalData();
-                personalData.setDateOfBirth(dateOfBirth);
-                shareholderContact.setPersonalData(personalData);
+                if(StringUtils.isNotEmpty(phoneNumber)){
+                    final PhoneNumber phoneNumberWrapper = new PhoneNumber();
+                    phoneNumberWrapper.setPhoneNumber(phoneNumber);
+                    shareholderContact.setPhoneNumber(phoneNumberWrapper);
+                }
+                if(ImmutableList.of(country, street, houseNumberOrName, city, postalCode, stateOrProvince).stream().noneMatch(StringUtils::isBlank)){
+                    final Address address = new Address();
+                    address.setCountry(country);
+                    address.setStreet(street);
+                    address.setHouseNumberOrName(houseNumberOrName);
+                    address.setCity(city);
+                    address.setPostalCode(postalCode);
+                    address.setStateOrProvince(stateOrProvince);
+                    shareholderContact.setAddress(address);
+                }
+                if(StringUtils.isNotEmpty(dateOfBirth)){
+                    final PersonalData personalData = new PersonalData();
+                    personalData.setDateOfBirth(dateOfBirth);
+                    shareholderContact.setPersonalData(personalData);
+                }
                 builder.add(shareholderContact);
             }
         });
