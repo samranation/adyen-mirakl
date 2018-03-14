@@ -42,7 +42,7 @@ public class MiraklCreateNewShopSteps extends StepDefsHelper {
     @Given("^a shop has been created in Mirakl for an (.*) with mandatory KYC data$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithMandatoryKYCData(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividualWithFullKYCData(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        MiraklCreatedShops shopForIndividual = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
 
         MiraklShop createdShop = shopForIndividual.getShopReturns()
             .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
