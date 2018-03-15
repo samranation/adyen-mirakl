@@ -355,6 +355,7 @@ public class ShopServiceTest {
         final Set<String> stateOrProvince = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getStateOrProvince).collect(Collectors.toSet());
         final Set<String> dateOfBirth = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getDateOfBirth).collect(Collectors.toSet());
         final Set<String> phoneNumber = shareHolders.stream().map(ShareholderContact::getPhoneNumber).map(PhoneNumber::getPhoneNumber).collect(Collectors.toSet());
+        final Set<String> shareHolderCode = shareHolders.stream().map(ShareholderContact::getShareholderCode).collect(Collectors.toSet());
 
         Assertions.assertThat(firstNames).containsExactlyInAnyOrder("firstname1", "firstname2", "firstname3", "firstname4");
         Assertions.assertThat(lastNames).containsExactlyInAnyOrder("lastname1", "lastname2", "lastname3", "lastname4");
@@ -367,6 +368,7 @@ public class ShopServiceTest {
         Assertions.assertThat(stateOrProvince).containsExactlyInAnyOrder("stateOrProvince1", "stateOrProvince2", "stateOrProvince3", "stateOrProvince4");
         Assertions.assertThat(dateOfBirth).containsExactlyInAnyOrder("dateOfBirth1", "dateOfBirth2", "dateOfBirth3", "dateOfBirth4");
         Assertions.assertThat(phoneNumber).containsExactlyInAnyOrder("phoneNumber1", "phoneNumber2", "phoneNumber3", "phoneNumber4");
+        Assertions.assertThat(shareHolderCode).containsExactlyInAnyOrder("id_ubo_1", "id_ubo_2", "id_ubo_3", "id_ubo_4");
         Assertions.assertThat(genders).containsOnly(Name.GenderEnum.UNKNOWN);
     }
 

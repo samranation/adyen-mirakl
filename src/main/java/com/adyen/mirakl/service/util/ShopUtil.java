@@ -69,12 +69,16 @@ public final class ShopUtil {
             String stateOrProvince = extractedKeysFromMirakl.getOrDefault(keys.get(STATE_OR_PROVINCE), null);
             String dateOfBirth = extractedKeysFromMirakl.getOrDefault(keys.get(DATE_OF_BIRTH), null);
             String phoneNumber = extractedKeysFromMirakl.getOrDefault(keys.get(PHONE_NUMBER), null);
+            String shareHolderCode = String.format("%s_ubo_%d", shop.getId(), i);
 
             //do nothing if mandatory fields are missing
             if (firstName != null && lastName != null && civility != null && email != null) {
+                ShareholderContact shareholderContact = new ShareholderContact();
+
+                //share holder code
+                shareholderContact.setShareholderCode(shareHolderCode);
 
                 //mandatory fields
-                ShareholderContact shareholderContact = new ShareholderContact();
                 Name name = new Name();
                 name.setFirstName(firstName);
                 name.setLastName(lastName);
