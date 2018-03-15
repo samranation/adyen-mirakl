@@ -87,6 +87,10 @@ public class ShopService {
         if (updateAccountHolderRequest.isPresent()) {
             UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest.get());
             log.debug("UpdateAccountHolderResponse: {}", response);
+            if(!CollectionUtils.isEmpty(response.getInvalidFields())){
+                final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
+                log.warn("Invalid fields when trying to create a shop: {}", invalidFields);
+            }
 
             // if IBAN has changed remove the old one
             if (isIbanChanged(getAccountHolderResponse, shop)) {
