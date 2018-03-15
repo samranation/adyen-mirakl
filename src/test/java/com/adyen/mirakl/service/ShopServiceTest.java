@@ -71,6 +71,8 @@ public class ShopServiceTest {
     private Date dateMock;
     @Mock
     private CreateAccountHolderResponse createAccountHolderResponseMock;
+    @Mock
+    private UpdateAccountHolderResponse updateAccountHolderResponseMock;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -205,7 +207,7 @@ public class ShopServiceTest {
         final ImmutableList<MiraklAdditionalFieldValue> additionalFields = new ImmutableList.Builder<MiraklAdditionalFieldValue>()
             .add(additionalField).addAll(ubo1).addAll(ubo2).addAll(ubo3).addAll(ubo4).build();
         setup(additionalFields);
-        when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(null);
+        when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(updateAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("alreadyExisting");
 
         shopService.processUpdatedShops();

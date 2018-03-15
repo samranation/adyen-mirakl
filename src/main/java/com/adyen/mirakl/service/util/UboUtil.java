@@ -84,22 +84,15 @@ public final class UboUtil {
 
             //do nothing if mandatory fields are missing
             if (firstName != null && lastName != null && civility != null && email != null) {
-                createShareHolder(builder, uboNumber, civility, firstName, lastName, email, dateOfBirth, nationality, idNumber, houseNumberOrName, street, city, postalCode, country, phoneCountryCode, phoneType, phoneNumber);
+                ShareholderContact shareholderContact = new ShareholderContact();
+                addMandatoryData(civility, firstName, lastName, email, shareholderContact);
+                addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
+                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact);
+                addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
+                builder.add(shareholderContact);
             }
         });
         return builder.build();
-    }
-
-    private static void createShareHolder(final ImmutableList.Builder<ShareholderContact> builder, final Integer uboNumber, final String civility, final String firstName,
-                                          final String lastName, final String email, final String dateOfBirth, final String nationality, final String idNumber,
-                                          final String houseNumberOrName, final String street, final String city, final String postalCode, final String country,
-                                          final String phoneCountryCode, final String phoneType, final String phoneNumber) {
-        ShareholderContact shareholderContact = new ShareholderContact();
-        addMandatoryData(civility, firstName, lastName, email, shareholderContact);
-        addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
-        addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact);
-        addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
-        builder.add(shareholderContact);
     }
 
     private static void addMandatoryData(final String civility, final String firstName, final String lastName, final String email, final ShareholderContact shareholderContact) {
