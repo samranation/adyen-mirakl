@@ -1,11 +1,6 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.hooks;
 
-import com.adyen.mirakl.domain.MiraklDelta;
-import com.adyen.model.marketpay.notification.*;
-import com.adyen.service.Notification;
-import com.google.common.collect.ImmutableList;
-import io.restassured.RestAssured;
-import io.restassured.response.ResponseBody;
+import javax.annotation.Resource;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.awaitility.Duration;
@@ -15,9 +10,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
-import java.time.ZonedDateTime;
+import com.adyen.mirakl.service.DeltaService;
+import com.adyen.model.marketpay.notification.CreateNotificationConfigurationRequest;
+import com.adyen.model.marketpay.notification.CreateNotificationConfigurationResponse;
+import com.adyen.model.marketpay.notification.GetNotificationConfigurationListResponse;
+import com.adyen.model.marketpay.notification.NotificationConfigurationDetails;
+import com.adyen.model.marketpay.notification.NotificationEventConfiguration;
+import com.adyen.service.Notification;
+import com.google.common.collect.ImmutableList;
+import io.restassured.RestAssured;
+import io.restassured.response.ResponseBody;
 
 @Component
 @ConfigurationProperties(prefix = "requestbin", ignoreUnknownFields = false)
@@ -29,6 +31,9 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
     private TestHooks testHooks;
     @Resource
     private Notification adyenNotification;
+    @Resource
+    private DeltaService deltaService;
+
     private String baseRequestbinUrl;
     private String baseRequestBinUrlPath;
     private Long notificationId;
@@ -41,8 +46,9 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
     }
 
     private void createDelta() {
-        final MiraklDelta miraklDelta = new MiraklDelta();
-        miraklDelta.setShopDelta(ZonedDateTime.now());
+        // Trigger deltas creation
+        deltaService.getShopDelta();
+        deltaService.getDocumentDelta();
     }
 
     private void createNotificationConfiguration() {
@@ -69,28 +75,16 @@ public class StartUpTestingHook implements ApplicationListener<ContextRefreshedE
         configurationDetails.setActive(true);
         configurationDetails.description(baseRequestbinUrl);
         // Event Configs
-        configurationDetails.setEventConfigs(ImmutableList.of(
-            notificationEventConfiguration(
-                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_CREATED,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
-            ),
-            notificationEventConfiguration(
-                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_VERIFICATION,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
-            ),
-            notificationEventConfiguration(
-                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_UPDATED,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
-            ),
-            notificationEventConfiguration(
-                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_PAYOUT,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
-            ),
-            notificationEventConfiguration(
-                NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_STATUS_CHANGE,
-                NotificationEventConfiguration.IncludeModeEnum.INCLUDE
-            )
-        ));
+        configurationDetails.setEventConfigs(ImmutableList.of(notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_CREATED,
+                                                                                             NotificationEventConfiguration.IncludeModeEnum.INCLUDE),
+                                                              notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_VERIFICATION,
+                                                                                             NotificationEventConfiguration.IncludeModeEnum.INCLUDE),
+                                                              notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_UPDATED,
+                                                                                             NotificationEventConfiguration.IncludeModeEnum.INCLUDE),
+                                                              notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_PAYOUT,
+                                                                                             NotificationEventConfiguration.IncludeModeEnum.INCLUDE),
+                                                              notificationEventConfiguration(NotificationEventConfiguration.EventTypeEnum.ACCOUNT_HOLDER_STATUS_CHANGE,
+                                                                                             NotificationEventConfiguration.IncludeModeEnum.INCLUDE)));
 
         configurationDetails.messageFormat(NotificationConfigurationDetails.MessageFormatEnum.JSON);
         configurationDetails.setNotifyURL(baseRequestbinUrl);

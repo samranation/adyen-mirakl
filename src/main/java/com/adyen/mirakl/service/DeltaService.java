@@ -37,7 +37,7 @@ public class DeltaService {
             return Date.from(firstByOrderByIdDesc.get().getShopDelta().toInstant());
         }
 
-        log.debug("No shopDelta found");
+        log.info("No shopDelta found");
         ZonedDateTime defaultDate = ZonedDateTime.now().minusDays(applicationProperties.getInitialDeltaDaysBack());
         createNewShopDelta(defaultDate);
         return Date.from(defaultDate.toInstant());
@@ -51,7 +51,7 @@ public class DeltaService {
     }
 
     public void updateShopDelta(ZonedDateTime delta) {
-        MiraklDelta entity = miraklDeltaRepository.findFirstByOrderByIdDesc().orElseThrow(() -> new RuntimeException("No shopDelta found"));
+        MiraklDelta entity = miraklDeltaRepository.findFirstByOrderByIdDesc().orElseThrow(() -> new IllegalStateException("No shopDelta found"));
         entity.setShopDelta(delta);
         miraklDeltaRepository.saveAndFlush(entity);
     }
@@ -67,7 +67,7 @@ public class DeltaService {
             return Date.from(firstByOrderByIdDesc.get().getDocumentDelta().toInstant());
         }
 
-        log.debug("No documentDelta found");
+        log.info("No documentDelta found");
         ZonedDateTime defaultDate = ZonedDateTime.now().minusDays(applicationProperties.getInitialDeltaDaysBack());
         createNewDocumentDelta(defaultDate);
         return Date.from(defaultDate.toInstant());
@@ -81,7 +81,7 @@ public class DeltaService {
     }
 
     public void updateDocumentDelta(ZonedDateTime delta) {
-        MiraklDocumentDelta entity = miraklDocumentDeltaRepository.findFirstByOrderByIdDesc().orElseThrow(() -> new RuntimeException("No DocumentDelta found"));
+        MiraklDocumentDelta entity = miraklDocumentDeltaRepository.findFirstByOrderByIdDesc().orElseThrow(() -> new IllegalStateException("No DocumentDelta found"));
         entity.setDocumentDelta(delta);
         miraklDocumentDeltaRepository.saveAndFlush(entity);
     }
