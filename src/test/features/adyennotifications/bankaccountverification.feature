@@ -31,7 +31,7 @@ Feature: Bank Account Verification
             | eventType              |
             | ACCOUNT_HOLDER_UPDATED |
 
-    @ADY-8 @ADY-71 @ADY-84
+    @ADY-8 @ADY-71 @ADY-84 @exclude
     Scenario: Editing IBAN in Mirakl will create new BankAccountDetail in Adyen
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city   | bank name | iban                   | bankOwnerName | lastName |

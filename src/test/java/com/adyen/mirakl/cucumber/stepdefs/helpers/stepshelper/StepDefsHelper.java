@@ -63,7 +63,7 @@ public class StepDefsHelper {
         });
     }
 
-    // use for scenarios which don't require eventType verification
+    // use for scenarios which don't require verificationType verification
     protected Map<String, Object> retrieveAdyenNotificationBody(String notification, String accountHolderCode) {
         Map<String, Object> adyenNotificationBody = new HashMap<>();
         await().untilAsserted(() -> {
