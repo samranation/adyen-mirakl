@@ -119,6 +119,7 @@ application:
     docsUpdaterCron: "0 */5 * * * ?"
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
+    initialDeltaDaysBack: 0
 
 shops:
     shopIds:
@@ -184,10 +185,6 @@ requestbin:
 
 shopService:
     maxUbos: 4
-
-miraklConfig:
-    createShopDeltaAtStartup: true
-    createDocDeltaAtStartup: true
 
 mail.max.retries: 10
 

@@ -1,17 +1,17 @@
 package com.adyen.mirakl.startup;
 
-import com.mirakl.client.mmp.domain.additionalfield.AbstractMiraklAdditionalField;
-import com.mirakl.client.mmp.domain.additionalfield.MiraklFrontOperatorAdditionalField;
-import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
-import com.mirakl.client.mmp.operator.request.additionalfield.MiraklGetAdditionalFieldRequest;
+import java.util.List;
+import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
-import java.util.List;
+import com.adyen.mirakl.config.ApplicationProperties;
+import com.mirakl.client.mmp.domain.additionalfield.AbstractMiraklAdditionalField;
+import com.mirakl.client.mmp.domain.additionalfield.MiraklFrontOperatorAdditionalField;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.operator.request.additionalfield.MiraklGetAdditionalFieldRequest;
 
 @Component
 public class MiraklStartupValidator implements ApplicationListener<ContextRefreshedEvent> {
@@ -27,6 +27,7 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
             name = s;
         }
 
+        @Override
         public String toString() {
             return this.name;
         }
@@ -42,6 +43,7 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
             name = s;
         }
 
+        @Override
         public String toString() {
             return this.name;
         }
@@ -49,6 +51,8 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
+    @Resource
+    private ApplicationProperties applicationProperties;
 
     @Override
     public void onApplicationEvent(final ContextRefreshedEvent event) {
@@ -56,9 +60,7 @@ public class MiraklStartupValidator implements ApplicationListener<ContextRefres
         final List<MiraklFrontOperatorAdditionalField> additionalFields = miraklMarketplacePlatformOperatorApiClient.getAdditionalFields(miraklGetAdditionalFieldRequest);
 
         for (CustomMiraklFields customMiraklFields : CustomMiraklFields.values()) {
-            boolean startupSuccess = additionalFields.stream()
-                .map(AbstractMiraklAdditionalField::getCode)
-                .anyMatch(customFieldName -> customMiraklFields.toString().equalsIgnoreCase(customFieldName));
+            boolean startupSuccess = additionalFields.stream().map(AbstractMiraklAdditionalField::getCode).anyMatch(customFieldName -> customMiraklFields.toString().equalsIgnoreCase(customFieldName));
             if (startupSuccess) {
                 log.info(String.format("Startup Mirkal validation succeeded, custom field found: [%s]", customMiraklFields.toString()));
             } else {

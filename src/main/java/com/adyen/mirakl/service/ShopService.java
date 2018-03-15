@@ -10,19 +10,31 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
-
-import com.adyen.model.marketpay.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import com.adyen.mirakl.service.util.ShopUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
+import com.adyen.model.marketpay.AccountHolderDetails;
+import com.adyen.model.marketpay.BankAccountDetail;
+import com.adyen.model.marketpay.BusinessDetails;
+import com.adyen.model.marketpay.CreateAccountHolderRequest;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
+import com.adyen.model.marketpay.CreateAccountHolderResponse;
+import com.adyen.model.marketpay.DeleteBankAccountRequest;
+import com.adyen.model.marketpay.DeleteBankAccountResponse;
+import com.adyen.model.marketpay.ErrorFieldType;
+import com.adyen.model.marketpay.GetAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.IndividualDetails;
+import com.adyen.model.marketpay.UpdateAccountHolderRequest;
+import com.adyen.model.marketpay.UpdateAccountHolderResponse;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.mirakl.client.mmp.domain.additionalfield.MiraklAdditionalFieldType;
@@ -34,7 +46,6 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.springframework.util.CollectionUtils;
 
 @Service
 @Transactional
@@ -74,14 +85,14 @@ public class ShopService {
             }
         }
 
-        deltaService.createNewShopDelta(beforeProcessing);
+        deltaService.updateShopDelta(beforeProcessing);
     }
 
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
         log.debug("CreateAccountHolderResponse: {}", response);
-        if(!CollectionUtils.isEmpty(response.getInvalidFields())){
+        if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
             log.error("Invalid fields when trying to create a shop: {}", invalidFields);
         }
@@ -134,6 +145,7 @@ public class ShopService {
             miraklGetShopsRequest.setOffset(offset);
 
             miraklGetShopsRequest.setUpdatedSince(deltaService.getShopDelta());
+            log.debug("getShops request since: " + miraklGetShopsRequest.getUpdatedSince());
             MiraklShops miraklShops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest);
             shops.addAll(miraklShops.getShops());
 

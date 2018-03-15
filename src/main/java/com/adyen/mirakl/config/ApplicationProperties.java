@@ -14,6 +14,7 @@ public class ApplicationProperties {
     private String removeSentEmailsCron;
 
     private String docsUpdaterCron;
+    private Integer initialDeltaDaysBack;
 
     public String getDocsUpdaterCron() {
         return docsUpdaterCron;
@@ -45,5 +46,13 @@ public class ApplicationProperties {
 
     public void setRemoveSentEmailsCron(final String removeSentEmailsCron) {
         this.removeSentEmailsCron = removeSentEmailsCron;
+    }
+
+    public Integer getInitialDeltaDaysBack() {
+        return initialDeltaDaysBack;
+    }
+
+    public void setInitialDeltaDaysBack(Integer initialDeltaDaysBack) {
+        this.initialDeltaDaysBack = initialDeltaDaysBack;
     }
 }
