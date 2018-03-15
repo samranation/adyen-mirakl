@@ -51,6 +51,7 @@ public final class UboUtil {
 
     /**
      * Extract shareholder contact data in a adyen format from a mirakl shop
+     *
      * @param shop    mirakl shop
      * @param maxUbos number of ubos to be extracted e.g. 4
      * @return share holder contacts to send to adyen
@@ -77,23 +78,27 @@ public final class UboUtil {
             String city = extractedKeysFromMirakl.getOrDefault(uboKeys.get(CITY), null);
             String postalCode = extractedKeysFromMirakl.getOrDefault(uboKeys.get(POSTAL_CODE), null);
             String country = extractedKeysFromMirakl.getOrDefault(uboKeys.get(COUNTRY), null);
+            String phoneCountryCode = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_COUNTRY_CODE), null);
             String phoneType = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_TYPE), null);
             String phoneNumber = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_NUMBER), null);
 
             //do nothing if mandatory fields are missing
             if (firstName != null && lastName != null && civility != null && email != null) {
-                createShareHolder(builder, uboNumber, civility, firstName, lastName, email, dateOfBirth, nationality, idNumber, houseNumberOrName, street, city, postalCode, country, phoneType, phoneNumber);
+                createShareHolder(builder, uboNumber, civility, firstName, lastName, email, dateOfBirth, nationality, idNumber, houseNumberOrName, street, city, postalCode, country, phoneCountryCode, phoneType, phoneNumber);
             }
         });
         return builder.build();
     }
 
-    private static void createShareHolder(final ImmutableList.Builder<ShareholderContact> builder, final Integer uboNumber, final String civility, final String firstName, final String lastName, final String email, final String dateOfBirth, final String nationality, final String idNumber, final String houseNumberOrName, final String street, final String city, final String postalCode, final String country, final String phoneType, final String phoneNumber) {
+    private static void createShareHolder(final ImmutableList.Builder<ShareholderContact> builder, final Integer uboNumber, final String civility, final String firstName,
+                                          final String lastName, final String email, final String dateOfBirth, final String nationality, final String idNumber,
+                                          final String houseNumberOrName, final String street, final String city, final String postalCode, final String country,
+                                          final String phoneCountryCode, final String phoneType, final String phoneNumber) {
         ShareholderContact shareholderContact = new ShareholderContact();
         addMandatoryData(civility, firstName, lastName, email, shareholderContact);
         addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
         addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact);
-        addPhoneData(uboNumber, phoneType, phoneNumber, shareholderContact);
+        addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
         builder.add(shareholderContact);
     }
 
@@ -106,13 +111,14 @@ public final class UboUtil {
         shareholderContact.setEmail(email);
     }
 
-    private static void addPhoneData(final Integer uboNumber, final String phoneType, final String phoneNumber, final ShareholderContact shareholderContact) {
-        if (phoneNumber != null || phoneType != null) {
+    private static void addPhoneData(final Integer uboNumber, final String phoneCountryCode, final String phoneType, final String phoneNumber, final ShareholderContact shareholderContact) {
+        if (phoneNumber != null || phoneType != null || phoneCountryCode != null) {
             final PhoneNumber phoneNumberWrapper = new PhoneNumber();
+            Optional.ofNullable(phoneCountryCode).ifPresent(phoneNumberWrapper::setPhoneCountryCode);
             Optional.ofNullable(phoneNumber).ifPresent(phoneNumberWrapper::setPhoneNumber);
             Optional.ofNullable(phoneType).ifPresent(x -> phoneNumberWrapper.setPhoneType(PhoneNumber.PhoneTypeEnum.valueOf(x)));
             shareholderContact.setPhoneNumber(phoneNumberWrapper);
-        }else{
+        } else {
             log.warn("Unable to populate any phone data for share holder {}", uboNumber);
         }
     }
@@ -126,7 +132,7 @@ public final class UboUtil {
             Optional.ofNullable(postalCode).ifPresent(address::setPostalCode);
             Optional.ofNullable(country).ifPresent(address::setCountry);
             shareholderContact.setAddress(address);
-        }else{
+        } else {
             log.warn("Unable to populate any address data for share holder {}", uboNumber);
         }
     }
@@ -138,13 +144,14 @@ public final class UboUtil {
             Optional.ofNullable(nationality).ifPresent(personalData::setNationality);
             Optional.ofNullable(idNumber).ifPresent(personalData::setIdNumber);
             shareholderContact.setPersonalData(personalData);
-        }else{
+        } else {
             log.warn("Unable to populate any personal data for share holder {}", uboNumber);
         }
     }
 
     /**
      * generate mirakl ubo keys
+     *
      * @param maxUbos number of ubos in mirakl e.g. 4
      * @return returns ubo numbers linked to their keys
      */
