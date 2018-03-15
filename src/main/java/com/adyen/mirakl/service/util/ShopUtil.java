@@ -1,5 +1,6 @@
 package com.adyen.mirakl.service.util;
 
+import com.adyen.mirakl.web.rest.util.HeaderUtil;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.PersonalData;
@@ -9,6 +10,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,19 +22,25 @@ import java.util.stream.IntStream;
 
 public final class ShopUtil {
 
+    private static final Logger log = LoggerFactory.getLogger(ShopUtil.class);
+
     private static final String ADYEN_UBO = "adyen-ubo";
+
+    private static final String CIVILITY = "civility";
     private static final String FIRSTNAME = "firstname";
     private static final String LASTNAME = "lastname";
-    private static final String CIVILITY = "civility";
     private static final String EMAIL = "email";
-    private static final String COUNTRY = "country";
-    private static final String STREET = "street";
-    private static final String HOUSE_NUMBER_OR_NAME = "houseNumberOrName";
+    private static final String DATE_OF_BIRTH = "dob";
+    private static final String NATIONALITY = "nationality";
+    private static final String ID_NUMBER = "idnumber";
+    private static final String HOUSE_NUMBER_OR_NAME = "housenumber";
+    private static final String STREET = "streetname";
     private static final String CITY = "city";
-    private static final String POSTAL_CODE = "postalCode";
-    private static final String STATE_OR_PROVINCE = "stateOrProvince";
-    private static final String DATE_OF_BIRTH = "dateOfBirth";
-    private static final String PHONE_NUMBER = "phoneNumber";
+    private static final String POSTAL_CODE = "zip";
+    private static final String COUNTRY = "country";
+    private static final String PHONE_COUNTRY_CODE = "phonecountry";
+    private static final String PHONE_TYPE = "phonetype";
+    private static final String PHONE_NUMBER = "phonenumber";
 
     public final static Map<String, Name.GenderEnum> CIVILITY_TO_GENDER = ImmutableMap.<String, Name.GenderEnum>builder().put("Mr", Name.GenderEnum.MALE)
         .put("Mrs", Name.GenderEnum.FEMALE)
@@ -56,60 +65,63 @@ public final class ShopUtil {
                 MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue));
 
         ImmutableList.Builder<ShareholderContact> builder = ImmutableList.builder();
-        generateKeys(maxUbos).forEach((i, keys) -> {
-            String firstName = extractedKeysFromMirakl.getOrDefault(keys.get(FIRSTNAME), null);
-            String lastName = extractedKeysFromMirakl.getOrDefault(keys.get(LASTNAME), null);
-            String civility = extractedKeysFromMirakl.getOrDefault(keys.get(CIVILITY), null);
-            String email = extractedKeysFromMirakl.getOrDefault(keys.get(EMAIL), null);
-            String country = extractedKeysFromMirakl.getOrDefault(keys.get(COUNTRY), null);
-            String street = extractedKeysFromMirakl.getOrDefault(keys.get(STREET), null);
-            String houseNumberOrName = extractedKeysFromMirakl.getOrDefault(keys.get(HOUSE_NUMBER_OR_NAME), null);
-            String city = extractedKeysFromMirakl.getOrDefault(keys.get(CITY), null);
-            String postalCode = extractedKeysFromMirakl.getOrDefault(keys.get(POSTAL_CODE), null);
-            String stateOrProvince = extractedKeysFromMirakl.getOrDefault(keys.get(STATE_OR_PROVINCE), null);
-            String dateOfBirth = extractedKeysFromMirakl.getOrDefault(keys.get(DATE_OF_BIRTH), null);
-            String phoneNumber = extractedKeysFromMirakl.getOrDefault(keys.get(PHONE_NUMBER), null);
-            String shareHolderCode = String.format("%s_ubo_%d", shop.getId(), i);
+        generateKeys(maxUbos).forEach((uboNumber, uboKeys) -> {
+            String civility = extractedKeysFromMirakl.getOrDefault(uboKeys.get(CIVILITY), null);
+            String firstName = extractedKeysFromMirakl.getOrDefault(uboKeys.get(FIRSTNAME), null);
+            String lastName = extractedKeysFromMirakl.getOrDefault(uboKeys.get(LASTNAME), null);
+            String email = extractedKeysFromMirakl.getOrDefault(uboKeys.get(EMAIL), null);
+            String dateOfBirth = extractedKeysFromMirakl.getOrDefault(uboKeys.get(DATE_OF_BIRTH), null);
+            String nationality = extractedKeysFromMirakl.getOrDefault(uboKeys.get(NATIONALITY), null);
+            String idNumber = extractedKeysFromMirakl.getOrDefault(uboKeys.get(ID_NUMBER), null);
+            String houseNumberOrName = extractedKeysFromMirakl.getOrDefault(uboKeys.get(HOUSE_NUMBER_OR_NAME), null);
+            String street = extractedKeysFromMirakl.getOrDefault(uboKeys.get(STREET), null);
+            String city = extractedKeysFromMirakl.getOrDefault(uboKeys.get(CITY), null);
+            String postalCode = extractedKeysFromMirakl.getOrDefault(uboKeys.get(POSTAL_CODE), null);
+            String country = extractedKeysFromMirakl.getOrDefault(uboKeys.get(COUNTRY), null);
+            String phoneType = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_TYPE), null);
+            String phoneNumber = extractedKeysFromMirakl.getOrDefault(uboKeys.get(PHONE_NUMBER), null);
 
             //do nothing if mandatory fields are missing
             if (firstName != null && lastName != null && civility != null && email != null) {
                 ShareholderContact shareholderContact = new ShareholderContact();
 
-                //share holder code
-                shareholderContact.setShareholderCode(shareHolderCode);
-
                 //mandatory fields
                 Name name = new Name();
+                name.setGender(CIVILITY_TO_GENDER.getOrDefault(civility, Name.GenderEnum.UNKNOWN));
                 name.setFirstName(firstName);
                 name.setLastName(lastName);
-                name.setGender(CIVILITY_TO_GENDER.getOrDefault(civility, Name.GenderEnum.UNKNOWN));
                 shareholderContact.setName(name);
                 shareholderContact.setEmail(email);
 
-                //do not set Phone Number wrapper if the phone number does not exist
-                if (phoneNumber != null) {
-                    final PhoneNumber phoneNumberWrapper = new PhoneNumber();
-                    phoneNumberWrapper.setPhoneNumber(phoneNumber);
-                    shareholderContact.setPhoneNumber(phoneNumberWrapper);
+                if (dateOfBirth != null || nationality != null || idNumber != null) {
+                    final PersonalData personalData = new PersonalData();
+                    Optional.ofNullable(dateOfBirth).ifPresent(personalData::setDateOfBirth);
+                    Optional.ofNullable(nationality).ifPresent(personalData::setNationality);
+                    Optional.ofNullable(idNumber).ifPresent(personalData::setIdNumber);
+                    shareholderContact.setPersonalData(personalData);
+                }else{
+                    log.warn("Unable to populate any personal data for share holder {}", uboNumber);
                 }
 
-                //do not set the address unless at least one address attribute exists
-                if (country != null || street != null || houseNumberOrName != null || city != null || postalCode != null || stateOrProvince != null) {
+                if (country != null || street != null || houseNumberOrName != null || city != null || postalCode != null) {
                     final Address address = new Address();
-                    Optional.ofNullable(country).ifPresent(address::setCountry);
-                    Optional.ofNullable(street).ifPresent(address::setStreet);
                     Optional.ofNullable(houseNumberOrName).ifPresent(address::setHouseNumberOrName);
+                    Optional.ofNullable(street).ifPresent(address::setStreet);
                     Optional.ofNullable(city).ifPresent(address::setCity);
                     Optional.ofNullable(postalCode).ifPresent(address::setPostalCode);
-                    Optional.ofNullable(stateOrProvince).ifPresent(address::setStateOrProvince);
+                    Optional.ofNullable(country).ifPresent(address::setCountry);
                     shareholderContact.setAddress(address);
+                }else{
+                    log.warn("Unable to populate any address data for share holder {}", uboNumber);
                 }
 
-                //do not set the dob wrapper if the dob does not exist
-                if (dateOfBirth != null) {
-                    final PersonalData personalData = new PersonalData();
-                    personalData.setDateOfBirth(dateOfBirth);
-                    shareholderContact.setPersonalData(personalData);
+                if (phoneNumber != null || phoneType != null) {
+                    final PhoneNumber phoneNumberWrapper = new PhoneNumber();
+                    Optional.ofNullable(phoneNumber).ifPresent(phoneNumberWrapper::setPhoneNumber);
+                    Optional.ofNullable(phoneType).ifPresent(x -> phoneNumberWrapper.setPhoneType(PhoneNumber.PhoneTypeEnum.valueOf(x)));
+                    shareholderContact.setPhoneNumber(phoneNumberWrapper);
+                }else{
+                    log.warn("Unable to populate any phone data for share holder {}", uboNumber);
                 }
 
                 builder.add(shareholderContact);
@@ -122,18 +134,21 @@ public final class ShopUtil {
         return IntStream.rangeClosed(1, maxUbos).mapToObj(i -> {
             final Map<Integer, Map<String, String>> grouped = new HashMap<>();
             grouped.put(i, new ImmutableMap.Builder<String, String>()
+                .put(CIVILITY, ADYEN_UBO + String.valueOf(i) + "-civility")
                 .put(FIRSTNAME, ADYEN_UBO + String.valueOf(i) + "-firstname")
                 .put(LASTNAME, ADYEN_UBO + String.valueOf(i) + "-lastname")
-                .put(CIVILITY, ADYEN_UBO + String.valueOf(i) + "-civility")
                 .put(EMAIL, ADYEN_UBO + String.valueOf(i) + "-email")
-                .put(COUNTRY, ADYEN_UBO + String.valueOf(i) + "-country")
-                .put(STREET, ADYEN_UBO + String.valueOf(i) + "-street")
-                .put(HOUSE_NUMBER_OR_NAME, ADYEN_UBO + String.valueOf(i) + "-houseNumberOrName")
+                .put(DATE_OF_BIRTH, ADYEN_UBO + String.valueOf(i) + "-dob")
+                .put(NATIONALITY, ADYEN_UBO + String.valueOf(i) + "-nationality")
+                .put(ID_NUMBER, ADYEN_UBO + String.valueOf(i) + "-idnumber")
+                .put(HOUSE_NUMBER_OR_NAME, ADYEN_UBO + String.valueOf(i) + "-housenumber")
+                .put(STREET, ADYEN_UBO + String.valueOf(i) + "-streetname")
                 .put(CITY, ADYEN_UBO + String.valueOf(i) + "-city")
-                .put(POSTAL_CODE, ADYEN_UBO + String.valueOf(i) + "-postalCode")
-                .put(STATE_OR_PROVINCE, ADYEN_UBO + String.valueOf(i) + "-stateOrProvince")
-                .put(DATE_OF_BIRTH, ADYEN_UBO + String.valueOf(i) + "-dateOfBirth")
-                .put(PHONE_NUMBER, ADYEN_UBO + String.valueOf(i) + "-phoneNumber")
+                .put(POSTAL_CODE, ADYEN_UBO + String.valueOf(i) + "-zip")
+                .put(COUNTRY, ADYEN_UBO + String.valueOf(i) + "-country")
+                .put(PHONE_COUNTRY_CODE, ADYEN_UBO + String.valueOf(i) + "-phonecountry")
+                .put(PHONE_TYPE, ADYEN_UBO + String.valueOf(i) + "-phonetype")
+                .put(PHONE_NUMBER, ADYEN_UBO + String.valueOf(i) + "-phonenumber")
                 .build());
             return grouped;
         }).reduce((x, y) -> {
