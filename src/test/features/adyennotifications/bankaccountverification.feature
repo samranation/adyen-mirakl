@@ -1,7 +1,7 @@
 @cucumber
 Feature: Bank Account Verification
 
-    @ADY-13 @ADY-77
+    @ADY-13 @ADY-77 @ADY-102 @bug
     Scenario: ACCOUNT_HOLDER_VERIFICATION notification is received after seller provides Bank Account Details
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city   | bank name | iban                   | bankOwnerName | lastName |
@@ -9,7 +9,7 @@ Feature: Bank Account Verification
         When we process the data and push to Adyen
         Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and DATA_PROVIDED
 
-    @ADY-8 @ADY-77 @ADY-84
+    @ADY-8 @ADY-77 @ADY-84 @ADY-102 @bug
     Scenario: New BankAccountDetail is created for Account Holder upon new Bank Account entry in Mirakl
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city   | bank name | iban                   | bankOwnerName | lastName |
