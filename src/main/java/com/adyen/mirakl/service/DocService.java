@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
 import com.adyen.model.marketpay.DocumentDetail;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
@@ -46,7 +47,7 @@ public class DocService {
 
         List<MiraklShopDocument> miraklShopDocumentList = retrieveUpdatedDocs();
         for (MiraklShopDocument document : miraklShopDocumentList) {
-            if (document.getTypeCode().equals("adyen-bankproof")) {
+            if (document.getTypeCode().equals(Constants.BANKPROOF)) {
                 FileWrapper fileWrapper = downloadSelectedDocument(document);
                 try {
                     uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT, fileWrapper, document.getShopId());
@@ -108,6 +109,8 @@ public class DocService {
         documentDetail.setDocumentType(documentType);
         request.setDocumentDetail(documentDetail);
         UploadDocumentResponse response = adyenAccountService.uploadDocument(request);
+        log.debug("Shop ID: " + shopId);
+        log.debug("DocumentType: " + documentType);
         log.debug("UploadDocumentResponse: ", response.toString());
     }
 
