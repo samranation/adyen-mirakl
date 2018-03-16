@@ -73,6 +73,8 @@ public class ShopServiceTest {
     private CreateAccountHolderResponse createAccountHolderResponseMock;
     @Mock
     private UpdateAccountHolderResponse updateAccountHolderResponseMock;
+    @Mock
+    private ShareholderMappingService shareholderMappingService;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -214,6 +216,7 @@ public class ShopServiceTest {
 
         UpdateAccountHolderRequest request = updateAccountHolderRequestCaptor.getValue();
         verify(adyenAccountServiceMock).updateAccountHolder(request);
+        verify(shareholderMappingService).updateShareholderMapping(updateAccountHolderResponseMock);
         assertEquals("id", request.getAccountHolderCode());
         final List<ShareholderContact> shareholders = request.getAccountHolderDetails().getBusinessDetails().getShareholders();
         verifyShareHolders(shareholders);
@@ -338,6 +341,7 @@ public class ShopServiceTest {
         shopService.processUpdatedShops();
 
         verify(deltaService).updateShopDelta(any(ZonedDateTime.class));
+        verify(shareholderMappingService).updateShareholderMapping(createAccountHolderResponseMock);
 
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
             .stream()

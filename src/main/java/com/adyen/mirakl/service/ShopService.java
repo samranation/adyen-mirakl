@@ -45,6 +45,9 @@ public class ShopService {
     @Resource
     private DeltaService deltaService;
 
+    @Resource
+    private ShareholderMappingService shareholderMappingService;
+
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
 
@@ -74,6 +77,7 @@ public class ShopService {
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
+        shareholderMappingService.updateShareholderMapping(response);
         log.debug("CreateAccountHolderResponse: {}", response);
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
@@ -86,6 +90,7 @@ public class ShopService {
         updateAccountHolderRequest = updateAccountHolderRequest.flatMap(x -> addBankDetails(x, shop));
         if (updateAccountHolderRequest.isPresent()) {
             UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest.get());
+            shareholderMappingService.updateShareholderMapping(response);
             log.debug("UpdateAccountHolderResponse: {}", response);
             if(!CollectionUtils.isEmpty(response.getInvalidFields())){
                 final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
