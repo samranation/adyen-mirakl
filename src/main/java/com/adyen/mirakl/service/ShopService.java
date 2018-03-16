@@ -88,31 +88,25 @@ public class ShopService {
     }
 
     private void processUpdateAccountHolder(final MiraklShop shop, final GetAccountHolderResponse getAccountHolderResponse) throws Exception {
-        Optional<UpdateAccountHolderRequest> updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        updateAccountHolderRequest = updateAccountHolderRequest.flatMap(x -> addBankDetails(x, shop));
-        if (updateAccountHolderRequest.isPresent()) {
-            UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest.get());
-            shareholderMappingService.updateShareholderMapping(response);
-            log.debug("UpdateAccountHolderResponse: {}", response);
-            if(!CollectionUtils.isEmpty(response.getInvalidFields())){
-                final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
-                log.warn("Invalid fields when trying to create a shop: {}", invalidFields);
-            }
+        UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
 
-            // if IBAN has changed remove the old one
-            if (isIbanChanged(getAccountHolderResponse, shop)) {
-                DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse));
-                log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
-            }
+        UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
+        shareholderMappingService.updateShareholderMapping(response);
+        log.debug("UpdateAccountHolderResponse: {}", response);
+        if(!CollectionUtils.isEmpty(response.getInvalidFields())){
+            final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
+            log.warn("Invalid fields when trying to create a shop: {}", invalidFields);
         }
+
+        // if IBAN has changed remove the old one
+        if (isIbanChanged(getAccountHolderResponse, shop)) {
+            DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse));
+            log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
+        }
+
     }
 
-    private Optional<UpdateAccountHolderRequest> addBankDetails(final UpdateAccountHolderRequest updateRequest, MiraklShop shop) {
-        final AccountHolderDetails accountHolderDetails = Optional.ofNullable(updateRequest.getAccountHolderDetails()).orElseGet(AccountHolderDetails::new);
-        accountHolderDetails.setBusinessDetails(addBusinessDetailsFromShop(shop));
-        updateRequest.setAccountHolderDetails(accountHolderDetails);
-        return Optional.of(updateRequest);
-    }
+
 
     /**
      * Construct DeleteBankAccountRequest to remove outdated iban bankaccounts
@@ -286,25 +280,29 @@ public class ShopService {
     /**
      * Construct updateAccountHolderRequest to Adyen from Mirakl shop
      */
-    protected Optional<UpdateAccountHolderRequest> updateAccountHolderRequestFromShop(MiraklShop shop, GetAccountHolderResponse getAccountHolderResponse) {
+    protected UpdateAccountHolderRequest updateAccountHolderRequestFromShop(MiraklShop shop, GetAccountHolderResponse getAccountHolderResponse) {
+
+        UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+        updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+
         if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
             if ((! miraklIbanBankAccountInformation.getIban().isEmpty() && shop.getCurrencyIsoCode() != null) &&
                 // if IBAN already exists and is the same then ignore this
                 (! isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse))) {
-                UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
-                updateAccountHolderRequest.setAccountHolderCode(shop.getId());
                 // create AccountHolderDetails
                 AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
                 accountHolderDetails.setBankAccountDetails(setBankAccountDetails(shop));
                 updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
-                return Optional.of(updateAccountHolderRequest);
 
             }
         }
 
-        log.warn("Unable to create Account holder details, skipping update for shop: {}", shop.getId());
-        return Optional.empty();
+        final AccountHolderDetails accountHolderDetails = Optional.ofNullable(updateAccountHolderRequest.getAccountHolderDetails()).orElseGet(AccountHolderDetails::new);
+        accountHolderDetails.setBusinessDetails(addBusinessDetailsFromShop(shop));
+        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+
+        return updateAccountHolderRequest;
     }
 
     /**

@@ -247,36 +247,33 @@ public class ShopServiceTest {
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn(null);
 
         // Update with no IBAN yet
-        Optional<UpdateAccountHolderRequest> requestOptional = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
-        Assertions.assertThat(requestOptional.isPresent()).isTrue();
-        requestOptional.ifPresent(request -> {
-            assertEquals("id", request.getAccountHolderCode());
-            assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-            assertEquals("owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
-            assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
-            assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-            assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
-            assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-            assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
-        });
+        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
+
+
+        assertEquals("id", request.getAccountHolderCode());
+        assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
+        assertEquals("owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+        assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
+        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+
 
 
         // Update with the same IBAN
         GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
 
-        Optional<UpdateAccountHolderRequest> requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        Assertions.assertThat(requestWithoutIbanChange.isPresent()).isEqualTo(false);
+        UpdateAccountHolderRequest requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        Assertions.assertThat(requestWithoutIbanChange.getAccountHolderDetails().getBankAccountDetails()).isEmpty();
 
 
         // Update with a different IBAN
         getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDIFFERENTIBAN");
 
-        Optional<UpdateAccountHolderRequest> requestWithIbanChangeOptional = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        Assertions.assertThat(requestWithIbanChangeOptional.isPresent()).isEqualTo(true);
-        requestWithIbanChangeOptional.ifPresent(requestWithIbanChange -> {
-            assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
-            assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
-        });
+        UpdateAccountHolderRequest requestWithIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
+        assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
     }
 
 
