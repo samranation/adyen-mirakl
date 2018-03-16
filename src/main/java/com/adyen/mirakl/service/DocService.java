@@ -57,7 +57,7 @@ public class DocService {
                 }
             }
         }
-        deltaService.createNewDocumentDelta(beforeProcessing);
+        deltaService.updateDocumentDelta(beforeProcessing);
     }
 
     /**
@@ -67,6 +67,7 @@ public class DocService {
         //To replace with MiraklGetShopDocumentsRequest when fixed
         GetShopDocumentsRequest request = new GetShopDocumentsRequest();
         request.setUpdatedSince(deltaService.getDocumentDelta());
+        log.debug("getShopDocuments request since: " + request.getUpdatedSince());
         return miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
     }
 
@@ -75,11 +76,10 @@ public class DocService {
      */
     private FileWrapper downloadSelectedDocument(MiraklShopDocument document) {
         MiraklDownloadShopsDocumentsRequest request = new MiraklDownloadShopsDocumentsRequest();
-        ArrayList<String> documentIds = new ArrayList();
+        List<String> documentIds = new ArrayList<>();
         documentIds.add(document.getId());
         request.setDocumentIds(documentIds);
-        FileWrapper fileWrapper = miraklMarketplacePlatformOperatorApiClient.downloadShopsDocuments(request);
-        return fileWrapper;
+        return miraklMarketplacePlatformOperatorApiClient.downloadShopsDocuments(request);
     }
 
     /**

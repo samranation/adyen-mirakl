@@ -1,6 +1,7 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.config.ApplicationProperties;
 import com.adyen.mirakl.domain.MiraklDelta;
 import com.adyen.mirakl.repository.MiraklDeltaRepository;
 import com.google.common.collect.ImmutableList;
@@ -29,6 +30,9 @@ public class DeltaServiceTest {
     @Autowired
     private MiraklDeltaRepository miraklDeltaRepository;
 
+    @Autowired
+    private ApplicationProperties applicationProperties;
+
     private Date date = new Date(0);
 
     @Before
@@ -36,6 +40,7 @@ public class DeltaServiceTest {
         final List<MiraklDelta> all = miraklDeltaRepository.findAll();
         miraklDeltaRepository.delete(all);
         miraklDeltaRepository.flush();
+        applicationProperties.setInitialDeltaDaysBack(0);
     }
 
     @Test
@@ -57,9 +62,11 @@ public class DeltaServiceTest {
     }
 
     @Test
-    public void noCurrentDeltaReturnsNull(){
+    public void noCurrentDeltaReturnsNow(){
+        final Date now = new Date();
         final Date result = deltaService.getShopDelta();
-        Assertions.assertThat(result).isNull();
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isInSameSecondWindowAs(now);
     }
 
     @Test
@@ -69,7 +76,7 @@ public class DeltaServiceTest {
         final Long id = miraklDeltaRepository.saveAndFlush(miraklDelta1).getId();
 
         final ZonedDateTime now = ZonedDateTime.now();
-        deltaService.createNewShopDelta(now);
+        deltaService.updateShopDelta(now);
 
         final List<MiraklDelta> all = miraklDeltaRepository.findAll();
         Assertions.assertThat(all.size()).isEqualTo(1);
@@ -80,13 +87,11 @@ public class DeltaServiceTest {
 
     @Test
     public void createDeltaWhenNonAlreadyExist(){
-        final ZonedDateTime now = ZonedDateTime.now();
-        deltaService.createNewShopDelta(now);
+        deltaService.getShopDelta();
 
         final List<MiraklDelta> all = miraklDeltaRepository.findAll();
+        final Date now = new Date();
         Assertions.assertThat(all.size()).isEqualTo(1);
-        final MiraklDelta miraklDelta = all.iterator().next();
-        Assertions.assertThat(miraklDelta.getShopDelta()).isEqualTo(now);
+        Assertions.assertThat(Date.from(all.get(0).getShopDelta().toInstant())).isInSameSecondWindowAs(now);
     }
-
 }

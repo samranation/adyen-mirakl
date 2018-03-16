@@ -134,7 +134,4 @@ jhipster:
 # ===================================================================
 
 application:
-
-miraklConfig:
-    createShopDeltaAtStartup: false
-    createDocDeltaAtStartup: false
+    initialDeltaDaysBack: 30

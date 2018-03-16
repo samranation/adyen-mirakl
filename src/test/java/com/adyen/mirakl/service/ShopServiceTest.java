@@ -328,7 +328,7 @@ public class ShopServiceTest {
 
         shopService.processUpdatedShops();
 
-        verify(deltaService).createNewShopDelta(any(ZonedDateTime.class));
+        verify(deltaService).updateShopDelta(any(ZonedDateTime.class));
 
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
             .stream()

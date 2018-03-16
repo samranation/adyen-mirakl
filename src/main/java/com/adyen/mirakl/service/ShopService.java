@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import com.adyen.mirakl.service.util.ShopUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
@@ -34,7 +35,6 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import org.springframework.util.CollectionUtils;
 
 @Service
 @Transactional
@@ -74,14 +74,14 @@ public class ShopService {
             }
         }
 
-        deltaService.createNewShopDelta(beforeProcessing);
+        deltaService.updateShopDelta(beforeProcessing);
     }
 
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
         log.debug("CreateAccountHolderResponse: {}", response);
-        if(!CollectionUtils.isEmpty(response.getInvalidFields())){
+        if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
             log.error("Invalid fields when trying to create a shop: {}", invalidFields);
         }
@@ -134,6 +134,7 @@ public class ShopService {
             miraklGetShopsRequest.setOffset(offset);
 
             miraklGetShopsRequest.setUpdatedSince(deltaService.getShopDelta());
+            log.debug("getShops request since: " + miraklGetShopsRequest.getUpdatedSince());
             MiraklShops miraklShops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest);
             shops.addAll(miraklShops.getShops());
 
