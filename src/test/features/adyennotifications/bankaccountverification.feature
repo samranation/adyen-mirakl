@@ -31,7 +31,7 @@ Feature: Bank Account Verification
             | eventType              |
             | ACCOUNT_HOLDER_UPDATED |
 
-    @ADY-8 @ADY-71 @ADY-84 @exclude
+    @ADY-8 @ADY-71 @ADY-84 @ADY-100 @exclude
     Scenario: Editing IBAN in Mirakl will create new BankAccountDetail in Adyen
         Given a shop has been created in Mirakl for an Individual with Bank Information
             | city   | bank name | iban                   | bankOwnerName | lastName |
@@ -44,9 +44,6 @@ Feature: Bank Account Verification
         Then a new bankAccountDetail will be created for the existing Account Holder
             | eventType              |
             | ACCOUNT_HOLDER_UPDATED |
-        And the previous BankAccountDetail will be removed
-            | eventType                    | reason                |
-            | ACCOUNT_HOLDER_STATUS_CHANGE | Bank account deletion |
 
     @ADY-15 @ADY-89
     Scenario: Seller uploads Bank Statement Mirakl to fulfil BANK_ACCOUNT_VERIFICATION in Adyen

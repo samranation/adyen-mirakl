@@ -4,7 +4,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,7 @@ public class RestAssuredAdyenApi {
     public Map<String, Object> getAdyenNotificationBody(String endpoint, String miraklShopId, String eventType, String verificationType) {
         ResponseBody body = getResponseBody(endpoint);
         List<String> check = body.jsonPath().get("body");
-        if (! CollectionUtils.isEmpty(check) ) {
+        if (!CollectionUtils.isEmpty(check)) {
             for (String list : check) {
 
                 Map<String, Object> mapResult = new HashMap<>(new Gson().fromJson(list, new TypeToken<HashMap<String, Object>>() {
@@ -36,12 +35,12 @@ public class RestAssuredAdyenApi {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId)
                         && mapResult.get("eventType").equals(eventType)
                         && contentMap.get("verificationType").equals(verificationType)) {
-                        log.info("found from url: {} : {}",endpoint, list);
+                        log.info("found from url: {} : {}", endpoint, list);
                         return mapResult;
                     }
                 } else {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType)) {
-                        log.info("found from url: {} : {}",endpoint, list);
+                        log.info("found from url: {} : {}", endpoint, list);
                         return mapResult;
                     }
                 }

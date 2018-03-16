@@ -1,7 +1,8 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
-import com.github.javafaker.Faker;
+import com.adyen.mirakl.service.UboService;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mirakl.client.mmp.domain.shop.MiraklProfessionalInformation;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.domain.shop.create.MiraklCreateShopAddress;
@@ -12,22 +13,32 @@ import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.additionalfield.MiraklRequestAdditionalFieldValue;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Resource;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    Faker faker = new Faker(new Locale("en-GB"));
+
+    @Resource
+    private UboService uboService;
 
     private String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailtrap.com");
-    private String companyName = faker.company().name();
-    private String firstName = faker.name().firstName();
+    private String companyName = FAKER.company().name();
+    private String firstName = FAKER.name().firstName();
+    private final Map<Integer, String> CIVILITIES = ImmutableMap.<Integer, String>builder()
+        .put(1, "Mr")
+        .put(2, "Mrs")
+        .put(3, "Miss")
+        .build();
 
     protected void populatePaymentInformation(List<Map<String, String>> rows, MiraklCreateShop createShop) {
 
@@ -44,7 +55,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
                 owner = row.get("bankOwnerName");
                 bankName = row.get("bank name");
                 iban = row.get("iban");
-                bic = faker.finance().bic();
+                bic = FAKER.finance().bic();
                 city = row.get("city");
                 createShop.setPaymentInformation(miraklIbanBankAccountInformation(owner, bankName, iban, bic, city));
             }
@@ -52,29 +63,70 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
     }
 
     protected void populateShareHolderData(String legalEntity, List<Map<String, String>> rows, MiraklCreateShop createShop) {
-
         rows.forEach(row -> {
             if (row.get("maxUbos") != null) {
                 ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder = ImmutableList.builder();
                 for (int i = 1; i <= Integer.valueOf(row.get("maxUbos")); i++) {
-                    builder.add(createAdditionalField("adyen-ubo" + i + "-civility", "Mr"));
-                    builder.add(createAdditionalField("adyen-ubo" + i + "-firstname", faker.name().firstName()));
-                    builder.add(createAdditionalField("adyen-ubo" + i + "-lastname", faker.name().lastName()));
-                    builder.add(createAdditionalField("adyen-ubo" + i + "-email", email));
+
+                    Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(row.get("maxUbos")));
+                    int randomCivility = ThreadLocalRandom.current().nextInt(1, 4);
+                    String civility = CIVILITIES.get(randomCivility);
+
+                    buildShareHolderMinimumData(builder, i, uboKeys, civility);
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.COUNTRY), "GB"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.HOUSE_NUMBER_OR_NAME), FAKER.address().streetAddressNumber()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.STREET), FAKER.address().streetName()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CITY), FAKER.address().city()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.POSTAL_CODE), FAKER.address().zipCode()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_COUNTRY_CODE), "GB"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.PHONE_NUMBER), FAKER.phoneNumber().phoneNumber()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.DATE_OF_BIRTH), dateOfBirth().toString()));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.NATIONALITY), "GB"));
+                    builder.add(createAdditionalField(uboKeys.get(i).get(UboService.ID_NUMBER), UUID.randomUUID().toString()));
                 }
-                builder.add(createAdditionalField("adyen-individual-housenumber", faker.address().streetAddressNumber()));
                 builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
                 createShop.setAdditionalFieldValues(builder.build());
             }
         });
     }
 
+    private DateTime dateOfBirth() {
+        String dob = "1989-03-15 23:00:00";
+        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyy-MM-dd HH:mm:ss");
+        return formatter.parseDateTime(dob);
+    }
+
+    protected void populateShareholderWithMissingData(String legalEntity, List<Map<String, String>> rows, MiraklCreateShop createShop) {
+        rows.forEach(row -> {
+            if (row.get("maxUbos") != null) {
+                ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder = ImmutableList.builder();
+                for (int i = 1; i <= Integer.valueOf(row.get("maxUbos")); i++) {
+
+                    Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(row.get("maxUbos")));
+                    int randomCivility = ThreadLocalRandom.current().nextInt(1, 4);
+                    String civility = CIVILITIES.get(randomCivility);
+
+                    buildShareHolderMinimumData(builder, i, uboKeys, civility);
+                }
+                builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
+                createShop.setAdditionalFieldValues(builder.build());
+            }
+        });
+    }
+
+    private void buildShareHolderMinimumData(ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder, int i, Map<Integer, Map<String, String>> uboKeys, String civility) {
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CIVILITY), civility));
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.FIRSTNAME), FAKER.name().firstName()));
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.LASTNAME), FAKER.name().lastName()));
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.EMAIL), email));
+    }
+
     protected void populateAddFieldsLegalAndHouseNumber(String legalEntity, MiraklCreateShop createShop) {
 
         createShop.setAdditionalFieldValues(ImmutableList.of(
-            createAdditionalField("adyen-individual-housenumber", faker.address().streetAddressNumber()),
+            createAdditionalField("adyen-individual-housenumber", FAKER.address().streetAddressNumber()),
             createAdditionalField("adyen-legal-entity-type", legalEntity),
-            createAdditionalField("adyen-individual-dob", "1989-03-15T23:00:00Z"),
+            createAdditionalField("adyen-individual-dob", dateOfBirth().toString()),
             createAdditionalField("adyen-individual-idnumber", "01234567890")
         ));
     }
@@ -111,7 +163,7 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
             String city;
 
             if (row.get("city") == null || StringUtils.isEmpty(row.get("city"))) {
-                city = faker.address().city();
+                city = FAKER.address().city();
             } else {
                 city = row.get("city");
             }
@@ -122,8 +174,8 @@ public class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
             address.setCountry("GBR");
             address.setFirstname(firstName);
             address.setLastname(row.get("lastName"));
-            address.setStreet1(faker.address().streetAddress());
-            address.setZipCode(faker.address().zipCode());
+            address.setStreet1(FAKER.address().streetAddress());
+            address.setZipCode(FAKER.address().zipCode());
             createShop.setAddress(address);
         });
     }
