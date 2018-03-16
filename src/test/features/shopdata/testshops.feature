@@ -1,3 +1,4 @@
+@exclude
 Feature: Create payout shops which will be KYC'ed for seller payout tests
 
 #    Description:

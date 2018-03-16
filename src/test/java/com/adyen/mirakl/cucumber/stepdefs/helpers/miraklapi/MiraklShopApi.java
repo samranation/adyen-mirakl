@@ -44,11 +44,20 @@ public class MiraklShopApi extends MiraklShopProperties {
         return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
-    // Business with UBOs populated, amount of UBOs come from Cucumber tables
-    public MiraklCreatedShops createBusinessShopWithUbos(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
+    // Business with UBOs populated, amount of UBOs come from Cucumber tables, full UBO data is provided in this method
+    public MiraklCreatedShops createBusinessShopWithFullUboInfo(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
         miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
         populateShareHolderData(legalEntity, rows, miraklCreateShop);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
+    }
+
+    // Business with UBOs populated, amount of UBOs come from Cucumber tables, missing UBO data is provided in this method
+    public MiraklCreatedShops createBusinessShopWithMissingUboInfo(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
+        populateShareholderWithMissingData(legalEntity, rows, miraklCreateShop);
         ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
         return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }

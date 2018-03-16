@@ -25,11 +25,10 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
 
-    protected ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> addMiraklShopUbos(List<Map<String, String>> rows){
+    protected ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> addMiraklShopUbos(List<Map<String, String>> rows) {
 
         ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> builder = ImmutableList.builder();
         rows.forEach(row -> {
@@ -42,8 +41,20 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
                     builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-civility", "Mr"));
                     builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-firstname", FAKER.name().firstName()));
                     builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-lastname", FAKER.name().lastName()));
-                    builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-email", "adyen-mirakl@"+UUID.randomUUID()+"@mailtrap.com"));
+                    builder.add(createAdditionalField("adyen-ubo" + noOfUbos + "-email", "adyen-mirakl" + UUID.randomUUID() + "@mailtrap.com"));
                 }
+            }
+        });
+        return builder;
+    }
+
+    protected ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> updateMiraklShopUbos(List<Map<String, String>> rows) {
+        ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> builder = ImmutableList.builder();
+        rows.forEach(row -> {
+            for (int i = Integer.valueOf(row.get("UBO")); i <= 4; i++) {
+                builder.add(createAdditionalField("adyen-ubo" + i + "-firstname", row.get("firstName")));
+                builder.add(createAdditionalField("adyen-ubo" + i + "-lastname", row.get("lastName")));
+                builder.add(createAdditionalField("adyen-ubo" + i + "-email", "adyen-mirakl" + UUID.randomUUID() + "@mailtrap.com"));
             }
         });
         return builder;
@@ -76,7 +87,7 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         MiraklIbanBankAccountInformation paymentInformation = new MiraklIbanBankAccountInformation();
         MiraklPaymentInformation miraklPaymentInformation = miraklShop.getPaymentInformation();
         if (miraklPaymentInformation instanceof MiraklIbanBankAccountInformation) {
-            paymentInformation.setIban(rows.get(0).get("iban").toString());
+            paymentInformation.setIban(rows.get(0).get("iban"));
             paymentInformation.setBic(((MiraklIbanBankAccountInformation) miraklPaymentInformation).getBic());
             paymentInformation.setOwner(miraklPaymentInformation.getOwner());
             paymentInformation.setBankName(((MiraklIbanBankAccountInformation) miraklPaymentInformation).getBankName());
@@ -87,13 +98,13 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
     protected MiraklShopAddress updateMiraklShopAddress(MiraklShop miraklShop, Map<String, String> row) {
         MiraklShopAddress address = new MiraklShopAddress();
 
-        address.setCity(row.get("city").toString());
+        address.setCity(row.get("city"));
         address.setCivility(miraklShop.getContactInformation().getCivility());
         address.setCountry(miraklShop.getContactInformation().getCountry());
-        address.setFirstname(row.get("firstName").toString());
-        address.setLastname(row.get("lastName").toString());
+        address.setFirstname(row.get("firstName"));
+        address.setLastname(row.get("lastName"));
         address.setStreet1(miraklShop.getContactInformation().getStreet1());
-        address.setZipCode(row.get("postCode").toString());
+        address.setZipCode(row.get("postCode"));
 
         return address;
     }
@@ -173,19 +184,17 @@ public class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperti
         final ImmutableList.Builder<MiraklRequestAdditionalFieldValue> updatedFields = new ImmutableList.Builder<>();
 
         for (MiraklSimpleRequestAdditionalFieldValue additionalFieldVal : fieldsToUpdate) {
-            Stream<MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue> valueStream = addFields.stream()
+            Optional<MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue> additionalField = addFields.stream()
                 .filter(x -> additionalFieldVal.getCode().equals(x.getCode()))
                 .filter(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::isInstance)
-                .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast);
+                .map(MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue.class::cast).findAny();
 
             // if fields are present then update them
             // else create them
-            if (valueStream.findFirst().isPresent()) {
-                valueStream
-                    .findFirst()
-                    .get()
-                    .setValue(additionalFieldVal.getValue());
-            } else {
+            if(additionalField.isPresent()){
+                MiraklAdditionalFieldValue.MiraklStringAdditionalFieldValue field = additionalField.get();
+                field.setValue(additionalFieldVal.getValue());
+            }else {
                 updatedFields.add(additionalFieldVal);
             }
         }

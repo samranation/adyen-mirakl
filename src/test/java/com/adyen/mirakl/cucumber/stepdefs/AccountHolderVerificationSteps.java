@@ -74,10 +74,10 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     }
 
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
-    public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) throws Throwable {
+    public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) {
         MiraklShop createdShop = (MiraklShop)cucumberMap.get("createdShop");
-
         waitForNotification();
+
         await().untilAsserted(() -> {
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
                 .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), createdShop.getId(), eventType, verificationType);
@@ -90,7 +90,7 @@ public class AccountHolderVerificationSteps extends StepDefsHelper {
     }
 
     @Then("^adyen will send the (.*) comprising of accountHolder (.*) and status of (.*)")
-    public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATIONAccountHolder(String eventType, String verificationType, String status) throws Throwable {
+    public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATIONAccountHolder(String eventType, String verificationType, String status) {
         MiraklShop createdShop = (MiraklShop)cucumberMap.get("createdShop");
 
         waitForNotification();

@@ -20,70 +20,85 @@ import java.util.Map;
 @Service
 public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
 
-    private MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
-    private ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder;
-
     private ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder(MiraklUpdateShop miraklUpdateShop) {
         ImmutableList.Builder<MiraklUpdateShop> builder = new ImmutableList.Builder<>();
         builder.add(miraklUpdateShop);
         return builder;
     }
 
-    public MiraklShop updateShopUbos(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
-        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
+    public MiraklShop addMoreUbosToShop(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
         // add Ubos
         ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> additionalUbosList = addMiraklShopUbos(rows);
         populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, additionalUbosList.build());
-        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        return updateMiraklRequest(client, miraklUpdateShopBuilder);
+    }
+
+    public MiraklShop updateUboData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows){
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
+
+        // update UBO data
+        ImmutableList.Builder<MiraklSimpleRequestAdditionalFieldValue> updatedShopUboList = updateMiraklShopUbos(rows);
+        populateMiraklAdditionalFields(miraklUpdateShop, miraklShop, updatedShopUboList.build());
+
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
     public void updateExistingShopsContactInfoWithTableData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, Map<String, String> row) {
-        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
 
         // update shop contact information
         MiraklShopAddress address = updateMiraklShopAddress(miraklShop, row);
         miraklUpdateShop.setAddress(address);
 
-        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
         updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
     public MiraklShop updateShopToIncludeVATNumber(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
-        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
         // update VAT number:
         MiraklProfessionalInformation miraklProfessionalInformation = updateMiraklShopTaxId(miraklShop);
         miraklUpdateShop.setProfessionalInformation(miraklProfessionalInformation);
-        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
     public MiraklShop updateShopToAddBankDetails(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
-        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
-        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
     public MiraklShop updateShopsIbanNumberOnly(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
-        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId);
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
 
         // update new iban number only:
         MiraklIbanBankAccountInformation paymentInformation = updateNewMiraklIbanOnly(miraklShop, rows);
         miraklUpdateShop.setPaymentInformation(paymentInformation);
 
-        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
     public void uploadBankStatementToExistingShop(String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
-        miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShopBuilder(miraklUpdateShop);
         // upload bankStatement
         MiraklUploadShopDocumentsRequest miraklUploadShopDocumentsRequest = uploadMiraklShopWithBankStatement(shopId);
         client.uploadShopDocuments(miraklUploadShopDocumentsRequest);
     }
 
     // required for any update we do to Mirakl
-    private MiraklUpdateShop populateAllMandatoryFields(MiraklShop miraklShop, String shopId) {
+    private MiraklUpdateShop populateAllMandatoryFields(MiraklShop miraklShop, String shopId, MiraklUpdateShop miraklUpdateShop) {
         miraklUpdateShop.setShopId(Long.valueOf(shopId));
         MiraklIbanBankAccountInformation paymentInformation = populateMiraklIbanBankAccountInformation(miraklShop);
         miraklUpdateShop.setPaymentInformation(paymentInformation);
