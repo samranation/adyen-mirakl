@@ -11,7 +11,7 @@ import cucumber.api.java.en.When;
 import java.util.List;
 import java.util.Map;
 
-import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.*;
+import static com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.CucumberHooks.cucumberMap;
 
 public class MiraklCreateNewShopSteps extends StepDefsHelper {
 
@@ -52,7 +52,18 @@ public class MiraklCreateNewShopSteps extends StepDefsHelper {
     @When("^a new shop has been created in Mirakl for a (.*)")
     public void aNewShopHasBeenCreatedInMiraklForABusiness(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithUbos(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithFullUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+
+        MiraklShop createdShop = businessShopWithUbos.getShopReturns()
+            .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
+
+        cucumberMap.put("createdShop", createdShop);
+    }
+
+    @Given("^a new (.*) shop has been created in Mirakl without mandatory Shareholder Information$")
+    public void aNewBusinessShopHasBeenCreatedInMiraklWithoutMandatoryShareholderInformation(String legalEntity, DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops businessShopWithUbos = miraklShopApi.createBusinessShopWithMissingUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
 
         MiraklShop createdShop = businessShopWithUbos.getShopReturns()
             .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);

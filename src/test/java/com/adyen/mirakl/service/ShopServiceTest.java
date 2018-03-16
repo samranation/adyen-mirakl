@@ -6,7 +6,6 @@ import com.adyen.model.Name;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
@@ -18,10 +17,7 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.time.ZonedDateTime;
@@ -36,21 +32,6 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
 
-
-    private static final Set<String> UBO_FIELDS = ImmutableSet.of(
-        "firstname",
-        "lastname",
-        "civility",
-        "email",
-        "country",
-        "street",
-        "houseNumberOrName",
-        "city",
-        "postalCode",
-        "stateOrProvince",
-        "dateOfBirth",
-        "phoneNumber");
-
     @InjectMocks
     private ShopService shopService;
 
@@ -64,6 +45,16 @@ public class ShopServiceTest {
     private DeltaService deltaService;
     @Mock
     private Date dateMock;
+    @Mock
+    private CreateAccountHolderResponse createAccountHolderResponseMock;
+    @Mock
+    private UpdateAccountHolderResponse updateAccountHolderResponseMock;
+    @Mock
+    private ShareholderMappingService shareholderMappingService;
+    @Mock
+    private UboService uboService;
+    @Mock
+    private ShareholderContact shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -148,7 +139,7 @@ public class ShopServiceTest {
         additionalFieldDob.setCode("adyen-individual-dob");
         additionalFieldDob.setValue("1989-03-15T23:00:00Z");
         setup(ImmutableList.of(additionalField, additionalFieldDob));
-        when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(null);
+        when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(createAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
 
         shopService.processUpdatedShops();
@@ -191,23 +182,22 @@ public class ShopServiceTest {
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
         additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
         additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo2 = createMiraklAdditionalUboField("2");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo3 = createMiraklAdditionalUboField("3");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo4 = createMiraklAdditionalUboField("4");
+
         final ImmutableList<MiraklAdditionalFieldValue> additionalFields = new ImmutableList.Builder<MiraklAdditionalFieldValue>()
-            .add(additionalField).addAll(ubo1).addAll(ubo2).addAll(ubo3).addAll(ubo4).build();
+            .add(additionalField).build();
         setup(additionalFields);
-        when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(null);
+        when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(updateAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("alreadyExisting");
+        when(uboService.extractUbos(any(), Matchers.eq(4))).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
 
         shopService.processUpdatedShops();
 
         UpdateAccountHolderRequest request = updateAccountHolderRequestCaptor.getValue();
         verify(adyenAccountServiceMock).updateAccountHolder(request);
+        verify(shareholderMappingService).updateShareholderMapping(updateAccountHolderResponseMock);
         assertEquals("id", request.getAccountHolderCode());
         final List<ShareholderContact> shareholders = request.getAccountHolderDetails().getBusinessDetails().getShareholders();
-        verifyShareHolders(shareholders);
+        Assertions.assertThat(shareholders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);
     }
 
     @Test
@@ -257,36 +247,33 @@ public class ShopServiceTest {
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn(null);
 
         // Update with no IBAN yet
-        Optional<UpdateAccountHolderRequest> requestOptional = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
-        Assertions.assertThat(requestOptional.isPresent()).isTrue();
-        requestOptional.ifPresent(request -> {
-            assertEquals("id", request.getAccountHolderCode());
-            assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
-            assertEquals("owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
-            assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
-            assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-            assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
-            assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-            assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
-        });
+        UpdateAccountHolderRequest request = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponseMock);
+
+
+        assertEquals("id", request.getAccountHolderCode());
+        assertEquals("GB", request.getAccountHolderDetails().getBankAccountDetails().get(0).getCountryCode());
+        assertEquals("owner", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerName());
+        assertEquals("GB00IBAN", request.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
+        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
+        assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
+        assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+
 
 
         // Update with the same IBAN
         GetAccountHolderResponse getAccountHolderResponse = createGetAccountHolderResponse();
 
-        Optional<UpdateAccountHolderRequest> requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        Assertions.assertThat(requestWithoutIbanChange.isPresent()).isEqualTo(false);
+        UpdateAccountHolderRequest requestWithoutIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        Assertions.assertThat(requestWithoutIbanChange.getAccountHolderDetails().getBankAccountDetails()).isEmpty();
 
 
         // Update with a different IBAN
         getAccountHolderResponse.getAccountHolderDetails().getBankAccountDetails().get(0).setIban("GBDIFFERENTIBAN");
 
-        Optional<UpdateAccountHolderRequest> requestWithIbanChangeOptional = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        Assertions.assertThat(requestWithIbanChangeOptional.isPresent()).isEqualTo(true);
-        requestWithIbanChangeOptional.ifPresent(requestWithIbanChange -> {
-            assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
-            assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
-        });
+        UpdateAccountHolderRequest requestWithIbanChange = shopService.updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
+        assertEquals(1, requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().size());
+        assertEquals("GB00IBAN", requestWithIbanChange.getAccountHolderDetails().getBankAccountDetails().get(0).getIban());
     }
 
 
@@ -310,25 +297,16 @@ public class ShopServiceTest {
         additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
         additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.BUSINESS.toString());
 
+        setup(ImmutableList.of(additionalField));
 
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo2 = createMiraklAdditionalUboField("2");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo3 = createMiraklAdditionalUboField("3");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo4 = createMiraklAdditionalUboField("4");
-
-
-        List<MiraklAdditionalFieldValue> addtionalFields = ImmutableList.of(ubo1, ubo2, ubo3, ubo4, ImmutableList.of(additionalField))
-            .stream()
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
-        setup(addtionalFields);
-
-        when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(null);
+        when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(createAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
+        when(uboService.extractUbos(any(), Matchers.eq(4))).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
 
         shopService.processUpdatedShops();
 
         verify(deltaService).updateShopDelta(any(ZonedDateTime.class));
+        verify(shareholderMappingService).updateShareholderMapping(createAccountHolderResponseMock);
 
         List<ShareholderContact> shareHolders = createAccountHolderRequestCaptor.getAllValues()
             .stream()
@@ -338,47 +316,8 @@ public class ShopServiceTest {
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
 
-        verifyShareHolders(shareHolders);
+        Assertions.assertThat(shareHolders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);
 
-    }
-
-    private void verifyShareHolders(final List<ShareholderContact> shareHolders) {
-        final Set<String> firstNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getFirstName).collect(Collectors.toSet());
-        final Set<String> lastNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getLastName).collect(Collectors.toSet());
-        final Set<Name.GenderEnum> genders = shareHolders.stream().map(ShareholderContact::getName).map(Name::getGender).collect(Collectors.toSet());
-        final Set<String> emails = shareHolders.stream().map(ShareholderContact::getEmail).collect(Collectors.toSet());
-        final Set<String> countries = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getCountry).collect(Collectors.toSet());
-        final Set<String> streets = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getStreet).collect(Collectors.toSet());
-        final Set<String> houseNumberOrName = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getHouseNumberOrName).collect(Collectors.toSet());
-        final Set<String> cities = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getCity).collect(Collectors.toSet());
-        final Set<String> postalCodes = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getPostalCode).collect(Collectors.toSet());
-        final Set<String> stateOrProvince = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getStateOrProvince).collect(Collectors.toSet());
-        final Set<String> dateOfBirth = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getDateOfBirth).collect(Collectors.toSet());
-        final Set<String> phoneNumber = shareHolders.stream().map(ShareholderContact::getPhoneNumber).map(PhoneNumber::getPhoneNumber).collect(Collectors.toSet());
-
-        Assertions.assertThat(firstNames).containsExactlyInAnyOrder("firstname1", "firstname2", "firstname3", "firstname4");
-        Assertions.assertThat(lastNames).containsExactlyInAnyOrder("lastname1", "lastname2", "lastname3", "lastname4");
-        Assertions.assertThat(emails).containsExactlyInAnyOrder("email1", "email2", "email3", "email4");
-        Assertions.assertThat(countries).containsExactlyInAnyOrder("country1", "country2", "country3", "country4");
-        Assertions.assertThat(streets).containsExactlyInAnyOrder("street1", "street2", "street3", "street4");
-        Assertions.assertThat(houseNumberOrName).containsExactlyInAnyOrder("houseNumberOrName1", "houseNumberOrName2", "houseNumberOrName3", "houseNumberOrName4");
-        Assertions.assertThat(cities).containsExactlyInAnyOrder("city1", "city2", "city3", "city4");
-        Assertions.assertThat(postalCodes).containsExactlyInAnyOrder("postalCode1", "postalCode2", "postalCode3", "postalCode4");
-        Assertions.assertThat(stateOrProvince).containsExactlyInAnyOrder("stateOrProvince1", "stateOrProvince2", "stateOrProvince3", "stateOrProvince4");
-        Assertions.assertThat(dateOfBirth).containsExactlyInAnyOrder("dateOfBirth1", "dateOfBirth2", "dateOfBirth3", "dateOfBirth4");
-        Assertions.assertThat(phoneNumber).containsExactlyInAnyOrder("phoneNumber1", "phoneNumber2", "phoneNumber3", "phoneNumber4");
-        Assertions.assertThat(genders).containsOnly(Name.GenderEnum.UNKNOWN);
-    }
-
-    private List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> createMiraklAdditionalUboField(String uboNumber) {
-        final ImmutableList.Builder<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> builder = new ImmutableList.Builder<>();
-        UBO_FIELDS.forEach(uboFieldName -> {
-            MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-            additionalField.setValue(uboFieldName + uboNumber);
-            additionalField.setCode("adyen-ubo" + uboNumber + "-" + uboFieldName);
-            builder.add(additionalField);
-        });
-        return builder.build();
     }
 
     private MiraklIbanBankAccountInformation createMiraklIbanBankAccountInformation() {

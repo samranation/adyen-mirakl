@@ -1,28 +1,9 @@
 package com.adyen.mirakl.service;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.annotation.Resource;
-
-import com.adyen.model.marketpay.*;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-import com.adyen.mirakl.service.util.ShopUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
+import com.adyen.model.marketpay.*;
 import com.adyen.model.marketpay.CreateAccountHolderRequest.LegalEntityEnum;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
@@ -35,6 +16,18 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -50,6 +43,12 @@ public class ShopService {
 
     @Resource
     private DeltaService deltaService;
+
+    @Resource
+    private ShareholderMappingService shareholderMappingService;
+
+    @Resource
+    private UboService uboService;
 
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
@@ -80,34 +79,34 @@ public class ShopService {
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
+        shareholderMappingService.updateShareholderMapping(response);
         log.debug("CreateAccountHolderResponse: {}", response);
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
-            log.error("Invalid fields when trying to create a shop: {}", invalidFields);
+            log.warn("Invalid fields when trying to create a shop: {}", invalidFields);
         }
     }
 
     private void processUpdateAccountHolder(final MiraklShop shop, final GetAccountHolderResponse getAccountHolderResponse) throws Exception {
-        Optional<UpdateAccountHolderRequest> updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
-        updateAccountHolderRequest = updateAccountHolderRequest.flatMap(x -> addBankDetails(x, shop));
-        if (updateAccountHolderRequest.isPresent()) {
-            UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest.get());
-            log.debug("UpdateAccountHolderResponse: {}", response);
+        UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
 
-            // if IBAN has changed remove the old one
-            if (isIbanChanged(getAccountHolderResponse, shop)) {
-                DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse));
-                log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
-            }
+        UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
+        shareholderMappingService.updateShareholderMapping(response);
+        log.debug("UpdateAccountHolderResponse: {}", response);
+        if(!CollectionUtils.isEmpty(response.getInvalidFields())){
+            final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
+            log.warn("Invalid fields when trying to create a shop: {}", invalidFields);
         }
+
+        // if IBAN has changed remove the old one
+        if (isIbanChanged(getAccountHolderResponse, shop)) {
+            DeleteBankAccountResponse deleteBankAccountResponse = adyenAccountService.deleteBankAccount(deleteBankAccountRequest(getAccountHolderResponse));
+            log.debug("DeleteBankAccountResponse: {}", deleteBankAccountResponse);
+        }
+
     }
 
-    private Optional<UpdateAccountHolderRequest> addBankDetails(final UpdateAccountHolderRequest updateRequest, MiraklShop shop) {
-        final AccountHolderDetails accountHolderDetails = Optional.ofNullable(updateRequest.getAccountHolderDetails()).orElseGet(AccountHolderDetails::new);
-        accountHolderDetails.setBusinessDetails(addBusinessDetailsFromShop(shop));
-        updateRequest.setAccountHolderDetails(accountHolderDetails);
-        return Optional.of(updateRequest);
-    }
+
 
     /**
      * Construct DeleteBankAccountRequest to remove outdated iban bankaccounts
@@ -224,7 +223,7 @@ public class ShopService {
                 businessDetails.setTaxId(shop.getProfessionalInformation().getTaxIdentificationNumber());
             }
         }
-        businessDetails.setShareholders(ShopUtil.extractUbos(shop, maxUbos));
+        businessDetails.setShareholders(uboService.extractUbos(shop, maxUbos));
         return businessDetails;
     }
 
@@ -247,7 +246,7 @@ public class ShopService {
         Name name = new Name();
         name.setFirstName(contactInformation.getFirstname());
         name.setLastName(contactInformation.getLastname());
-        name.setGender(ShopUtil.CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
+        name.setGender(UboService.CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
         individualDetails.setName(name);
         return individualDetails;
     }
@@ -281,25 +280,29 @@ public class ShopService {
     /**
      * Construct updateAccountHolderRequest to Adyen from Mirakl shop
      */
-    protected Optional<UpdateAccountHolderRequest> updateAccountHolderRequestFromShop(MiraklShop shop, GetAccountHolderResponse getAccountHolderResponse) {
+    protected UpdateAccountHolderRequest updateAccountHolderRequestFromShop(MiraklShop shop, GetAccountHolderResponse getAccountHolderResponse) {
+
+        UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
+        updateAccountHolderRequest.setAccountHolderCode(shop.getId());
+
         if (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation) {
             MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
             if ((! miraklIbanBankAccountInformation.getIban().isEmpty() && shop.getCurrencyIsoCode() != null) &&
                 // if IBAN already exists and is the same then ignore this
                 (! isIbanIdentical(miraklIbanBankAccountInformation.getIban(), getAccountHolderResponse))) {
-                UpdateAccountHolderRequest updateAccountHolderRequest = new UpdateAccountHolderRequest();
-                updateAccountHolderRequest.setAccountHolderCode(shop.getId());
                 // create AccountHolderDetails
                 AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
                 accountHolderDetails.setBankAccountDetails(setBankAccountDetails(shop));
                 updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
-                return Optional.of(updateAccountHolderRequest);
 
             }
         }
 
-        log.warn("Unable to create Account holder details, skipping update for shop: {}", shop.getId());
-        return Optional.empty();
+        final AccountHolderDetails accountHolderDetails = Optional.ofNullable(updateAccountHolderRequest.getAccountHolderDetails()).orElseGet(AccountHolderDetails::new);
+        accountHolderDetails.setBusinessDetails(addBusinessDetailsFromShop(shop));
+        updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+
+        return updateAccountHolderRequest;
     }
 
     /**
