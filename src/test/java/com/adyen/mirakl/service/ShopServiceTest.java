@@ -6,8 +6,6 @@ import com.adyen.model.Name;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.common.currency.MiraklIsoCurrencyCode;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
@@ -19,10 +17,7 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.time.ZonedDateTime;
@@ -36,25 +31,6 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ShopServiceTest {
-
-    private static final Map<String, String> UBO_FIELDS_ENUMS = ImmutableMap.of(
-        "civility", "Mr",
-        "phonetype", "MOBILE");
-
-    private static final Set<String> UBO_FIELDS = ImmutableSet.of(
-        "firstname",
-        "lastname",
-        "email",
-        "dob",
-        "nationality",
-        "idnumber",
-        "housenumber",
-        "streetname",
-        "city",
-        "zip",
-        "country",
-        "phonecountry",
-        "phonenumber");
 
     @InjectMocks
     private ShopService shopService;
@@ -75,6 +51,10 @@ public class ShopServiceTest {
     private UpdateAccountHolderResponse updateAccountHolderResponseMock;
     @Mock
     private ShareholderMappingService shareholderMappingService;
+    @Mock
+    private UboService uboService;
+    @Mock
+    private ShareholderContact shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -202,15 +182,13 @@ public class ShopServiceTest {
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
         additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
         additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo2 = createMiraklAdditionalUboField("2");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo3 = createMiraklAdditionalUboField("3");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo4 = createMiraklAdditionalUboField("4");
+
         final ImmutableList<MiraklAdditionalFieldValue> additionalFields = new ImmutableList.Builder<MiraklAdditionalFieldValue>()
-            .add(additionalField).addAll(ubo1).addAll(ubo2).addAll(ubo3).addAll(ubo4).build();
+            .add(additionalField).build();
         setup(additionalFields);
         when(adyenAccountServiceMock.updateAccountHolder(updateAccountHolderRequestCaptor.capture())).thenReturn(updateAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("alreadyExisting");
+        when(uboService.extractUbos(any(), Matchers.eq(4))).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
 
         shopService.processUpdatedShops();
 
@@ -219,7 +197,7 @@ public class ShopServiceTest {
         verify(shareholderMappingService).updateShareholderMapping(updateAccountHolderResponseMock);
         assertEquals("id", request.getAccountHolderCode());
         final List<ShareholderContact> shareholders = request.getAccountHolderDetails().getBusinessDetails().getShareholders();
-        verifyShareHolders(shareholders);
+        Assertions.assertThat(shareholders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);
     }
 
     @Test
@@ -322,21 +300,11 @@ public class ShopServiceTest {
         additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
         additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.BUSINESS.toString());
 
-
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo2 = createMiraklAdditionalUboField("2");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo3 = createMiraklAdditionalUboField("3");
-        List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> ubo4 = createMiraklAdditionalUboField("4");
-
-
-        List<MiraklAdditionalFieldValue> addtionalFields = ImmutableList.of(ubo1, ubo2, ubo3, ubo4, ImmutableList.of(additionalField))
-            .stream()
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList());
-        setup(addtionalFields);
+        setup(ImmutableList.of(additionalField));
 
         when(adyenAccountServiceMock.createAccountHolder(createAccountHolderRequestCaptor.capture())).thenReturn(createAccountHolderResponseMock);
         when(getAccountHolderResponseMock.getAccountHolderCode()).thenReturn("");
+        when(uboService.extractUbos(any(), Matchers.eq(4))).thenReturn(ImmutableList.of(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4));
 
         shopService.processUpdatedShops();
 
@@ -351,72 +319,8 @@ public class ShopServiceTest {
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
 
-        verifyShareHolders(shareHolders);
+        Assertions.assertThat(shareHolders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);
 
-    }
-
-    private void verifyShareHolders(final List<ShareholderContact> shareHolders) {
-        final Set<Name.GenderEnum> genders = shareHolders.stream().map(ShareholderContact::getName).map(Name::getGender).collect(Collectors.toSet());
-        Assertions.assertThat(genders).containsOnly(Name.GenderEnum.MALE);
-
-        final Set<String> firstNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getFirstName).collect(Collectors.toSet());
-        Assertions.assertThat(firstNames).containsExactlyInAnyOrder("firstname1", "firstname2", "firstname3", "firstname4");
-
-        final Set<String> lastNames = shareHolders.stream().map(ShareholderContact::getName).map(Name::getLastName).collect(Collectors.toSet());
-        Assertions.assertThat(lastNames).containsExactlyInAnyOrder("lastname1", "lastname2", "lastname3", "lastname4");
-
-        final Set<String> emails = shareHolders.stream().map(ShareholderContact::getEmail).collect(Collectors.toSet());
-        Assertions.assertThat(emails).containsExactlyInAnyOrder("email1", "email2", "email3", "email4");
-
-        final Set<String> dateOfBirth = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getDateOfBirth).collect(Collectors.toSet());
-        Assertions.assertThat(dateOfBirth).containsExactlyInAnyOrder("dob1", "dob2", "dob3", "dob4");
-
-        final Set<String> nationalities = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getNationality).collect(Collectors.toSet());
-        Assertions.assertThat(nationalities).containsExactlyInAnyOrder("nationality1", "nationality2", "nationality3", "nationality4");
-
-        final Set<String> idNumbers = shareHolders.stream().map(ShareholderContact::getPersonalData).map(PersonalData::getIdNumber).collect(Collectors.toSet());
-        Assertions.assertThat(idNumbers).containsExactlyInAnyOrder("idnumber1", "idnumber2", "idnumber3", "idnumber4");
-
-        final Set<String> houseNumberOrName = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getHouseNumberOrName).collect(Collectors.toSet());
-        Assertions.assertThat(houseNumberOrName).containsExactlyInAnyOrder("housenumber1", "housenumber2", "housenumber3", "housenumber4");
-
-        final Set<String> streets = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getStreet).collect(Collectors.toSet());
-        Assertions.assertThat(streets).containsExactlyInAnyOrder("streetname4", "streetname3", "streetname2", "streetname1");
-
-        final Set<String> cities = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getCity).collect(Collectors.toSet());
-        Assertions.assertThat(cities).containsExactlyInAnyOrder("city1", "city2", "city3", "city4");
-
-        final Set<String> postalCodes = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getPostalCode).collect(Collectors.toSet());
-        Assertions.assertThat(postalCodes).containsExactlyInAnyOrder("zip2", "zip1", "zip4", "zip3");
-
-        final Set<String> countries = shareHolders.stream().map(ShareholderContact::getAddress).map(Address::getCountry).collect(Collectors.toSet());
-        Assertions.assertThat(countries).containsExactlyInAnyOrder("country1", "country2", "country3", "country4");
-
-        final Set<String> phoneCountries = shareHolders.stream().map(ShareholderContact::getPhoneNumber).map(PhoneNumber::getPhoneCountryCode).collect(Collectors.toSet());
-        Assertions.assertThat(phoneCountries).containsExactlyInAnyOrder("phonecountry1", "phonecountry2", "phonecountry3", "phonecountry4");
-
-        final Set<PhoneNumber.PhoneTypeEnum> phoneTypes = shareHolders.stream().map(ShareholderContact::getPhoneNumber).map(PhoneNumber::getPhoneType).collect(Collectors.toSet());
-        Assertions.assertThat(phoneTypes).containsExactly(PhoneNumber.PhoneTypeEnum.MOBILE);
-
-        final Set<String> phoneNumbers = shareHolders.stream().map(ShareholderContact::getPhoneNumber).map(PhoneNumber::getPhoneNumber).collect(Collectors.toSet());
-        Assertions.assertThat(phoneNumbers).containsExactlyInAnyOrder("phonenumber1", "phonenumber2", "phonenumber3", "phonenumber4");
-    }
-
-    private List<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> createMiraklAdditionalUboField(String uboNumber) {
-        final ImmutableList.Builder<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> builder = new ImmutableList.Builder<>();
-        UBO_FIELDS.forEach(uboFieldName -> {
-            MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-            additionalField.setCode("adyen-ubo" + uboNumber + "-" + uboFieldName);
-            additionalField.setValue(uboFieldName + uboNumber);
-            builder.add(additionalField);
-        });
-        UBO_FIELDS_ENUMS.forEach((k, v) -> {
-            MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
-            additionalField.setCode("adyen-ubo" + uboNumber + "-" + k);
-            additionalField.setValue(v);
-            builder.add(additionalField);
-        });
-        return builder.build();
     }
 
     private MiraklIbanBankAccountInformation createMiraklIbanBankAccountInformation() {

@@ -1,5 +1,6 @@
-package com.adyen.mirakl.service.util;
+package com.adyen.mirakl.service;
 
+import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.PersonalData;
@@ -11,7 +12,9 @@ import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +22,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public final class UboUtil {
+@Service
+public class UboService {
 
-    private static final Logger log = LoggerFactory.getLogger(UboUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(UboService.class);
 
     private static final String ADYEN_UBO = "adyen-ubo";
 
@@ -46,8 +50,8 @@ public final class UboUtil {
         .put("Miss", Name.GenderEnum.FEMALE)
         .build();
 
-    private UboUtil() {
-    }
+    @Resource
+    private ShareholderMappingRepository shareholderMappingRepository;
 
     /**
      * Extract shareholder contact data in a adyen format from a mirakl shop
@@ -56,7 +60,7 @@ public final class UboUtil {
      * @param maxUbos number of ubos to be extracted e.g. 4
      * @return share holder contacts to send to adyen
      */
-    public static List<ShareholderContact> extractUbos(final MiraklShop shop, Integer maxUbos) {
+    public List<ShareholderContact> extractUbos(final MiraklShop shop, Integer maxUbos) {
         Map<String, String> extractedKeysFromMirakl = shop.getAdditionalFieldValues()
             .stream()
             .filter(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue.class::isInstance)
@@ -85,6 +89,7 @@ public final class UboUtil {
             //do nothing if mandatory fields are missing
             if (firstName != null && lastName != null && civility != null && email != null) {
                 ShareholderContact shareholderContact = new ShareholderContact();
+                addShareholderCode(shop, uboNumber, shareholderContact);
                 addMandatoryData(civility, firstName, lastName, email, shareholderContact);
                 addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
                 addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact);
@@ -95,7 +100,12 @@ public final class UboUtil {
         return builder.build();
     }
 
-    private static void addMandatoryData(final String civility, final String firstName, final String lastName, final String email, final ShareholderContact shareholderContact) {
+    private void addShareholderCode(final MiraklShop shop, final Integer uboNumber, final ShareholderContact shareholderContact) {
+        shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(shop.getId(), uboNumber)
+            .ifPresent(shareholderMapping -> shareholderContact.setShareholderCode(shareholderMapping.getAdyenShareholderCode()));
+    }
+
+    private void addMandatoryData(final String civility, final String firstName, final String lastName, final String email, final ShareholderContact shareholderContact) {
         Name name = new Name();
         name.setGender(CIVILITY_TO_GENDER.getOrDefault(civility, Name.GenderEnum.UNKNOWN));
         name.setFirstName(firstName);
@@ -104,7 +114,7 @@ public final class UboUtil {
         shareholderContact.setEmail(email);
     }
 
-    private static void addPhoneData(final Integer uboNumber, final String phoneCountryCode, final String phoneType, final String phoneNumber, final ShareholderContact shareholderContact) {
+    private void addPhoneData(final Integer uboNumber, final String phoneCountryCode, final String phoneType, final String phoneNumber, final ShareholderContact shareholderContact) {
         if (phoneNumber != null || phoneType != null || phoneCountryCode != null) {
             final PhoneNumber phoneNumberWrapper = new PhoneNumber();
             Optional.ofNullable(phoneCountryCode).ifPresent(phoneNumberWrapper::setPhoneCountryCode);
@@ -116,7 +126,7 @@ public final class UboUtil {
         }
     }
 
-    private static void addAddressData(final Integer uboNumber, final String houseNumberOrName, final String street, final String city, final String postalCode, final String country, final ShareholderContact shareholderContact) {
+    private void addAddressData(final Integer uboNumber, final String houseNumberOrName, final String street, final String city, final String postalCode, final String country, final ShareholderContact shareholderContact) {
         if (country != null || street != null || houseNumberOrName != null || city != null || postalCode != null) {
             final Address address = new Address();
             Optional.ofNullable(houseNumberOrName).ifPresent(address::setHouseNumberOrName);
@@ -130,7 +140,7 @@ public final class UboUtil {
         }
     }
 
-    private static void addPersonalData(final Integer uboNumber, final String dateOfBirth, final String nationality, final String idNumber, final ShareholderContact shareholderContact) {
+    private void addPersonalData(final Integer uboNumber, final String dateOfBirth, final String nationality, final String idNumber, final ShareholderContact shareholderContact) {
         if (dateOfBirth != null || nationality != null || idNumber != null) {
             final PersonalData personalData = new PersonalData();
             Optional.ofNullable(dateOfBirth).ifPresent(personalData::setDateOfBirth);
@@ -148,7 +158,7 @@ public final class UboUtil {
      * @param maxUbos number of ubos in mirakl e.g. 4
      * @return returns ubo numbers linked to their keys
      */
-    public static Map<Integer, Map<String, String>> generateMiraklUboKeys(Integer maxUbos) {
+    public Map<Integer, Map<String, String>> generateMiraklUboKeys(Integer maxUbos) {
         return IntStream.rangeClosed(1, maxUbos).mapToObj(i -> {
             final Map<Integer, Map<String, String>> grouped = new HashMap<>();
             grouped.put(i, new ImmutableMap.Builder<String, String>()

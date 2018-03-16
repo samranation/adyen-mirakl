@@ -1,6 +1,5 @@
 package com.adyen.mirakl.service;
 
-import com.adyen.mirakl.service.util.UboUtil;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
@@ -47,6 +46,9 @@ public class ShopService {
 
     @Resource
     private ShareholderMappingService shareholderMappingService;
+
+    @Resource
+    private UboService uboService;
 
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
@@ -227,7 +229,7 @@ public class ShopService {
                 businessDetails.setTaxId(shop.getProfessionalInformation().getTaxIdentificationNumber());
             }
         }
-        businessDetails.setShareholders(UboUtil.extractUbos(shop, maxUbos));
+        businessDetails.setShareholders(uboService.extractUbos(shop, maxUbos));
         return businessDetails;
     }
 
@@ -250,7 +252,7 @@ public class ShopService {
         Name name = new Name();
         name.setFirstName(contactInformation.getFirstname());
         name.setLastName(contactInformation.getLastname());
-        name.setGender(UboUtil.CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
+        name.setGender(UboService.CIVILITY_TO_GENDER.getOrDefault(contactInformation.getCivility(), Name.GenderEnum.UNKNOWN));
         individualDetails.setName(name);
         return individualDetails;
     }
