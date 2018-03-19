@@ -17,14 +17,4 @@ public class CucumberHooks extends StepDefsHelper {
     public void clearCucumberMap() {
         cucumberMap.clear();
     }
-
-    @BeforeClass(alwaysRun = true)
-    public void testngSetDefaultAwaitilityTimeOut() {
-        Awaitility.setDefaultTimeout(Duration.FIVE_MINUTES);
-    }
-
-    @BeforeClass(alwaysRun = true)
-    public void testngClearCucumberMap() {
-        cucumberMap.clear();
-    }
 }
