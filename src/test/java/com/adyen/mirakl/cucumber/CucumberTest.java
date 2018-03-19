@@ -26,7 +26,7 @@ public class CucumberTest extends StepDefsHelper {
         testNGCucumberRunner = new TestNGCucumberRunner(this.getClass());
     }
 
-    @Test
+    @Test(description = "Runs smoke test")
     public void smokeTest() {
         List<CucumberFeature> features = testNGCucumberRunner.getFeatures();
         CucumberFeature feature = null;
@@ -40,7 +40,7 @@ public class CucumberTest extends StepDefsHelper {
         testNGCucumberRunner.runCucumber(feature);
     }
 
-    @Test(dependsOnMethods = {"smokeTest"}, testName = "cucumber", description = "Runs Cucumber Feature", dataProvider = "features")
+    @Test(dependsOnMethods = {"smokeTest"}, testName = "cucumber", description = "Runs Cucumber Features", dataProvider = "features")
     public void feature(CucumberFeatureWrapper cucumberFeature) {
         testNGCucumberRunner.runCucumber(cucumberFeature.getCucumberFeature());
     }

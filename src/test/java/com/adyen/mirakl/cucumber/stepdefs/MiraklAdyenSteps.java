@@ -24,6 +24,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -420,6 +421,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         );
     }
 
+    @Test(enabled = false)
     @Given("^an update shop exists in Mirakl$")
     public void updateShopExistsInMirakl(DataTable table) {
         List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
