@@ -31,6 +31,9 @@ public class AdyenPayoutError implements Serializable {
     @Column(name = "raw_response")
     private String rawResponse;
 
+    @Column(name = "retry")
+    private Integer retry;
+
     @Column(name = "processing")
     private Boolean processing;
 
@@ -73,6 +76,19 @@ public class AdyenPayoutError implements Serializable {
 
     public void setRawResponse(String rawResponse) {
         this.rawResponse = rawResponse;
+    }
+
+    public Integer getRetry() {
+        return retry;
+    }
+
+    public AdyenPayoutError retry(Integer retry) {
+        this.retry = retry;
+        return this;
+    }
+
+    public void setRetry(Integer retry) {
+        this.retry = retry;
     }
 
     public Boolean isProcessing() {
@@ -141,6 +157,7 @@ public class AdyenPayoutError implements Serializable {
             "id=" + getId() +
             ", rawRequest='" + getRawRequest() + "'" +
             ", rawResponse='" + getRawResponse() + "'" +
+            ", retry=" + getRetry() +
             ", processing='" + isProcessing() + "'" +
             ", createdAt='" + getCreatedAt() + "'" +
             ", updatedAt='" + getUpdatedAt() + "'" +
