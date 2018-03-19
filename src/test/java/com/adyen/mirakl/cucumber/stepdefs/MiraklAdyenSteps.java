@@ -420,6 +420,22 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         );
     }
 
+    @Given("^an update shop exists in Mirakl$")
+    public void updateShopExistsInMirakl(DataTable table) {
+        List<Map<Object, Object>> rows = table.getTableConverter().toMaps(table, String.class, String.class);
+
+        String seller = shopConfiguration.shopIds.get(rows.get(0).get("seller").toString()).toString();
+        shop = getMiraklShop(miraklMarketplacePlatformOperatorApiClient, seller);
+
+        Assertions.assertThat(shop.getId()).isEqualTo(seller);
+        rows.forEach(row-> {
+            Assertions.assertThat(row.get("firstName")).isEqualTo(shop.getContactInformation().getFirstname());
+            Assertions.assertThat(row.get("lastName")).isEqualTo(shop.getContactInformation().getLastname());
+            Assertions.assertThat(row.get("postCode")).isEqualTo(shop.getContactInformation().getZipCode());
+            Assertions.assertThat(row.get("city")).isEqualTo(shop.getContactInformation().getCity());
+        });
+    }
+
     @Given("^a AccountHolder exists who (?:is not|is) eligible for payout$")
     public void aAccountHolderExistsWhoHasPassedKYCChecksAndIsEligibleForPayout(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
