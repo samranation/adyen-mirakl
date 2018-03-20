@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import com.adyen.Util.Util;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
@@ -31,7 +32,7 @@ import com.adyen.service.Account;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest(classes = AdyenMiraklConnectorApp.class)
 @Transactional
 public class PayoutServiceTest {
