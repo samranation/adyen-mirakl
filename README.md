@@ -65,6 +65,9 @@ To launch your application's tests, run:
 
 For more information, refer to the [Running tests page][].
 
+## You can also deploy to Heroku
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+
 ## Using Docker to simplify development (optional)
 
 You can use Docker to improve your JHipster development experience. A number of docker-compose configuration are available in the [src/main/docker](src/main/docker) folder to launch required third party services.
