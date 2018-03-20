@@ -13,7 +13,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
-import liquibase.util.StringUtils;
+import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,7 +114,7 @@ public class UboService {
     public Map<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> extractUboDocuments(List<MiraklShopDocument> miraklUbos) {
         final ImmutableMap.Builder<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> builder = ImmutableMap.builder();
 
-        Map<String, DocumentDetail.DocumentTypeEnum> internalMemoryForDocs = new HashMap<>();
+        Map<String, String> internalMemoryForDocs = new HashMap<>();
         miraklUbos.forEach(miraklShopDocument -> {
             for (int uboNumber = 1; uboNumber <= maxUbos; uboNumber++) {
                 addToBuilder(builder, internalMemoryForDocs, miraklShopDocument, uboNumber);
@@ -124,21 +124,40 @@ public class UboService {
         return builder.build();
     }
 
-    private void addToBuilder(ImmutableMap.Builder<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> builder, Map<String, DocumentDetail.DocumentTypeEnum> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, int uboNumber) {
+    private void addToBuilder(ImmutableMap.Builder<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> builder, Map<String, String> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, int uboNumber) {
         String photoIdFront = ADYEN_UBO + uboNumber + "-photoid";
         String photoIdRear = ADYEN_UBO + uboNumber + "-photoid-rear";
-        if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdFront) || miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)) {
-            DocumentDetail.DocumentTypeEnum documentTypeEnum = retrieveUboPhotoIdType(uboNumber, miraklShopDocument.getShopId(), internalMemoryForDocs);
+        if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdFront)) {
+            final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, uboNumber, "_FRONT");
             if(documentTypeEnum!=null){
-                builder.put(miraklShopDocument, documentTypeEnum);
+                builder.put(miraklShopDocument, documentTypeEnum.values().iterator().next());
+            }
+        }
+        if(miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)){
+            final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, uboNumber, "_BACK");
+            //ignore if the result is could not convert to enum with suffix
+            if(documentTypeEnum != null && documentTypeEnum.keySet().iterator().next()){
+                builder.put(miraklShopDocument, documentTypeEnum.values().iterator().next());
             }
         }
     }
 
-    private DocumentDetail.DocumentTypeEnum retrieveUboPhotoIdType(final Integer uboNumber, final String shopId, Map<String, DocumentDetail.DocumentTypeEnum> internalMemory) {
-        DocumentDetail.DocumentTypeEnum documentTypeEnum = internalMemory.getOrDefault(shopId + "_" + uboNumber, null);
+    private Map<Boolean, DocumentDetail.DocumentTypeEnum> findCorrectEnum(final Map<String, String> internalMemoryForDocs, final MiraklShopDocument miraklShopDocument, final int uboNumber, String suffix) {
+        String documentType = retrieveUboPhotoIdType(uboNumber, miraklShopDocument.getShopId(), internalMemoryForDocs);
+        if(documentType!=null){
+            if(EnumUtils.isValidEnum(DocumentDetail.DocumentTypeEnum.class, documentType+suffix)){
+                return ImmutableMap.of(true, DocumentDetail.DocumentTypeEnum.valueOf(documentType+suffix));
+            }else{
+                return ImmutableMap.of(false, DocumentDetail.DocumentTypeEnum.valueOf(documentType));
+            }
+        }
+        return null;
+    }
+
+    private String retrieveUboPhotoIdType(final Integer uboNumber, final String shopId, Map<String, String> internalMemory) {
+        String documentTypeEnum = internalMemory.getOrDefault(shopId + "_" + uboNumber, null);
         if (documentTypeEnum == null) {
-            DocumentDetail.DocumentTypeEnum docTypeFromMirakl = getDocTypeFromMirakl(uboNumber, shopId);
+            String docTypeFromMirakl = getDocTypeFromMirakl(uboNumber, shopId);
             if(docTypeFromMirakl!=null){
                 internalMemory.put(shopId + "_" + uboNumber, docTypeFromMirakl);
                 return docTypeFromMirakl;
@@ -147,7 +166,7 @@ public class UboService {
         return documentTypeEnum;
     }
 
-    private DocumentDetail.DocumentTypeEnum getDocTypeFromMirakl(Integer uboNumber, String shopId) {
+    private String getDocTypeFromMirakl(Integer uboNumber, String shopId) {
         MiraklGetShopsRequest request = new MiraklGetShopsRequest();
         request.setShopIds(ImmutableList.of(shopId));
         MiraklShops shops = miraklMarketplacePlatformOperatorApiClient.getShops(request);
@@ -157,8 +176,7 @@ public class UboService {
             .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
             .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
             .filter(x -> code.equalsIgnoreCase(x.getCode())).findAny();
-        return photoIdType.filter(x -> StringUtils.isNotEmpty(x.getValue())).map(x -> DocumentDetail.DocumentTypeEnum.valueOf(x.getValue()))
-            .orElse(null);
+        return photoIdType.map(MiraklAdditionalFieldValue.MiraklAbstractAdditionalFieldWithSingleValue::getValue).orElse(null);
     }
 
     public List<ShareholderContact> extractUbos(final MiraklShop shop) {
