@@ -1,6 +1,8 @@
 package com.adyen.mirakl.service;
 
 
+import java.util.List;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -8,17 +10,30 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
+import com.adyen.Util.Util;
+import com.adyen.mirakl.AdyenMiraklConnectorApp;
+import com.adyen.mirakl.domain.AdyenPayoutError;
+import com.adyen.mirakl.domain.MiraklDelta;
+import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
+import com.adyen.model.Amount;
+import com.adyen.model.PaymentRequest;
 import com.adyen.model.marketpay.AccountHolderDetails;
 import com.adyen.model.marketpay.BankAccountDetail;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.PayoutAccountHolderRequest;
+import com.adyen.model.marketpay.PayoutAccountHolderResponse;
 import com.adyen.service.Account;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
+@SpringBootTest(classes = AdyenMiraklConnectorApp.class)
+@Transactional
 public class PayoutServiceTest {
 
     @InjectMocks
@@ -29,6 +44,35 @@ public class PayoutServiceTest {
 
     @Captor
     private ArgumentCaptor<GetAccountHolderRequest> getAccountHolderRequestArgumentCaptor;
+
+    @Autowired
+    private AdyenPayoutErrorRepository adyenPayoutErrorRepository;
+
+    @Before
+    public void removeExistingTestAdyenPayoutErrors(){
+        final List<AdyenPayoutError> all = adyenPayoutErrorRepository.findAll();
+        adyenPayoutErrorRepository.delete(all);
+        adyenPayoutErrorRepository.flush();
+    }
+
+    @Test
+    public void testStoreAccountHolderRequest()
+    {
+
+        PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
+        payoutAccountHolderRequest.setAccountCode("accountCode");
+        payoutAccountHolderRequest.setBankAccountUUID("bankAccountUUID");
+        payoutAccountHolderRequest.setAccountHolderCode("accountHolderCode");
+        payoutAccountHolderRequest.setDescription("description");
+        Amount adyenAmount = Util.createAmount("100", "EUR");
+        payoutAccountHolderRequest.setAmount(adyenAmount);
+
+
+        //  todo throw API exception
+        PayoutAccountHolderResponse payoutAccountHolderResponse = new PayoutAccountHolderResponse();
+
+        payoutService.storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse);
+    }
 
     @Test
     public void testGetBankAccountUUID() {
@@ -46,7 +90,7 @@ public class PayoutServiceTest {
     public void testPayout() throws Exception {
         GetAccountHolderResponse getAccountHolderResponse = getResponseWithBankDetails();
         when(adyenAccountServiceMock.getAccountHolder(getAccountHolderRequestArgumentCaptor.capture())).thenReturn(getAccountHolderResponse);
-        PayoutAccountHolderRequest request = payoutService.payoutAccountHolder("2000", "10.25", "EUR", "GB29NWBK60161331926819", "Description");
+        PayoutAccountHolderRequest request = payoutService.createPayoutAccountHolderRequest("2000", "10.25", "EUR", "GB29NWBK60161331926819", "Description");
         assertEquals("2000", getAccountHolderRequestArgumentCaptor.getValue().getAccountHolderCode());
         assertEquals("2a421c72-ead7-4ad3-8741-80a0aebb8758", request.getBankAccountUUID());
         assertEquals("2000", request.getAccountHolderCode());
