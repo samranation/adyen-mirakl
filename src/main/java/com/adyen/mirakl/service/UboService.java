@@ -152,9 +152,9 @@ public class UboService {
         request.setShopIds(ImmutableList.of(shopId));
         MiraklShops shops = miraklMarketplacePlatformOperatorApiClient.getShops(request);
         MiraklShop shop = shops.getShops().iterator().next();
-        String code = "adyen-ubo" + uboNumber + "-photoidtype";
+        String code = ADYEN_UBO + uboNumber + "-photoidtype";
         Optional<MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue> photoIdType = shop.getAdditionalFieldValues().stream()
-            .filter(x -> x instanceof MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue)
+            .filter(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::isInstance)
             .map(MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue.class::cast)
             .filter(x -> code.equalsIgnoreCase(x.getCode())).findAny();
         return photoIdType.filter(x -> StringUtils.isNotEmpty(x.getValue())).map(x -> DocumentDetail.DocumentTypeEnum.valueOf(x.getValue()))
