@@ -125,8 +125,8 @@ public class UboService {
     }
 
     private void addToBuilder(ImmutableMap.Builder<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> builder, Map<String, DocumentDetail.DocumentTypeEnum> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, int uboNumber) {
-        String photoIdFront = "adyen-ubo" + uboNumber + "-photoid";
-        String photoIdRear = "adyen-ubo" + uboNumber + "-photoid-rear";
+        String photoIdFront = ADYEN_UBO + uboNumber + "-photoid";
+        String photoIdRear = ADYEN_UBO + uboNumber + "-photoid-rear";
         if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdFront) || miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)) {
             DocumentDetail.DocumentTypeEnum documentTypeEnum = retrieveUboPhotoIdType(uboNumber, miraklShopDocument.getShopId(), internalMemoryForDocs);
             if(documentTypeEnum!=null){
