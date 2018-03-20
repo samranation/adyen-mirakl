@@ -39,7 +39,7 @@ public class MailTemplateService {
     public void sendMiraklShopEmailFromTemplate(MiraklShop miraklShop, Locale locale, String templateName, String titleKey) {
         Context context = new Context(locale);
         context.setVariable(MIRAKL_SHOP, miraklShop);
-        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId()));
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, locale);
@@ -50,11 +50,11 @@ public class MailTemplateService {
     public void sendSellerEmailWithErrors(MiraklShop miraklShop, List<String> errors) {
         Context context = new Context(Locale.ENGLISH);
         context.setVariable(MIRAKL_SHOP, miraklShop);
-        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId()));
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         context.setVariable(ERRORS, errors);
         String content = templateEngine.process("shopNotifications/sellerEmailWithErrors", context);
-        String subject = messageSource.getMessage("email.account.holder.validation.title", null, Locale.ENGLISH);
+        String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE, null, Locale.ENGLISH);
         mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
@@ -62,23 +62,16 @@ public class MailTemplateService {
     public void sendOperatorEmailWithErrors(MiraklShop miraklShop, List<String> errors) {
         Context context = new Context(Locale.ENGLISH);
         context.setVariable(MIRAKL_SHOP, miraklShop);
-        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId()));
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         context.setVariable(ERRORS, errors);
         String content = templateEngine.process("shopNotifications/operatorEmailWithErrors", context);
-        String subject = messageSource.getMessage("email.account.holder.validation.title", null, Locale.ENGLISH);
+        String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE, null, Locale.ENGLISH);
         mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
-    @Async
-    public void sendGenericSellerEmail(MiraklShop miraklShop) {
-        Context context = new Context(Locale.ENGLISH);
-        context.setVariable(MIRAKL_SHOP, miraklShop);
-        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId()));
-        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
-        String content = templateEngine.process("shopNotifications/genericSellerEmail", context);
-        String subject = messageSource.getMessage("email.account.holder.validation.title", null, Locale.ENGLISH);
-        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
+    private String getMiraklShopUrl(MiraklShop miraklShop) {
+        return String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId());
     }
 
     public String getMiraklEnvUrl() {

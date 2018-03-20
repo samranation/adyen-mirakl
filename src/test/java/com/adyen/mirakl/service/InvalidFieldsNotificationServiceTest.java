@@ -9,14 +9,14 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import com.adyen.constants.ErrorTypeCodes;
 import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.model.marketpay.ErrorFieldType;
 import com.adyen.model.marketpay.FieldType;
 import com.mirakl.client.mmp.domain.shop.MiraklContactInformation;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InvalidFieldsNotificationServiceTest {
@@ -25,10 +25,16 @@ public class InvalidFieldsNotificationServiceTest {
     private MailTemplateService mailTemplateServiceMock;
 
     @Captor
-    private ArgumentCaptor<MiraklShop> miraklShopArgumentCaptor;
+    private ArgumentCaptor<MiraklShop> miraklShopOperatorArgumentCaptor;
 
     @Captor
-    private ArgumentCaptor<List<String>> errorsArgumentCaptor;
+    private ArgumentCaptor<List<String>> errorsOperatorArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<MiraklShop> miraklShopSellerArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<String>> errorsSellerArgumentCaptor;
 
     private InvalidFieldsNotificationService invalidFieldsNotificationService;
 
@@ -37,9 +43,8 @@ public class InvalidFieldsNotificationServiceTest {
         invalidFieldsNotificationService = new InvalidFieldsNotificationService();
         invalidFieldsNotificationService.setMailTemplateService(mailTemplateServiceMock);
 
-        doNothing().when(mailTemplateServiceMock).sendGenericSellerEmail(miraklShopArgumentCaptor.capture());
-        doNothing().when(mailTemplateServiceMock).sendSellerEmailWithErrors(miraklShopArgumentCaptor.capture(), errorsArgumentCaptor.capture());
-        doNothing().when(mailTemplateServiceMock).sendOperatorEmailWithErrors(miraklShopArgumentCaptor.capture(), errorsArgumentCaptor.capture());
+        Mockito.doNothing().when(mailTemplateServiceMock).sendSellerEmailWithErrors(miraklShopSellerArgumentCaptor.capture(), errorsSellerArgumentCaptor.capture());
+        Mockito.doNothing().when(mailTemplateServiceMock).sendOperatorEmailWithErrors(miraklShopOperatorArgumentCaptor.capture(), errorsOperatorArgumentCaptor.capture());
     }
 
     @Test
@@ -55,16 +60,18 @@ public class InvalidFieldsNotificationServiceTest {
 
         List<ErrorFieldType> invalidFields = new ArrayList<>();
         ErrorFieldType error1 = new ErrorFieldType();
-        error1.setErrorCode(2);
+        error1.setErrorCode(ErrorTypeCodes.EMAIL_INVALID);
         error1.setErrorDescription("Email address invalidemailhere is invalid");
         invalidFields.add(error1);
         invalidFieldsNotificationService.handleErrorsInResponse(miraklShop, invalidFields);
 
-        verify(mailTemplateServiceMock).sendSellerEmailWithErrors(miraklShopArgumentCaptor.getValue(), errorsArgumentCaptor.getValue());
+        Mockito.verify(mailTemplateServiceMock).sendSellerEmailWithErrors(miraklShopSellerArgumentCaptor.getValue(), errorsSellerArgumentCaptor.getValue());
 
-        List<String> errors = errorsArgumentCaptor.getValue();
+        List<String> errors = errorsSellerArgumentCaptor.getValue();
         Assertions.assertThat(errors).hasSize(1);
         Assertions.assertThat(errors).contains("Email address invalidemailhere is invalid");
+
+        Assertions.assertThat(miraklShopSellerArgumentCaptor.getValue()).isEqualTo(miraklShop);
     }
 
     @Test
@@ -82,7 +89,7 @@ public class InvalidFieldsNotificationServiceTest {
 
         ErrorFieldType error1 = new ErrorFieldType();
         invalidFields.add(error1);
-        error1.setErrorCode(1);
+        error1.setErrorCode(ErrorTypeCodes.FIELD_MISSING);
         error1.setErrorDescription("Field is missing");
         FieldType fieldType = new FieldType();
         error1.setFieldType(fieldType);
@@ -90,16 +97,23 @@ public class InvalidFieldsNotificationServiceTest {
 
         ErrorFieldType error2 = new ErrorFieldType();
         invalidFields.add(error2);
-        error2.setErrorCode(2);
+        error2.setErrorCode(ErrorTypeCodes.EMAIL_INVALID);
         error2.setErrorDescription("Email address invalidemailhere is invalid");
 
         invalidFieldsNotificationService.handleErrorsInResponse(miraklShop, invalidFields);
 
-        verify(mailTemplateServiceMock).sendGenericSellerEmail(miraklShopArgumentCaptor.getValue());
-        verify(mailTemplateServiceMock).sendOperatorEmailWithErrors(miraklShopArgumentCaptor.getValue(), errorsArgumentCaptor.getValue());
+        Mockito.verify(mailTemplateServiceMock).sendSellerEmailWithErrors(miraklShopSellerArgumentCaptor.getValue(), errorsSellerArgumentCaptor.getValue());
+        Mockito.verify(mailTemplateServiceMock).sendOperatorEmailWithErrors(miraklShopOperatorArgumentCaptor.getValue(), errorsOperatorArgumentCaptor.getValue());
 
-        List<String> errors = errorsArgumentCaptor.getValue();
-        Assertions.assertThat(errors).hasSize(2);
-        Assertions.assertThat(errors).contains("Field is missing: AccountHolderDetails.BankAccountDetails.accountNumber").contains("Email address invalidemailhere is invalid");
+        List<String> errorsSeller = errorsSellerArgumentCaptor.getValue();
+        Assertions.assertThat(errorsSeller).hasSize(1);
+        Assertions.assertThat(errorsSeller).contains("Email address invalidemailhere is invalid");
+
+        List<String> errorsOperator = errorsOperatorArgumentCaptor.getValue();
+        Assertions.assertThat(errorsOperator).hasSize(1);
+        Assertions.assertThat(errorsOperator).contains("Field is missing: AccountHolderDetails.BankAccountDetails.accountNumber");
+
+        Assertions.assertThat(miraklShopSellerArgumentCaptor.getValue()).isEqualTo(miraklShop);
+        Assertions.assertThat(miraklShopOperatorArgumentCaptor.getValue()).isEqualTo(miraklShop);
     }
 }

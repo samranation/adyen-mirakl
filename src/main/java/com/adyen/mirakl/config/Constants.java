@@ -14,6 +14,13 @@ public final class Constants {
 
     public static final String BANKPROOF = "adyen-bankproof";
 
+    public final class Messages {
+        public static final String EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE = "email.account.holder.validation.title";
+
+        private Messages() {
+        }
+    }
+
     private Constants() {
     }
 }
