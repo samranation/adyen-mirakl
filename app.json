@@ -13,11 +13,11 @@
     "ADYEN_NOTIFY_USERNAME" : {
       "description": "User name for notification endpoint"
       "value": "admin"
-    }
+    },
     "ADYEN_NOTIFY_PASSWORD" : {
       "description": "Password of the Connector notification endpoint",
       "generator" : "secret"
-    }
+    },
     "ADYEN_USER_NAME" : {
       "description": "User name for Adyen Markpetplace Web Service API",
       "value": "wd_{n}@Marketplace.{account}"
