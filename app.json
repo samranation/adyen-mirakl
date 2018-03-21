@@ -1,11 +1,14 @@
 {
   "name": "adyen-mirakl",
-  "description": "Adyen MarkPay connector for Mirakl",
+  "description": "Adyen MarketPay connector for Mirakl",
   "website": "http://www.adyen.com/",
   "repository": "https://github.com/e2y/adyen-mirakl",
   "logo": "https://avatars3.githubusercontent.com/u/9713612?s=200&v=4",
   "keywords": ["java"],
   "env": {
+    "HEROKU_APP_NAME": {
+      "required": true
+    },
     "ADYEN_ENV" : {
       "description": "TEST or LIVE",
       "value": "TEST"

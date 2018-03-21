@@ -17,3 +17,9 @@ spring:
         url: ${JAWSDB_URL}
         hikari:
             maximumPoolSize: 8
+
+
+adyenNotificationsConfig:
+    notificationConfigurationDetails:
+        - description: ${HEROKU_APP_NAME}
+          notifyURL: https://${HEROKU_APP_NAME}.herokuapp.com/api/adyen-notifications
