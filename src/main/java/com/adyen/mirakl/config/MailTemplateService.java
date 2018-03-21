@@ -51,7 +51,7 @@ public class MailTemplateService {
     }
 
     @Async
-    public void sendShareholderEmailFromTemplate(final ShareholderContact shareholder, String shopId, Locale locale, String templateName, String titleKey) {
+    public void sendShareholderAwaitingIdentityEmailFromTemplate(final ShareholderContact shareholder, String shopId, Locale locale, String templateName, String titleKey) {
         Context context = new Context(locale);
         context.setVariable(SHAREHOLDER, shareholder);
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());

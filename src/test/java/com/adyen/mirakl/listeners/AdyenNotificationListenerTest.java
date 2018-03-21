@@ -102,7 +102,25 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingDataEmail", "email.account.verification.awaiting.data.title");
+        verify(mailTemplateServiceMock).sendShareholderAwaitingIdentityEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForPassportVerificationAwaitingData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/PASSPORT_VERIFICATION_AWAITING_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+        when(adyenAccountServiceMock.getAccountHolder(accountHolderRequestCaptor.capture())).thenReturn(getAccountHolderResponseMock);
+        when(getAccountHolderResponseMock.getAccountHolderDetails().getBusinessDetails().getShareholders()).thenReturn(ImmutableList.of(shareholderMock1, shareholderMock2));
+        when(shareholderMock1.getShareholderCode()).thenReturn("invalidShareholderCode");
+        when(shareholderMock2.getShareholderCode()).thenReturn("24610d08-9d80-4a93-85f3-78d475274e08");
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
+        verify(mailTemplateServiceMock).sendShareholderAwaitingIdentityEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 

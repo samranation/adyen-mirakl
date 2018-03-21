@@ -13,6 +13,7 @@ import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.notification.NotificationHandler;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -26,11 +27,20 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Component
 public class AdyenNotificationListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static Map<KYCCheckStatusData.CheckTypeEnum, String> templateMap = ImmutableMap.of(
+        KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, "accountHolderAwaitingIdentityEmail",
+        KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, "accountHolderAwaitingPassportEmail"
+    );
+    private static Map<KYCCheckStatusData.CheckTypeEnum, String> subjectMap = ImmutableMap.of(
+        KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, "email.account.verification.awaiting.id.title",
+        KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, "email.account.verification.awaiting.passport.title"
+    );
 
     private NotificationHandler notificationHandler;
     private AdyenNotificationRepository adyenNotificationRepository;
@@ -76,7 +86,7 @@ public class AdyenNotificationListener {
             KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)){
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
-        }else if(KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA.equals(verificationStatus)){
+        }else if(awaitingDataForIdentityOrPassport(verificationStatus, verificationType)){
             final GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
             getAccountHolderRequest.setAccountHolderCode(shopId);
             final GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
@@ -84,8 +94,13 @@ public class AdyenNotificationListener {
             final ShareholderContact shareholderContact = accountHolderResponse.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
                 .filter(x -> x.getShareholderCode().equals(shareholderCode))
                 .findAny().orElseThrow(() -> new IllegalStateException("Unable to find shareholder: " + shareholderCode));
-            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, Locale.ENGLISH, "accountHolderAwaitingDataEmail", "email.account.verification.awaiting.data.title");
+            mailTemplateService.sendShareholderAwaitingIdentityEmailFromTemplate(shareholderContact, shopId, Locale.ENGLISH, templateMap.get(verificationType), subjectMap.get(verificationType));
         }
+    }
+
+    private boolean awaitingDataForIdentityOrPassport(final KYCCheckStatusData.CheckStatusEnum verificationStatus, final KYCCheckStatusData.CheckTypeEnum verificationType) {
+        return KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA.equals(verificationStatus)
+            && (KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION.equals(verificationType) ||  KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION.equals(verificationType));
     }
 
     private MiraklShop getShop(String shopId){
