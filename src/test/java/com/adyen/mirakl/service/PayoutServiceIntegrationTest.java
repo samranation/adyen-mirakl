@@ -16,7 +16,6 @@ import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
 import com.adyen.model.Amount;
 import com.adyen.model.marketpay.PayoutAccountHolderRequest;
-import com.adyen.model.marketpay.PayoutAccountHolderResponse;
 
 
 @RunWith(SpringRunner.class)
@@ -31,15 +30,14 @@ public class PayoutServiceIntegrationTest {
     private AdyenPayoutErrorRepository adyenPayoutErrorRepository;
 
     @Before
-    public void removeExistingTestAdyenPayoutErrors(){
+    public void removeExistingTestAdyenPayoutErrors() {
         final List<AdyenPayoutError> all = adyenPayoutErrorRepository.findAll();
         adyenPayoutErrorRepository.delete(all);
         adyenPayoutErrorRepository.flush();
     }
 
     @Test
-    public void testStoreAccountHolderRequest()
-    {
+    public void testStoreAccountHolderRequest() {
         PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
         payoutAccountHolderRequest.setAccountCode("accountCode");
         payoutAccountHolderRequest.setBankAccountUUID("bankAccountUUID");

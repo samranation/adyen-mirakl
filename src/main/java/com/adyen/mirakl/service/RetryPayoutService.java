@@ -17,7 +17,6 @@ import com.adyen.service.exception.ApiException;
 import com.google.common.reflect.TypeToken;
 import static com.adyen.mirakl.service.PayoutService.GSON;
 
-
 @Service
 @Transactional
 public class RetryPayoutService {
@@ -54,8 +53,7 @@ public class RetryPayoutService {
         processFailedPayout(failedPayouts);
     }
 
-    public void processFailedPayout(List<AdyenPayoutError> failedPayouts)
-    {
+    public void processFailedPayout(List<AdyenPayoutError> failedPayouts) {
         putFailedPayoutInProcessing(failedPayouts);
 
         failedPayouts.forEach(adyenPayoutError -> {
@@ -77,16 +75,14 @@ public class RetryPayoutService {
     /**
      * to solve possible race-condition between cronjob update and notification update
      */
-    protected void putFailedPayoutInProcessing(List<AdyenPayoutError> failedPayouts)
-    {
-        failedPayouts.forEach(adyenPayoutError ->{
+    protected void putFailedPayoutInProcessing(List<AdyenPayoutError> failedPayouts) {
+        failedPayouts.forEach(adyenPayoutError -> {
             adyenPayoutError.setProcessing(true);
             adyenPayoutErrorRepository.save(adyenPayoutError);
         });
     }
 
-    protected void updateFailedPayout(AdyenPayoutError adyenPayoutError, PayoutAccountHolderResponse payoutAccountHolderResponse)
-    {
+    protected void updateFailedPayout(AdyenPayoutError adyenPayoutError, PayoutAccountHolderResponse payoutAccountHolderResponse) {
         adyenPayoutError.setRetry(adyenPayoutError.getRetry() + 1);
         adyenPayoutError.setProcessing(false);
 
