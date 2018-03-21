@@ -19,7 +19,7 @@ Feature: Bank Account Verification
             | eventType              | iban                   |
             | ACCOUNT_HOLDER_CREATED | GB26TEST40051512347366 |
 
-    @ADY-8 @ADY-71 @ADY-84
+    @ADY-8 @ADY-71 @ADY-84 @bug @ADY-104
     Scenario: New BankAccountDetail is created for Account Holder upon new IBAN entry in Mirakl for an existing Adyen accountHolder
         Given a new shop has been created in Mirakl for an Individual
             | lastName |

@@ -5,6 +5,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+
+import com.adyen.model.marketpay.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -13,16 +17,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.mirakl.config.Constants;
-import com.adyen.model.marketpay.AccountHolderDetails;
-import com.adyen.model.marketpay.BankAccountDetail;
-import com.adyen.model.marketpay.DocumentDetail;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.UploadDocumentRequest;
 import com.adyen.service.Account;
 import com.google.common.io.Resources;
 import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+
 import static com.google.common.io.Files.toByteArray;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -40,10 +40,18 @@ public class DocServiceTest {
     @Mock
     private Account adyenAccountServiceMock;
     @Mock
-    private DeltaService deltaService;
-
+    private DeltaService deltaServiceMock;
+    @Mock
+    private UboService uboServiceMock;
+    @Mock
+    private MiraklShopDocument miraklShopDocumentMock;
+    @Mock
+    private FileWrapper fileWrapperMock;
+    @Mock
+    private UploadDocumentResponse responseMock;
     @Captor
     private ArgumentCaptor<UploadDocumentRequest> uploadDocumentRequestCaptor;
+
 
     @Test
     public void testRetrieveBankproofAndUpload() throws Exception {
@@ -74,7 +82,7 @@ public class DocServiceTest {
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponse);
         when(adyenAccountServiceMock.uploadDocument(uploadDocumentRequestCaptor.capture())).thenReturn(null);
 
-        docService.retrieveBankproofAndUpload();
+        docService.processUpdatedDocuments();
 
         UploadDocumentRequest uploadDocumentRequest = uploadDocumentRequestCaptor.getValue();
         assertEquals("1234", uploadDocumentRequest.getAccountHolderCode());
@@ -82,7 +90,25 @@ public class DocServiceTest {
         assertEquals(file.getName(), uploadDocumentRequest.getDocumentDetail().getFilename());
         assertEquals(Base64.getEncoder().encodeToString(toByteArray(file)), uploadDocumentRequest.getDocumentContent());
         assertEquals(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT, uploadDocumentRequest.getDocumentDetail().getDocumentType());
-        verify(deltaService).getDocumentDelta();
+        verify(deltaServiceMock).getDocumentDelta();
+    }
+
+    @Test
+    public void shouldProcessUboDocuments() throws Exception {
+        URL url = Resources.getResource("fileuploads/BankStatement.jpg");
+        File file = new File(url.getPath());
+
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));
+        when(miraklShopDocumentMock.getTypeCode()).thenReturn("typecCode");
+        when(uboServiceMock.extractUboDocuments(ImmutableList.of(miraklShopDocumentMock))).thenReturn(ImmutableMap.of(miraklShopDocumentMock, DocumentDetail.DocumentTypeEnum.ID_CARD));
+        when(miraklMarketplacePlatformOperatorApiClientMock.downloadShopsDocuments(any())).thenReturn(fileWrapperMock);
+        when(fileWrapperMock.getFile()).thenReturn(file);
+        when(fileWrapperMock.getFilename()).thenReturn("fileName");
+        when(adyenAccountServiceMock.uploadDocument(any())).thenReturn(responseMock);
+
+        docService.processUpdatedDocuments();
+
+        verify(adyenAccountServiceMock).uploadDocument(any());
     }
 
 }

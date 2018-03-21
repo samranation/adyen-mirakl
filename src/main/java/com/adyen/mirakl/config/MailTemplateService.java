@@ -1,16 +1,16 @@
 package com.adyen.mirakl.config;
 
-import com.adyen.mirakl.service.MailService;
-import com.mirakl.client.mmp.domain.shop.MiraklShop;
-import io.github.jhipster.config.JHipsterProperties;
+import java.util.List;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
-
-import java.util.Locale;
+import com.adyen.mirakl.service.MailService;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import io.github.jhipster.config.JHipsterProperties;
 
 @Service
 public class MailTemplateService {
@@ -18,6 +18,7 @@ public class MailTemplateService {
     private static final String MIRAKL_SHOP = "miraklShop";
     private static final String MIRAKL_CALL_BACK_SHOP_URL = "miraklCallBackShopUrl";
     private static final String BASE_URL = "baseUrl";
+    private static final String ERRORS = "errors";
 
     @Value("${miraklOperator.miraklEnvUrl}")
     private String miraklEnvUrl;
@@ -38,14 +39,40 @@ public class MailTemplateService {
     public void sendMiraklShopEmailFromTemplate(MiraklShop miraklShop, Locale locale, String templateName, String titleKey) {
         Context context = new Context(locale);
         context.setVariable(MIRAKL_SHOP, miraklShop);
-        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId()));
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, locale);
         mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
+    @Async
+    public void sendSellerEmailWithErrors(MiraklShop miraklShop, List<String> errors) {
+        Context context = new Context(Locale.ENGLISH);
+        context.setVariable(MIRAKL_SHOP, miraklShop);
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop));
+        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(ERRORS, errors);
+        String content = templateEngine.process("shopNotifications/sellerEmailWithErrors", context);
+        String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE, null, Locale.ENGLISH);
+        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
+    }
 
+    @Async
+    public void sendOperatorEmailWithErrors(MiraklShop miraklShop, List<String> errors) {
+        Context context = new Context(Locale.ENGLISH);
+        context.setVariable(MIRAKL_SHOP, miraklShop);
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop));
+        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(ERRORS, errors);
+        String content = templateEngine.process("shopNotifications/operatorEmailWithErrors", context);
+        String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE, null, Locale.ENGLISH);
+        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
+    }
+
+    private String getMiraklShopUrl(MiraklShop miraklShop) {
+        return String.format("%s/mmp/shop/account/shop/%s", miraklEnvUrl, miraklShop.getId());
+    }
 
     public String getMiraklEnvUrl() {
         return miraklEnvUrl;

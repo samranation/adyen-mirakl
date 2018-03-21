@@ -7,7 +7,9 @@ Feature: Identity verification check
             | maxUbos | lastName |
             | 4       | testData |
         And we process the data and push to Adyen
-        Then adyen will send multiple ACCOUNT_HOLDER_CREATED notification with IDENTITY_VERIFICATION of status DATA_PROVIDED
+        Then adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notification with IDENTITY_VERIFICATION of status DATA_PROVIDED
+            | maxUbos |
+            | 4       |
 
     @ADY-18
     Scenario: Mandatory shareholder data is updated and sent to Adyen to re-perform KYC Identity Check
@@ -33,4 +35,6 @@ Feature: Identity verification check
             | maxUbos | lastName |
             | 4       | testData |
         And we process the data and push to Adyen
-        Then adyen will send multiple ACCOUNT_HOLDER_CREATED notification with IDENTITY_VERIFICATION of status DATA_PROVIDED
+        Then adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notification with IDENTITY_VERIFICATION of status AWAITING_DATA
+            | maxUbos |
+            | 4       |

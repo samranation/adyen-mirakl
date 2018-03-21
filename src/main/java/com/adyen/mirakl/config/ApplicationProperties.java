@@ -9,29 +9,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
-    private String shopUpdaterCron;
+    private String miraklPullCron;
     private String emailRetryCron;
     private String removeSentEmailsCron;
     private String docsUpdaterCron;
     private String payoutRetryCron;
-
     private Integer initialDeltaDaysBack;
     private Integer maxPayoutFailed;
 
-    public String getDocsUpdaterCron() {
-        return docsUpdaterCron;
+    public String getMiraklPullCron() {
+        return miraklPullCron;
     }
 
-    public void setDocsUpdaterCron(final String docsUpdaterCron) {
-        this.docsUpdaterCron = docsUpdaterCron;
-    }
-
-    public String getShopUpdaterCron() {
-        return shopUpdaterCron;
-    }
-
-    public void setShopUpdaterCron(final String shopUpdaterCron) {
-        this.shopUpdaterCron = shopUpdaterCron;
+    public void setMiraklPullCron(final String miraklPullCron) {
+        this.miraklPullCron = miraklPullCron;
     }
 
     public String getEmailRetryCron() {
