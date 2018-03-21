@@ -26,9 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
@@ -238,20 +239,36 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
     @Then("^adyen will send multiple (.*) notification with (.*) of status (.*)$")
     public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
-        String eventType, String verificationType, String verificationStatus) {
+        String eventType, String verificationType, String verificationStatus, DataTable table) throws Throwable {
+        List<Map<String, Integer>> cucumberTable = table.getTableConverter().toMaps(table, String.class, Integer.class);
         waitForNotification();
-        await().untilAsserted(() -> {
-            Map<String, Object> accountHolderCreated = restAssuredAdyenApi.getAdyenNotificationBody(
-                startUpCucumberHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
-            Assertions.assertThat(accountHolderCreated).isNotEmpty();
 
-            ArrayList shareholdersArray = JsonPath.parse(accountHolderCreated.get("content")).read("verification.shareholders");
-            for (Object shareholder : shareholdersArray) {
-                ArrayList checks = JsonPath.parse(shareholder).read("checks.*");
-                Assertions
-                    .assertThat(JsonPath.parse(checks).read("[0]status").toString())
-                    .isEqualTo(verificationStatus);
-            }
+        // get shareholderCodes from Adyen
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountHolderCode(shop.getId());
+        GetAccountHolderResponse accountHolder = adyenAccountService.getAccountHolder(getAccountHolderRequest);
+
+        List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
+            .map(ShareholderContact::getShareholderCode)
+            .collect(Collectors.toList());
+
+        await().untilAsserted(() -> {
+            Integer maxUbos = cucumberTable.get(0).get("maxUbos");
+            // get all ACCOUNT_HOLDER_VERIFICATION notifications
+            List<Map<String, Object>> notifications = restAssuredAdyenApi
+                .getMultipleAdyenNotificationBodies
+                    (startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType, shareholderCodes, maxUbos);
+
+            Assertions.assertThat(notifications).isNotEmpty();
+            Assertions.assertThat(notifications.get(0)).hasSize(maxUbos);
+
+            IntStream.rangeClosed(1, maxUbos).forEach(i->{
+                for (Map<String, Object> notification : notifications) {
+                    Assertions
+                        .assertThat(JsonPath.parse(notification.get("content-"+i)).read("verificationStatus").toString())
+                        .isEqualTo(verificationStatus);
+                }
+            });
         });
     }
 

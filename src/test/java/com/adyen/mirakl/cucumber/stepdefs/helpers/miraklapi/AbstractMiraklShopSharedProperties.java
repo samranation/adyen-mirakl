@@ -1,6 +1,5 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi;
 
-import com.adyen.mirakl.service.UboService;
 import com.github.javafaker.Faker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -38,12 +37,5 @@ public abstract class AbstractMiraklShopSharedProperties {
 
     MiraklUploadShopDocumentsRequest miraklUploadShopDocumentsRequest(String shopId, ImmutableList<MiraklUploadDocument> miraklUploadDocuments) {
         return new MiraklUploadShopDocumentsRequest(shopId, miraklUploadDocuments);
-    }
-
-    void buildShareHolderMinimumData(ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder, int i, Map<Integer, Map<String, String>> uboKeys, String civility) {
-        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CIVILITY), civility));
-        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.FIRSTNAME), FAKER.name().firstName()));
-        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.LASTNAME), FAKER.name().lastName()));
-        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.EMAIL), email));
     }
 }

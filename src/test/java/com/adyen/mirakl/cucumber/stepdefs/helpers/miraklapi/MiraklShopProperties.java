@@ -87,19 +87,25 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
 
     void populateShareholderWithMissingData(String legalEntity, List<Map<String, String>> rows, MiraklCreateShop createShop) {
         rows.forEach(row -> {
-            maxUbos = row.get(maxUbos);
+            maxUbos = row.get("maxUbos");
             if (maxUbos != null) {
                 ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder = ImmutableList.builder();
                 Map<Integer, Map<String, String>> uboKeys = uboService.generateMiraklUboKeys(Integer.valueOf(maxUbos));
 
                 for (int i = 1; i <= Integer.valueOf(maxUbos); i++) {
-
                     buildShareHolderMinimumData(builder, i, uboKeys, civility());
                 }
                 builder.add(createAdditionalField("adyen-legal-entity-type", legalEntity));
                 createShop.setAdditionalFieldValues(builder.build());
             }
         });
+    }
+
+    void buildShareHolderMinimumData(ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder, int i, Map<Integer, Map<String, String>> uboKeys, String civility) {
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CIVILITY), civility));
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.FIRSTNAME), FAKER.name().firstName()));
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.LASTNAME), FAKER.name().lastName()));
+        builder.add(createAdditionalField(uboKeys.get(i).get(UboService.EMAIL), email));
     }
 
     void populateAddFieldsLegalAndHouseNumber(String legalEntity, MiraklCreateShop createShop) {
