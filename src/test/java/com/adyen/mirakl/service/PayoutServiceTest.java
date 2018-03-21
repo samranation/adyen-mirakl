@@ -1,37 +1,23 @@
 package com.adyen.mirakl.service;
 
-
-import java.util.List;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
-import com.adyen.Util.Util;
-import com.adyen.mirakl.AdyenMiraklConnectorApp;
-import com.adyen.mirakl.domain.AdyenPayoutError;
-import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
-import com.adyen.model.Amount;
+import org.mockito.runners.MockitoJUnitRunner;
 import com.adyen.model.marketpay.AccountHolderDetails;
 import com.adyen.model.marketpay.BankAccountDetail;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.PayoutAccountHolderRequest;
-import com.adyen.model.marketpay.PayoutAccountHolderResponse;
 import com.adyen.service.Account;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = AdyenMiraklConnectorApp.class)
-@Transactional
+@RunWith(MockitoJUnitRunner.class)
 public class PayoutServiceTest {
 
     @InjectMocks
@@ -43,7 +29,6 @@ public class PayoutServiceTest {
     @Captor
     private ArgumentCaptor<GetAccountHolderRequest> getAccountHolderRequestArgumentCaptor;
 
-
     @Test
     public void testGetBankAccountUUID() {
         GetAccountHolderResponse getAccountHolderResponse = getResponseWithBankDetails();
@@ -51,7 +36,7 @@ public class PayoutServiceTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testGetBankAccountUUIDException(){
+    public void testGetBankAccountUUIDException() {
         GetAccountHolderResponse getAccountHolderResponse = getResponseWithBankDetails();
         payoutService.getBankAccountUUID(getAccountHolderResponse, "invalidiban");
     }
@@ -65,7 +50,7 @@ public class PayoutServiceTest {
         assertEquals("2a421c72-ead7-4ad3-8741-80a0aebb8758", request.getBankAccountUUID());
         assertEquals("2000", request.getAccountHolderCode());
         assertEquals("123456", request.getAccountCode());
-        assertEquals(1025L, (long)request.getAmount().getValue());
+        assertEquals(1025L, (long) request.getAmount().getValue());
         assertEquals("EUR", request.getAmount().getCurrency());
         assertEquals("Description", request.getDescription());
     }
