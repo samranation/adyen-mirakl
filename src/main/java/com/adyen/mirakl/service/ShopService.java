@@ -71,8 +71,6 @@ public class ShopService {
     @Resource
     private InvalidFieldsNotificationService invalidFieldsNotificationService;
 
-    @Value("${shopService.maxUbos}")
-    private Integer maxUbos = 4;
 
     public void processUpdatedShops() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
@@ -245,7 +243,7 @@ public class ShopService {
                 businessDetails.setTaxId(shop.getProfessionalInformation().getTaxIdentificationNumber());
             }
         }
-        businessDetails.setShareholders(uboService.extractUbos(shop, existingAccountHolder, maxUbos));
+        businessDetails.setShareholders(uboService.extractUbos(shop, existingAccountHolder));
         return businessDetails;
     }
 
@@ -425,14 +423,6 @@ public class ShopService {
      */
     private String getHouseNumberFromStreet(String street) {
         return "1";
-    }
-
-    public Integer getMaxUbos() {
-        return maxUbos;
-    }
-
-    public void setMaxUbos(Integer maxUbos) {
-        this.maxUbos = maxUbos;
     }
 
     /**

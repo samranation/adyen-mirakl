@@ -54,7 +54,7 @@ public class ConnectorAppSteps extends StepDefsHelper {
 
     @And("^we process the document data and push to Adyen$")
     public void weProcessTheDocumentDataAndPushToAdyen() {
-        docService.retrieveBankproofAndUpload();
+        docService.processUpdatedDocuments();
     }
 
 }

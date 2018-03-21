@@ -56,6 +56,14 @@ public class RestAssuredAdyenApi {
     private ResponseBody getResponseBody(String endpoint) {
         ResponseBody body = RestAssured.get(endpoint).getBody();
 
+        try{
+            body.jsonPath().get("error");
+        }catch (Exception e){
+            log.info("\n-------------------------------------------------------");
+            log.info("\nget body response was: \n{}", body.prettyPrint());
+            log.info("\n-------------------------------------------------------");
+        }
+
         if (body.jsonPath().get("error").equals("Bin not found")) {
             throw new IllegalStateException(String.format("Bin no longer exists. Endpoint is showing: [%s]", body.jsonPath().get("error").toString()));
         }

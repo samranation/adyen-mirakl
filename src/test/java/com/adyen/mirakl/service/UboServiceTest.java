@@ -4,28 +4,24 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.PersonalData;
-import com.adyen.model.marketpay.PhoneNumber;
-import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.mirakl.client.mmp.domain.common.MiraklAdditionalFieldValue;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Answers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.when;
@@ -65,10 +61,25 @@ public class UboServiceTest {
     private GetAccountHolderResponse existingAccountHolderMock;
     @Mock
     private ShareholderContact shareholderMock1, shareholderMock2, shareholderMock3, shareholderMock4;
+    @Mock
+    private MiraklShopDocument miraklShopDocument1, miraklShopDocument2, miraklShopDocument3, miraklShopDocument4, miraklShopDocument5, miraklShopDocument6;
+    @Mock
+    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClientMock;
+    @Mock
+    private MiraklShops miraklShops1, miraklShops2;
+    @Mock
+    private MiraklShop miraklShop1, miraklShop2;
+    @Mock
+    private MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue miraklAddtionalField1, miraklAddtionalField2, miraklAddtionalField3;
+
+    @Captor
+    private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
+
 
 
     @Test
     public void shouldCreateAllShareholdersFromUbos() {
+        uboService.setMaxUbos(4);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
         List<MiraklAdditionalFieldValue> ubo2 = createMiraklAdditionalUboField("2", UBO_FIELDS, UBO_FIELDS_ENUMS);
         List<MiraklAdditionalFieldValue> ubo3 = createMiraklAdditionalUboField("3", UBO_FIELDS, UBO_FIELDS_ENUMS);
@@ -85,47 +96,51 @@ public class UboServiceTest {
         when(shareholderMappingRepositoryMock.findOneByMiraklShopIdAndMiraklUboNumber("shopCode", 4)).thenReturn(Optional.of(shareholderMappingMock4));
         when(shareholderMappingMock4.getAdyenShareholderCode()).thenReturn("shareholderCode4");
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, 4);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
 
         verifyShareHolders(result);
     }
 
     @Test
     public void shouldNotCreateIfMissingCivility() {
+        uboService.setMaxUbos(1);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", ImmutableSet.of("firstname","lastname","email"), ImmutableMap.of());
         when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1);
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, 1);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
 
         Assertions.assertThat(result).isEmpty();
     }
 
     @Test
     public void shouldNotCreateIfMissingFirstName() {
+        uboService.setMaxUbos(1);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", ImmutableSet.of("lastname","email"), ImmutableMap.of("civility", "Mr"));
         when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1);
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, 1);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
 
         Assertions.assertThat(result).isEmpty();
     }
 
     @Test
     public void shouldNotCreateIfMissingLastName() {
+        uboService.setMaxUbos(1);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", ImmutableSet.of("firstname","email"), ImmutableMap.of("civility", "Mr"));
         when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1);
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, 1);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
 
         Assertions.assertThat(result).isEmpty();
     }
 
     @Test
     public void shouldNotCreateIfMissingEmail() {
+        uboService.setMaxUbos(1);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", ImmutableSet.of("firstname","lastname"), ImmutableMap.of("civility", "Mr"));
         when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1);
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, 1);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
 
         Assertions.assertThat(result).isEmpty();
     }
@@ -133,13 +148,14 @@ public class UboServiceTest {
 
     @Test
     public void shouldNotCreateDataIfMissing() {
+        uboService.setMaxUbos(1);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", ImmutableSet.of("firstname","lastname","email"), ImmutableMap.of("civility", "Mr"));
         when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1);
         when(miraklShopMock.getId()).thenReturn("shopCode");
         when(shareholderMappingRepositoryMock.findOneByMiraklShopIdAndMiraklUboNumber("shopCode", 1)).thenReturn(Optional.empty());
 
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, 1);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
 
         Assertions.assertThat(result.size()).isOne();
         final ShareholderContact shareholderContact = result.iterator().next();
@@ -155,7 +171,7 @@ public class UboServiceTest {
 
     @Test
     public void shouldUseMappingFromExistingShop(){
-
+        uboService.setMaxUbos(4);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);
         List<MiraklAdditionalFieldValue> ubo2 = createMiraklAdditionalUboField("2", UBO_FIELDS, UBO_FIELDS_ENUMS);
         List<MiraklAdditionalFieldValue> ubo3 = createMiraklAdditionalUboField("3", UBO_FIELDS, UBO_FIELDS_ENUMS);
@@ -174,9 +190,66 @@ public class UboServiceTest {
         when(shareholderMock3.getShareholderCode()).thenReturn("shareholderCode3");
         when(shareholderMock4.getShareholderCode()).thenReturn("shareholderCode4");
 
-        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, existingAccountHolderMock, 4);
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock, existingAccountHolderMock);
 
         verifyShareHolders(result);
+    }
+
+    @Test
+    public void shouldExtractMiraklDocumentsRelatedToUbos(){
+        uboService.setMaxUbos(4);
+
+        //shop 1
+        when(miraklShopDocument1.getTypeCode()).thenReturn("adyen-ubo1-photoid");//front passport used
+        when(miraklShopDocument1.getShopId()).thenReturn("shop1");
+        when(miraklShopDocument2.getTypeCode()).thenReturn("adyen-ubo1-photoid-rear");//rear passport picture ignored
+        when(miraklShopDocument2.getShopId()).thenReturn("shop1");
+        //shop 2
+        when(miraklShopDocument3.getTypeCode()).thenReturn("adyen-ubo1-photoid");//id front used
+        when(miraklShopDocument3.getShopId()).thenReturn("shop2");
+        when(miraklShopDocument4.getTypeCode()).thenReturn("adyen-ubo1-photoid-rear");//rear id picture ignored
+        when(miraklShopDocument4.getShopId()).thenReturn("shop2");
+        when(miraklShopDocument5.getTypeCode()).thenReturn("adyen-ubo2-photoid");//front driving licence always mapped to front
+        when(miraklShopDocument5.getShopId()).thenReturn("shop2");
+        when(miraklShopDocument6.getTypeCode()).thenReturn("adyen-ubo2-photoid-rear");//rear driving licence always mapped to rear
+        when(miraklShopDocument6.getShopId()).thenReturn("shop2");
+        // result will be 4 documents sent to adyen
+        // 1 passport                                                       - shop 1 ubo 1
+        // 1 id                                                             - shop 2 ubo 1
+        // 1 front driving licence & 1 rear driving licence                 - shop 2 ubo 2
+
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShops(miraklGetShopsRequestCaptor.capture())).thenReturn(miraklShops1).thenReturn(miraklShops2);
+        when(miraklShops1.getShops()).thenReturn(ImmutableList.of(miraklShop1));
+        when(miraklShops2.getShops()).thenReturn(ImmutableList.of(miraklShop2));
+        when(miraklShop1.getAdditionalFieldValues()).thenReturn(ImmutableList.of(miraklAddtionalField1));
+        when(miraklShop2.getAdditionalFieldValues()).thenReturn(ImmutableList.of(miraklAddtionalField2, miraklAddtionalField3));
+        when(miraklAddtionalField1.getCode()).thenReturn("adyen-ubo1-photoidtype");
+        when(miraklAddtionalField1.getValue()).thenReturn("PASSPORT");
+        when(miraklAddtionalField2.getCode()).thenReturn("adyen-ubo1-photoidtype");
+        when(miraklAddtionalField2.getValue()).thenReturn("ID_CARD");
+        when(miraklAddtionalField3.getCode()).thenReturn("adyen-ubo2-photoidtype");
+        when(miraklAddtionalField3.getValue()).thenReturn("DRIVING_LICENCE");
+
+        Map<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> result = uboService.extractUboDocuments(ImmutableList.of(miraklShopDocument1, miraklShopDocument2, miraklShopDocument3, miraklShopDocument4, miraklShopDocument5, miraklShopDocument6));
+
+        List<MiraklGetShopsRequest> requestsToMirakl = miraklGetShopsRequestCaptor.getAllValues();
+        Assertions.assertThat(requestsToMirakl.size()).isEqualTo(3);
+        Assertions.assertThat(requestsToMirakl.get(0).getShopIds()).containsOnly("shop1");
+        Assertions.assertThat(requestsToMirakl.get(1).getShopIds()).containsOnly("shop2");
+        Assertions.assertThat(result.size()).isEqualTo(4);
+        List<Map.Entry<MiraklShopDocument, DocumentDetail.DocumentTypeEnum>> results = new ArrayList<>(result.entrySet());
+        Assertions.assertThat(results.get(0).getKey().getShopId()).isEqualTo("shop1");
+        Assertions.assertThat(results.get(0).getKey().getTypeCode()).isEqualTo("adyen-ubo1-photoid");
+        Assertions.assertThat(results.get(0).getValue()).isEqualTo(DocumentDetail.DocumentTypeEnum.PASSPORT);
+        Assertions.assertThat(results.get(1).getKey().getShopId()).isEqualTo("shop2");
+        Assertions.assertThat(results.get(1).getKey().getTypeCode()).isEqualTo("adyen-ubo1-photoid");
+        Assertions.assertThat(results.get(1).getValue()).isEqualTo(DocumentDetail.DocumentTypeEnum.ID_CARD);
+        Assertions.assertThat(results.get(2).getKey().getShopId()).isEqualTo("shop2");
+        Assertions.assertThat(results.get(2).getKey().getTypeCode()).isEqualTo("adyen-ubo2-photoid");
+        Assertions.assertThat(results.get(2).getValue()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_FRONT);
+        Assertions.assertThat(results.get(3).getKey().getShopId()).isEqualTo("shop2");
+        Assertions.assertThat(results.get(3).getKey().getTypeCode()).isEqualTo("adyen-ubo2-photoid-rear");
+        Assertions.assertThat(results.get(3).getValue()).isEqualTo(DocumentDetail.DocumentTypeEnum.DRIVING_LICENCE_BACK);
     }
 
     private void verifyShareHolders(final List<ShareholderContact> shareHolders) {
