@@ -22,7 +22,7 @@
       "generator" : "secret"
     },
     "ADYEN_USER_NAME" : {
-      "description": "User name for Adyen Marketplace Web Service API (format wd_{n}@Marketplace.{account})",
+      "description": "User name for Adyen Marketplace Web Service API (format wd_{n}@Marketplace.{account})"
     },
     "ADYEN_PASS" : {
       "description": "Password for Adyen Web Service API User found:  https://ca-test.adyen.com/ca/ca/config/users.shtml"
