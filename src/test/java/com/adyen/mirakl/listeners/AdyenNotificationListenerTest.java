@@ -102,7 +102,7 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderAwaitingIdentityEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
@@ -120,10 +120,45 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderAwaitingIdentityEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
+    @Test
+    public void shouldSendEmailForPassportVerificationInvalidData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/PASSPORT_VERIFICATION_INVALID_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+        when(adyenAccountServiceMock.getAccountHolder(accountHolderRequestCaptor.capture())).thenReturn(getAccountHolderResponseMock);
+        when(getAccountHolderResponseMock.getAccountHolderDetails().getBusinessDetails().getShareholders()).thenReturn(ImmutableList.of(shareholderMock1, shareholderMock2));
+        when(shareholderMock1.getShareholderCode()).thenReturn("invalidShareholderCode");
+        when(shareholderMock2.getShareholderCode()).thenReturn("24610d08-9d80-4a93-85f3-78d475274e08");
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderInvalidPassportEmail", "email.account.verification.invalid.passport.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForIdentityVerificationInvalidData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/IDENTITY_VERIFICATION_INVALID_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+        when(adyenAccountServiceMock.getAccountHolder(accountHolderRequestCaptor.capture())).thenReturn(getAccountHolderResponseMock);
+        when(getAccountHolderResponseMock.getAccountHolderDetails().getBusinessDetails().getShareholders()).thenReturn(ImmutableList.of(shareholderMock1, shareholderMock2));
+        when(shareholderMock1.getShareholderCode()).thenReturn("invalidShareholderCode");
+        when(shareholderMock2.getShareholderCode()).thenReturn("24610d08-9d80-4a93-85f3-78d475274e08");
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderInvalidIdentityEmail", "email.account.verification.invalid.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
 
 
 }

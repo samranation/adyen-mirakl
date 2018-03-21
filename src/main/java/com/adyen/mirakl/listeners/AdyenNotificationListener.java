@@ -33,13 +33,17 @@ import java.util.Map;
 public class AdyenNotificationListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    private static Map<KYCCheckStatusData.CheckTypeEnum, String> templateMap = ImmutableMap.of(
-        KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, "accountHolderAwaitingIdentityEmail",
-        KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, "accountHolderAwaitingPassportEmail"
+    private static Map<Map<KYCCheckStatusData.CheckTypeEnum, KYCCheckStatusData.CheckStatusEnum>, String> templateMap = ImmutableMap.of(
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA), "accountHolderAwaitingIdentityEmail",
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA), "accountHolderAwaitingPassportEmail",
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.INVALID_DATA), "accountHolderInvalidIdentityEmail",
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.INVALID_DATA), "accountHolderInvalidPassportEmail"
     );
-    private static Map<KYCCheckStatusData.CheckTypeEnum, String> subjectMap = ImmutableMap.of(
-        KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, "email.account.verification.awaiting.id.title",
-        KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, "email.account.verification.awaiting.passport.title"
+    private static Map<Map<KYCCheckStatusData.CheckTypeEnum, KYCCheckStatusData.CheckStatusEnum>, String> subjectMap = ImmutableMap.of(
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA), "email.account.verification.awaiting.id.title",
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA), "email.account.verification.awaiting.passport.title",
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.INVALID_DATA), "email.account.verification.invalid.id.title",
+        ImmutableMap.of(KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION, KYCCheckStatusData.CheckStatusEnum.INVALID_DATA), "email.account.verification.invalid.passport.title"
     );
 
     private NotificationHandler notificationHandler;
@@ -86,7 +90,7 @@ public class AdyenNotificationListener {
             KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)){
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
-        }else if(awaitingDataForIdentityOrPassport(verificationStatus, verificationType)){
+        }else if(awaitingDataForIdentityOrPassport(verificationStatus, verificationType) || invalidDataForIdentityOrPassport(verificationStatus, verificationType)){
             final GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
             getAccountHolderRequest.setAccountHolderCode(shopId);
             final GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
@@ -94,12 +98,17 @@ public class AdyenNotificationListener {
             final ShareholderContact shareholderContact = accountHolderResponse.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
                 .filter(x -> x.getShareholderCode().equals(shareholderCode))
                 .findAny().orElseThrow(() -> new IllegalStateException("Unable to find shareholder: " + shareholderCode));
-            mailTemplateService.sendShareholderAwaitingIdentityEmailFromTemplate(shareholderContact, shopId, Locale.ENGLISH, templateMap.get(verificationType), subjectMap.get(verificationType));
+            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, Locale.ENGLISH, templateMap.get(ImmutableMap.of(verificationType, verificationStatus)), subjectMap.get(ImmutableMap.of(verificationType, verificationStatus)));
         }
     }
 
     private boolean awaitingDataForIdentityOrPassport(final KYCCheckStatusData.CheckStatusEnum verificationStatus, final KYCCheckStatusData.CheckTypeEnum verificationType) {
         return KYCCheckStatusData.CheckStatusEnum.AWAITING_DATA.equals(verificationStatus)
+            && (KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION.equals(verificationType) ||  KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION.equals(verificationType));
+    }
+
+    private boolean invalidDataForIdentityOrPassport(final KYCCheckStatusData.CheckStatusEnum verificationStatus, final KYCCheckStatusData.CheckTypeEnum verificationType) {
+        return KYCCheckStatusData.CheckStatusEnum.INVALID_DATA.equals(verificationStatus)
             && (KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION.equals(verificationType) ||  KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION.equals(verificationType));
     }
 
