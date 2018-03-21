@@ -40,7 +40,6 @@ public class PayoutServiceIntegrationTest {
     @Test
     public void testStoreAccountHolderRequest()
     {
-
         PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
         payoutAccountHolderRequest.setAccountCode("accountCode");
         payoutAccountHolderRequest.setBankAccountUUID("bankAccountUUID");
@@ -49,10 +48,7 @@ public class PayoutServiceIntegrationTest {
         Amount adyenAmount = Util.createAmount("100", "EUR");
         payoutAccountHolderRequest.setAmount(adyenAmount);
 
-        //  todo throw API exception
-        PayoutAccountHolderResponse payoutAccountHolderResponse = new PayoutAccountHolderResponse();
-
-        payoutService.storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse);
+        payoutService.storeAdyenPayoutError(payoutAccountHolderRequest, null);
 
         // check if it stores it properly
         final List<AdyenPayoutError> all = adyenPayoutErrorRepository.findAll();
