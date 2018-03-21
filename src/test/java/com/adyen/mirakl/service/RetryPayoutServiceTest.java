@@ -15,7 +15,6 @@ import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
 import com.adyen.model.Amount;
 import com.adyen.model.marketpay.PayoutAccountHolderRequest;
-import com.adyen.model.marketpay.PayoutAccountHolderResponse;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = AdyenMiraklConnectorApp.class)
@@ -74,23 +73,16 @@ public class RetryPayoutServiceTest {
     }
 
     public void retry() {
-
         String accountHolderCode = "1000";
         // add 2 failed payouts
         PayoutAccountHolderRequest payoutAccountHolderRequestFirst = createFailedPayout("", accountHolderCode);
         payoutService.storeAdyenPayoutError(payoutAccountHolderRequestFirst, null);
-
-
         retryPayoutService.retryFailedPayoutsForAccountHolder(accountHolderCode);
-
 
         List<AdyenPayoutError> all = adyenPayoutErrorRepository.findByAccountHolderCode(accountHolderCode);
         Assertions.assertThat(all.get(0).getRawRequest()).isEqualTo(PayoutService.GSON.toJson(payoutAccountHolderRequestFirst));
         Assertions.assertThat(all.get(0).getRetry()).isEqualTo(2);
-
-
     }
-
 
     public PayoutAccountHolderRequest createFailedPayout(String prefix) {
         return createFailedPayout(prefix, "_accountCode");

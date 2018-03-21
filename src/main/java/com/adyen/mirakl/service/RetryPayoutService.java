@@ -40,7 +40,6 @@ public class RetryPayoutService {
             return;
         }
         processFailedPayout(failedPayouts);
-
     }
 
     public void retryFailedPayouts() {
@@ -49,7 +48,6 @@ public class RetryPayoutService {
             log.info("No failed payouts found");
             return;
         }
-
         processFailedPayout(failedPayouts);
     }
 
