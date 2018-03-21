@@ -1,5 +1,6 @@
 package com.adyen.mirakl.repository;
 
+import java.util.List;
 import com.adyen.mirakl.domain.AdyenPayoutError;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +14,6 @@ import org.springframework.data.jpa.repository.*;
 @Repository
 public interface AdyenPayoutErrorRepository extends JpaRepository<AdyenPayoutError, Long> {
 
+    @Query("select e from AdyenPayoutError as e where e.retry < ?1")
+    List<AdyenPayoutError> findByRetry(Integer retry);
 }

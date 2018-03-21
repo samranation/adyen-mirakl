@@ -9,7 +9,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -17,10 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.adyen.Util.Util;
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
 import com.adyen.mirakl.domain.AdyenPayoutError;
-import com.adyen.mirakl.domain.MiraklDelta;
 import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
 import com.adyen.model.Amount;
-import com.adyen.model.PaymentRequest;
 import com.adyen.model.marketpay.AccountHolderDetails;
 import com.adyen.model.marketpay.BankAccountDetail;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
@@ -46,34 +43,6 @@ public class PayoutServiceTest {
     @Captor
     private ArgumentCaptor<GetAccountHolderRequest> getAccountHolderRequestArgumentCaptor;
 
-    @Autowired
-    private AdyenPayoutErrorRepository adyenPayoutErrorRepository;
-
-    @Before
-    public void removeExistingTestAdyenPayoutErrors(){
-        final List<AdyenPayoutError> all = adyenPayoutErrorRepository.findAll();
-        adyenPayoutErrorRepository.delete(all);
-        adyenPayoutErrorRepository.flush();
-    }
-
-    @Test
-    public void testStoreAccountHolderRequest()
-    {
-
-        PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
-        payoutAccountHolderRequest.setAccountCode("accountCode");
-        payoutAccountHolderRequest.setBankAccountUUID("bankAccountUUID");
-        payoutAccountHolderRequest.setAccountHolderCode("accountHolderCode");
-        payoutAccountHolderRequest.setDescription("description");
-        Amount adyenAmount = Util.createAmount("100", "EUR");
-        payoutAccountHolderRequest.setAmount(adyenAmount);
-
-
-        //  todo throw API exception
-        PayoutAccountHolderResponse payoutAccountHolderResponse = new PayoutAccountHolderResponse();
-
-        payoutService.storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse);
-    }
 
     @Test
     public void testGetBankAccountUUID() {

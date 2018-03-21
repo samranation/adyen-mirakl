@@ -119,7 +119,9 @@ application:
     docsUpdaterCron: "0 */5 * * * ?"
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
+    payoutRetryCron: "0 */10 * * * ?"
     initialDeltaDaysBack: 0
+    maxPayoutFailed: 10
 
 shops:
     shopIds:

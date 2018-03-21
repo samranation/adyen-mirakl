@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-
 @Service
 @Transactional
 public class PayoutService {
@@ -70,22 +69,18 @@ public class PayoutService {
 
     }
 
-
     /**
-     * Store Payout error into database for retry
-     * @param payoutAccountHolderRequest
-     * @param payoutAccountHolderResponse
+     * Store Payout request into database so we can do retries
      */
-    protected void storeAdyenPayoutError(PayoutAccountHolderRequest payoutAccountHolderRequest, PayoutAccountHolderResponse payoutAccountHolderResponse)
-    {
-        if(!payoutAccountHolderRequest.equals(null)) {
-            // store in DB payoutAccountHolderRequest
+    protected void storeAdyenPayoutError(PayoutAccountHolderRequest payoutAccountHolderRequest, PayoutAccountHolderResponse payoutAccountHolderResponse) {
+        if (payoutAccountHolderRequest != null) {
             String rawRequest = GSON.toJson(payoutAccountHolderRequest);
             AdyenPayoutError adyenPayoutError = new AdyenPayoutError();
+
+//            adyenPayoutError.setAccountHolderCode(payoutAccountHolderRequest.getAccountHolderCode());
             adyenPayoutError.setRawRequest(rawRequest);
 
-
-            if(!payoutAccountHolderResponse.equals(null)) {
+            if (payoutAccountHolderResponse != null) {
                 String rawResponse = GSON.toJson(payoutAccountHolderResponse);
                 adyenPayoutError.setRawResponse(rawResponse);
             }
@@ -94,12 +89,8 @@ public class PayoutService {
             adyenPayoutError.setRetry(0);
             adyenPayoutError.setCreatedAt(ZonedDateTime.now());
             adyenPayoutError.setUpdatedAt(ZonedDateTime.now());
-            adyenPayoutErrorRepository.saveAndFlush(adyenPayoutError);
+            adyenPayoutErrorRepository.save(adyenPayoutError);
         }
-    }
-
-    public void retryPayoutOut() {
-
     }
 
     protected PayoutAccountHolderResponse payoutAccountHolder(PayoutAccountHolderRequest payoutAccountHolderRequest) throws Exception {

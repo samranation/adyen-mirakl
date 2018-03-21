@@ -116,8 +116,11 @@ application:
     docsUpdaterCron: "0 */5 * * * ?"
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
+    payoutRetryCron: "30 1 * * * ?"
     #how many dates back shall be initially used for updated_at Mirakl queries
     initialDeltaDaysBack: 0
+    #how many retries can fail for payout
+    maxPayoutFailed: 10
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
