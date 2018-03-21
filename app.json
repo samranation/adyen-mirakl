@@ -6,12 +6,34 @@
   "logo": "https://avatars3.githubusercontent.com/u/9713612?s=200&v=4",
   "keywords": ["java"],
   "env": {
+    "ADYEN_ENV" : {
+      "description": "TEST or LIVE",
+      "value": "TEST"
+    },
+    "ADYEN_NOTIFY_USERNAME" : {
+      "description": "User name for notification endpoint"
+      "value": "admin"
+    }
+    "ADYEN_NOTIFY_PASSWORD" : {
+      "description": "Password of the Connector notification endpoint",
+      "generator" : "secret"
+    }
+    "ADYEN_USER_NAME" : {
+      "description": "User name for Adyen Markpetplace Web Service API",
+      "value": "wd_{n}@Marketplace.{account}"
+    },
+    "ADYEN_PASS" : {
+      "description": "Password for Adyen Web Service API User found:  https://ca-test.adyen.com/ca/ca/config/users.shtml"
+    },
     "MIRAKL_ENV_URL": {
-      "description": "The number of processes to run.",
+      "description": "The base URL of your Mirakl Environment",
       "value": "http://yourproject-dev.mirakl-net"
+    },
+    "MIRAKL_API_OPERATOR_KEY": {
+      "description": "Operator API key for your Mirakl Environment" 
     }
   },
   "addons": [
-    "jawsdb"
+    "jawsdb","mailgun"
   ]
 }
