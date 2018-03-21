@@ -11,7 +11,7 @@
       "value": "TEST"
     },
     "ADYEN_NOTIFY_USERNAME" : {
-      "description": "User name for notification endpoint"
+      "description": "User name for notification endpoint",
       "value": "admin"
     },
     "ADYEN_NOTIFY_PASSWORD" : {
