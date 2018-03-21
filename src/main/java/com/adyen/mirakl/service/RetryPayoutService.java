@@ -58,8 +58,15 @@ public class RetryPayoutService {
 
             PayoutAccountHolderResponse payoutAccountHolderResponse = null;
             try {
-                payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(GSON.fromJson(adyenPayoutError.getRawRequest(), new TypeToken<PayoutAccountHolderRequest>() {
-                }.getType()));
+
+                PayoutAccountHolderRequest payoutAccountHolderRequest = GSON.fromJson(adyenPayoutError.getRawRequest(), new TypeToken<PayoutAccountHolderRequest>() {
+                              }.getType());
+
+                payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(payoutAccountHolderRequest);
+                log.info("Payout submitted for accountHolder: [{}] + Psp ref: [{}]", payoutAccountHolderRequest.getAccountHolderCode(), payoutAccountHolderResponse.getPspReference());
+
+                // remove from payout error
+                adyenPayoutErrorRepository.delete(adyenPayoutError);
             } catch (ApiException e) {
                 log.error("Failed retry payout exception: " + e.getError(), e);
                 updateFailedPayout(adyenPayoutError, payoutAccountHolderResponse);
