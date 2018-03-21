@@ -19,7 +19,44 @@ spring:
             maximumPoolSize: 8
 
 
+
 adyenNotificationsConfig:
     notificationConfigurationDetails:
-        - description: ${HEROKU_APP_NAME}
-          notifyURL: https://${HEROKU_APP_NAME}.herokuapp.com/api/adyen-notifications
+        - active: TRUE
+          description: ${HEROKU_APP_NAME}
+          messageFormat: JSON
+          notifyURL: https://${HEROKU_APP_NAME}.herokuapp.com/api/adyen-notifications  
+          notifyUsername: ${ADYEN_NOTIFY_USERNAME}
+          notifyPassword: ${ADYEN_NOTIFY_PASSWORD}
+          sslProtocol: TLSV12
+          eventConfigs:
+            - eventType: ACCOUNT_CREATED
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_HOLDER_CREATED
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_HOLDER_LIMIT_REACHED
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_HOLDER_PAYOUT
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_HOLDER_STATUS_CHANGE
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_HOLDER_UPDATED
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_HOLDER_VERIFICATION
+              includeMode: INCLUDE
+            - eventType: ACCOUNT_UPDATED
+              includeMode: INCLUDE
+            - eventType: BENEFICIARY_SETUP
+              includeMode: INCLUDE
+            - eventType: COMPENSATE_NEGATIVE_BALANCE
+              includeMode: INCLUDE
+            - eventType: PAYMENT_FAILURE
+              includeMode: INCLUDE
+            - eventType: REPORT_AVAILABLE
+              includeMode: INCLUDE
+            - eventType: SCHEDULED_REFUNDS
+              includeMode: INCLUDE
+            - eventType: TRANSFER_FUNDS
+              includeMode: INCLUDE
+
+

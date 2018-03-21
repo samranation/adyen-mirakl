@@ -22,15 +22,14 @@
       "generator" : "secret"
     },
     "ADYEN_USER_NAME" : {
-      "description": "User name for Adyen Markpetplace Web Service API",
-      "value": "wd_{n}@Marketplace.{account}"
+      "description": "User name for Adyen Marketplace Web Service API (format wd_{n}@Marketplace.{account})",
     },
     "ADYEN_PASS" : {
       "description": "Password for Adyen Web Service API User found:  https://ca-test.adyen.com/ca/ca/config/users.shtml"
     },
     "MIRAKL_ENV_URL": {
       "description": "The base URL of your Mirakl Environment",
-      "value": "http://<yourproject>-dev.mirakl.net"
+      "value": "https://<yourproject>-dev.mirakl.net"
     },
     "MIRAKL_API_OPERATOR_KEY": {
       "description": "Operator API key for your Mirakl Environment" 
