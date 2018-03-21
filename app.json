@@ -31,9 +31,23 @@
     },
     "MIRAKL_API_OPERATOR_KEY": {
       "description": "Operator API key for your Mirakl Environment" 
+    },
+    "MAIL_HOST": {
+       "description": "Mail host",
+       "value": "smtp.mailtrap.io"
+    },
+    "MAIL_PORT": {
+        "description": "Port for SMTP server",
+        "value": "2525"
+    },
+    "MAIL_USER": {
+         "description": "User, update with smtp user"
+    },
+    "MAIL_PASS": {
+          "decription": "Update with smtp password"
     }
   },
   "addons": [
-    "jawsdb","mailgun"
+    "jawsdb","mailtrap"
   ]
 }
