@@ -77,7 +77,7 @@ public class PayoutService {
             String rawRequest = GSON.toJson(payoutAccountHolderRequest);
             AdyenPayoutError adyenPayoutError = new AdyenPayoutError();
 
-//            adyenPayoutError.setAccountHolderCode(payoutAccountHolderRequest.getAccountHolderCode());
+            adyenPayoutError.setAccountHolderCode(payoutAccountHolderRequest.getAccountHolderCode());
             adyenPayoutError.setRawRequest(rawRequest);
 
             if (payoutAccountHolderResponse != null) {

@@ -32,7 +32,7 @@ public class RetryPayoutServiceTest {
     private RetryPayoutService retryPayoutService;
 
     @Before
-    public void removeExistingTestAdyenPayoutErrors(){
+    public void removeExistingTestAdyenPayoutErrors() {
         final List<AdyenPayoutError> all = adyenPayoutErrorRepository.findAll();
         adyenPayoutErrorRepository.delete(all);
         adyenPayoutErrorRepository.flush();
@@ -73,9 +73,32 @@ public class RetryPayoutServiceTest {
         Assertions.assertThat(failedPayouts.size()).isEqualTo(0);
     }
 
+    public void retry() {
+
+        String accountHolderCode = "1000";
+        // add 2 failed payouts
+        PayoutAccountHolderRequest payoutAccountHolderRequestFirst = createFailedPayout("", accountHolderCode);
+        payoutService.storeAdyenPayoutError(payoutAccountHolderRequestFirst, null);
+
+
+        retryPayoutService.retryFailedPayoutsForAccountHolder(accountHolderCode);
+
+
+        List<AdyenPayoutError> all = adyenPayoutErrorRepository.findByAccountHolderCode(accountHolderCode);
+        Assertions.assertThat(all.get(0).getRawRequest()).isEqualTo(PayoutService.GSON.toJson(payoutAccountHolderRequestFirst));
+        Assertions.assertThat(all.get(0).getRetry()).isEqualTo(2);
+
+
+    }
+
+
     public PayoutAccountHolderRequest createFailedPayout(String prefix) {
+        return createFailedPayout(prefix, "_accountCode");
+    }
+
+    public PayoutAccountHolderRequest createFailedPayout(String prefix, String accountHolderCode) {
         PayoutAccountHolderRequest payoutAccountHolderRequest = new PayoutAccountHolderRequest();
-        payoutAccountHolderRequest.setAccountCode(prefix + "_accountCode");
+        payoutAccountHolderRequest.setAccountCode(prefix + accountHolderCode);
         payoutAccountHolderRequest.setBankAccountUUID(prefix + "_bankAccountUUID");
         payoutAccountHolderRequest.setAccountHolderCode(prefix + "_accountHolderCode");
         payoutAccountHolderRequest.setDescription(prefix + "_description");

@@ -33,12 +33,30 @@ public class RetryPayoutService {
     @Resource
     private Fund adyenFundService;
 
+
+    public void retryFailedPayoutsForAccountHolder(String accountHolderCode) {
+        final List<AdyenPayoutError> failedPayouts = adyenPayoutErrorRepository.findByAccountHolderCode(accountHolderCode);
+        if (CollectionUtils.isEmpty(failedPayouts)) {
+            log.info("No failed payouts found for this accountHolder with accountHolderCode" + accountHolderCode);
+            return;
+        }
+        processFailedPayout(failedPayouts);
+
+    }
+
     public void retryFailedPayouts() {
         final List<AdyenPayoutError> failedPayouts = adyenPayoutErrorRepository.findByRetry(applicationProperties.getMaxPayoutFailed());
         if (CollectionUtils.isEmpty(failedPayouts)) {
             log.info("No failed payouts found");
             return;
         }
+
+        processFailedPayout(failedPayouts);
+    }
+
+    public void processFailedPayout(List<AdyenPayoutError> failedPayouts)
+    {
+        putFailedPayoutInProcessing(failedPayouts);
 
         failedPayouts.forEach(adyenPayoutError -> {
 
@@ -48,16 +66,34 @@ public class RetryPayoutService {
                 }.getType()));
             } catch (ApiException e) {
                 log.error("Failed retry payout exception: " + e.getError(), e);
-                adyenPayoutError.setRetry(adyenPayoutError.getRetry() + 1);
-
-                if (payoutAccountHolderResponse != null) {
-                    String rawResponse = GSON.toJson(payoutAccountHolderResponse);
-                    adyenPayoutError.setRawResponse(rawResponse);
-                }
-                adyenPayoutErrorRepository.save(adyenPayoutError);
+                updateFailedPayout(adyenPayoutError, payoutAccountHolderResponse);
             } catch (Exception e) {
                 log.error("Failed retry payout exception: " + e.getMessage(), e);
+                updateFailedPayout(adyenPayoutError, payoutAccountHolderResponse);
             }
         });
+    }
+
+    /**
+     * to solve possible race-condition between cronjob update and notification update
+     */
+    protected void putFailedPayoutInProcessing(List<AdyenPayoutError> failedPayouts)
+    {
+        failedPayouts.forEach(adyenPayoutError ->{
+            adyenPayoutError.setProcessing(true);
+            adyenPayoutErrorRepository.save(adyenPayoutError);
+        });
+    }
+
+    protected void updateFailedPayout(AdyenPayoutError adyenPayoutError, PayoutAccountHolderResponse payoutAccountHolderResponse)
+    {
+        adyenPayoutError.setRetry(adyenPayoutError.getRetry() + 1);
+        adyenPayoutError.setProcessing(false);
+
+        if (payoutAccountHolderResponse != null) {
+            String rawResponse = GSON.toJson(payoutAccountHolderResponse);
+            adyenPayoutError.setRawResponse(rawResponse);
+        }
+        adyenPayoutErrorRepository.save(adyenPayoutError);
     }
 }

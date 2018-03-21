@@ -4,6 +4,7 @@ import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.mirakl.service.RetryPayoutService;
 import com.adyen.model.marketpay.AccountPayoutState;
 import com.adyen.model.marketpay.KYCCheckStatusData;
 import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
@@ -33,6 +34,7 @@ public class AdyenNotificationListener {
     private AdyenNotificationRepository adyenNotificationRepository;
     private MailTemplateService mailTemplateService;
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
+    private RetryPayoutService retryPayoutService;
 
     public AdyenNotificationListener(final NotificationHandler notificationHandler,
                                      final AdyenNotificationRepository adyenNotificationRepository,
@@ -91,8 +93,7 @@ public class AdyenNotificationListener {
         if (oldAccountPayoutState.getAllowPayout().equals(false) && newAccountPayoutState.getAllowPayout().equals(true)) {
             // check if there are payout errors to retrigger
             String accountHolderCode = accountHolderStatusChangeNotification.getContent().getAccountHolderCode();
-
-
+            retryPayoutService.retryFailedPayoutsForAccountHolder(accountHolderCode);
         }
     }
 

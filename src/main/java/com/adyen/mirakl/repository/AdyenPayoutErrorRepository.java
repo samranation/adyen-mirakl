@@ -14,6 +14,10 @@ import org.springframework.data.jpa.repository.*;
 @Repository
 public interface AdyenPayoutErrorRepository extends JpaRepository<AdyenPayoutError, Long> {
 
-    @Query("select e from AdyenPayoutError as e where e.retry < ?1")
+    @Query("select e from AdyenPayoutError as e where e.processing = 0 and e.retry < ?1")
     List<AdyenPayoutError> findByRetry(Integer retry);
+
+    @Query("select e from AdyenPayoutError as e where e.processing = 0 and e.accountHolderCode = ?1")
+    List<AdyenPayoutError> findByAccountHolderCode(String accountHolderCode);
+
 }
