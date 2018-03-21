@@ -160,5 +160,39 @@ public class AdyenNotificationListenerTest {
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
+    @Test
+    public void shouldSendEmailForAllowPayout() throws Exception {
+        URL url = Resources.getResource("adyenRequests/ACCOUNT_HOLDER_STATUS_CHANGE_ALLOW_PAYOUT.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest requestCaptorValue = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getShopIds()).containsOnly("8278");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "accountHolderStatusNowTrue", "email.account.status.now.true.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForNotAllowedPayouts() throws Exception {
+        URL url = Resources.getResource("adyenRequests/ACCOUNT_HOLDER_STATUS_CHANGE_NOT_ALLOW_PAYOUT.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest requestCaptorValue = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getShopIds()).containsOnly("8278");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "accountHolderStatusNowFalse", "email.account.status.now.false.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
 
 }

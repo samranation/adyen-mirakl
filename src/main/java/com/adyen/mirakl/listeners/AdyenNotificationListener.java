@@ -8,6 +8,7 @@ import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.KYCCheckStatusData;
 import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.notification.NotificationHandler;
@@ -28,6 +29,9 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 
 @Component
 public class AdyenNotificationListener {
@@ -79,6 +83,18 @@ public class AdyenNotificationListener {
     private void processNotification(final GenericNotification genericNotification) throws Exception {
         if(genericNotification instanceof AccountHolderVerificationNotification){
             processAccountholderVerificationNotification((AccountHolderVerificationNotification) genericNotification);
+        }else if(genericNotification instanceof AccountHolderStatusChangeNotification){
+            processAccountholderStatusChangeNotification((AccountHolderStatusChangeNotification) genericNotification);
+        }
+    }
+
+    private void processAccountholderStatusChangeNotification(final AccountHolderStatusChangeNotification accountHolderStatusChangeNotification) {
+        final Boolean oldPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState().getAllowPayout();
+        final Boolean newPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState().getAllowPayout();
+        if(FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)){
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.ENGLISH, "accountHolderStatusNowTrue", "email.account.status.now.true.title");
+        }else if(TRUE.equals(oldPayoutState) && FALSE.equals(newPayoutState)){
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.ENGLISH, "accountHolderStatusNowFalse", "email.account.status.now.false.title");
         }
     }
 
