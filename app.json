@@ -6,6 +6,9 @@
   "logo": "https://avatars3.githubusercontent.com/u/9713612?s=200&v=4",
   "keywords": ["java"],
   "env": {
+    "HEROKU_APP_NAME" : {
+       "description": "Required for the notification endpoint creation"
+    },
     "ADYEN_ENV" : {
       "description": "TEST or LIVE",
       "value": "TEST"
@@ -27,7 +30,7 @@
     },
     "MIRAKL_ENV_URL": {
       "description": "The base URL of your Mirakl Environment",
-      "value": "http://yourproject-dev.mirakl-net"
+      "value": "http://<yourproject>-dev.mirakl.net"
     },
     "MIRAKL_API_OPERATOR_KEY": {
       "description": "Operator API key for your Mirakl Environment" 
