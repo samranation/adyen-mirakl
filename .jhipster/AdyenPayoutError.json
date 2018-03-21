@@ -13,6 +13,10 @@
             "fieldTypeBlobContent": "text"
         },
         {
+            "fieldName": "accountHolderCode",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "retry",
             "fieldType": "Integer"
         },
