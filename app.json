@@ -45,6 +45,12 @@
     },
     "MAIL_PASS": {
           "decription": "Update with smtp password"
+    },
+    "MIRAKL_SDK_USER": {
+          "description" : "Your artifactory.mirakl.net user (required to download Mirakl SDK)"
+    },
+    "MIRAKL_SDK_PASSWORD": {
+          "description" : "Your artifactory.mirakl.net password"
     }
   },
   "addons": [
