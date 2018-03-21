@@ -32,7 +32,7 @@ public class SchedulerTrigger {
         log.debug("Pulling shops from Mirakl");
         shopService.processUpdatedShops();
         log.debug("Pulling documents from Mirakl");
-        docService.retrieveBankproofAndUpload();
+        docService.processUpdatedDocuments();
     }
 
     @Scheduled(cron = "${application.emailRetryCron}")

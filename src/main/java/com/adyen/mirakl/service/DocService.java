@@ -1,9 +1,7 @@
 package com.adyen.mirakl.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,26 +37,36 @@ public class DocService {
     @Resource
     private DeltaService deltaService;
 
+    @Resource
+    private UboService uboService;
+
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
      */
-    public void retrieveBankproofAndUpload() {
+    public void processUpdatedDocuments() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
 
         List<MiraklShopDocument> miraklShopDocumentList = retrieveUpdatedDocs();
         for (MiraklShopDocument document : miraklShopDocumentList) {
             if (document.getTypeCode().equals(Constants.BANKPROOF)) {
-                FileWrapper fileWrapper = downloadSelectedDocument(document);
-                try {
-                    uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum.BANK_STATEMENT, fileWrapper, document.getShopId());
-                } catch (ApiException e) {
-                    log.error("MarketPay Api Exception: {}", e.getError(), e);
-                } catch (Exception e) {
-                    log.error("Exception: {}", e.getMessage(), e);
-                }
+                updateDocument(document, DocumentDetail.DocumentTypeEnum.BANK_STATEMENT);
             }
         }
+        for (Map.Entry<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> uboDoc : uboService.extractUboDocuments(miraklShopDocumentList).entrySet()) {
+            updateDocument(uboDoc.getKey(), uboDoc.getValue());
+        }
         deltaService.updateDocumentDelta(beforeProcessing);
+    }
+
+    private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type) {
+        FileWrapper fileWrapper = downloadSelectedDocument(document);
+        try {
+            uploadDocumentToAdyen(type, fileWrapper, document.getShopId());
+        } catch (ApiException e) {
+            log.error("MarketPay Api Exception: {}", e.getError(), e);
+        } catch (Exception e) {
+            log.error("Exception: {}", e.getMessage(), e);
+        }
     }
 
     /**
