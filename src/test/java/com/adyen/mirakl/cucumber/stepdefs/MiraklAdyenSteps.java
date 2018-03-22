@@ -517,7 +517,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     }
 
     @Then("^the documents are successfully uploaded to Adyen$")
-    public void theDocumentsAreSuccessfullyUploadedToAdyen(DataTable table) throws Throwable {
+    public void theDocumentsAreSuccessfullyUploadedToAdyen(DataTable table) throws Exception {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
 
         GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
@@ -561,21 +561,24 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     }
 
     @Then("^the updated documents are successfully uploaded to Adyen$")
-    public void theUpdatedDocumentsAreSuccessfullyUploadedToAdyen(DataTable table) {
+    public void theUpdatedDocumentsAreSuccessfullyUploadedToAdyen(DataTable table) throws Exception {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        cucumberTable.forEach(row -> {
+        for (Map<String, String> row : cucumberTable) {
             String documentType = row.get("documentType");
-            String filename = row.get("filename");
+                String filename = row.get("filename");
+                GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
+                getUploadedDocumentsRequest.setAccountHolderCode(shop.getId());
+                uploadedDocuments = adyenAccountService.getUploadedDocuments(getUploadedDocumentsRequest);
 
-            List<DocumentDetail> documents = uploadedDocuments.getDocumentDetails().stream()
-                .filter(doc ->
-                    DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
-                        && filename.equals(doc.getFilename()))
-                .collect(Collectors.toList());
+                List<DocumentDetail> documents = uploadedDocuments.getDocumentDetails().stream()
+                    .filter(doc ->
+                        DocumentDetail.DocumentTypeEnum.valueOf(documentType).equals(doc.getDocumentType())
+                            && filename.equals(doc.getFilename()))
+                    .collect(Collectors.toList());
 
-            Assertions
-                .assertThat(documents)
-                .hasSize(2);
-        });
+                Assertions
+                    .assertThat(documents)
+                    .hasSize(2);
+        }
     }
 }
