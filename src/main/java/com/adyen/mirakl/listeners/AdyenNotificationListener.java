@@ -21,6 +21,7 @@ import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiC
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -55,6 +56,9 @@ public class AdyenNotificationListener {
     private MailTemplateService mailTemplateService;
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
     private Account adyenAccountService;
+
+    @Value("${application.systemLocale}")
+    private Locale systemLocale;
 
     public AdyenNotificationListener(final NotificationHandler notificationHandler, final AdyenNotificationRepository adyenNotificationRepository, final MailTemplateService mailTemplateService, MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient, Account adyenAccountService) {
         this.notificationHandler = notificationHandler;
@@ -92,9 +96,9 @@ public class AdyenNotificationListener {
         final Boolean oldPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState().getAllowPayout();
         final Boolean newPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState().getAllowPayout();
         if(FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)){
-            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.ENGLISH, "accountHolderStatusNowTrue", "email.account.status.now.true.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), systemLocale, "nowPayable", "email.account.status.now.true.title");
         }else if(TRUE.equals(oldPayoutState) && FALSE.equals(newPayoutState)){
-            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.ENGLISH, "accountHolderStatusNowFalse", "email.account.status.now.false.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), systemLocale, "payoutRevoked", "email.account.status.now.false.title");
         }
     }
 
@@ -105,7 +109,7 @@ public class AdyenNotificationListener {
         if(KYCCheckStatusData.CheckStatusEnum.RETRY_LIMIT_REACHED.equals(verificationStatus) &&
             KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)){
             final MiraklShop shop = getShop(shopId);
-            mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(shop, systemLocale, "bankAccountVerificationEmail", "email.bank.verification.title");
         }else if(awaitingDataForIdentityOrPassport(verificationStatus, verificationType) || invalidDataForIdentityOrPassport(verificationStatus, verificationType)){
             final GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
             getAccountHolderRequest.setAccountHolderCode(shopId);
@@ -114,7 +118,7 @@ public class AdyenNotificationListener {
             final ShareholderContact shareholderContact = accountHolderResponse.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
                 .filter(x -> x.getShareholderCode().equals(shareholderCode))
                 .findAny().orElseThrow(() -> new IllegalStateException("Unable to find shareholder: " + shareholderCode));
-            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, Locale.ENGLISH, templateMap.get(ImmutableMap.of(verificationType, verificationStatus)), subjectMap.get(ImmutableMap.of(verificationType, verificationStatus)));
+            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, systemLocale, templateMap.get(ImmutableMap.of(verificationType, verificationStatus)), subjectMap.get(ImmutableMap.of(verificationType, verificationStatus)));
         }
     }
 
@@ -138,4 +142,7 @@ public class AdyenNotificationListener {
         return shops.iterator().next();
     }
 
+    public void setSystemLocale(final Locale systemLocale) {
+        this.systemLocale = systemLocale;
+    }
 }

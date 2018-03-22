@@ -117,6 +117,7 @@ application:
     removeSentEmailsCron: "0 0 2 * * ?"
     #how many dates back shall be initially used for updated_at Mirakl queries
     initialDeltaDaysBack: 0
+    systemLocale: ENGLISH
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}

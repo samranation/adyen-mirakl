@@ -66,6 +66,7 @@ public class AdyenNotificationListenerTest {
     @Before
     public void setup(){
         adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailTemplateServiceMock, miraklMarketplacePlatformOperatorApiClient, adyenAccountServiceMock);
+        adyenNotificationListener.setSystemLocale(Locale.ENGLISH);
         when(eventMock.getDbId()).thenReturn(1L);
         when(adyenNotificationRepositoryMock.findOneById(1L)).thenReturn(adyenNotificationMock);
     }
@@ -173,7 +174,7 @@ public class AdyenNotificationListenerTest {
 
         final MiraklGetShopsRequest requestCaptorValue = miraklShopsRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getShopIds()).containsOnly("8278");
-        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "accountHolderStatusNowTrue", "email.account.status.now.true.title");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "nowPayable", "email.account.status.now.true.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
@@ -190,7 +191,7 @@ public class AdyenNotificationListenerTest {
 
         final MiraklGetShopsRequest requestCaptorValue = miraklShopsRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getShopIds()).containsOnly("8278");
-        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "accountHolderStatusNowFalse", "email.account.status.now.false.title");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "payoutRevoked", "email.account.status.now.false.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 

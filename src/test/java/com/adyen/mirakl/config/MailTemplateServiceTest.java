@@ -53,6 +53,7 @@ public class MailTemplateServiceTest {
     @Before
     public void setup() {
         mailTemplateService = new MailTemplateService(jHipsterProperties, mailServiceMock, templateEngine, messageSource);
+        mailTemplateService.setSystemLocale(Locale.ENGLISH);
     }
 
     @Test

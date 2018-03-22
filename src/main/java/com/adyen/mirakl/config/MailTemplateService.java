@@ -27,6 +27,10 @@ public class MailTemplateService {
     @Value("${miraklOperator.miraklEnvUrl}")
     private String miraklEnvUrl;
 
+    @Value("${application.systemLocale}")
+    private Locale systemLocale;
+
+
     private final JHipsterProperties jHipsterProperties;
     private final MailService mailService;
     private final SpringTemplateEngine templateEngine;
@@ -63,7 +67,7 @@ public class MailTemplateService {
 
     @Async
     public void sendSellerEmailWithErrors(MiraklShop miraklShop, List<String> errors) {
-        Context context = new Context(Locale.ENGLISH);
+        Context context = new Context(systemLocale);
         context.setVariable(MIRAKL_SHOP, miraklShop);
         context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop.getId()));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
@@ -75,7 +79,7 @@ public class MailTemplateService {
 
     @Async
     public void sendOperatorEmailWithErrors(MiraklShop miraklShop, List<String> errors) {
-        Context context = new Context(Locale.ENGLISH);
+        Context context = new Context(systemLocale);
         context.setVariable(MIRAKL_SHOP, miraklShop);
         context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShop.getId()));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
@@ -95,5 +99,13 @@ public class MailTemplateService {
 
     public void setMiraklEnvUrl(final String miraklEnvUrl) {
         this.miraklEnvUrl = miraklEnvUrl;
+    }
+
+    public Locale getSystemLocale() {
+        return systemLocale;
+    }
+
+    public void setSystemLocale(final Locale systemLocale) {
+        this.systemLocale = systemLocale;
     }
 }
