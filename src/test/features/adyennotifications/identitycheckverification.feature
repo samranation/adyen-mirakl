@@ -39,7 +39,7 @@ Feature: Identity verification check
             | maxUbos |
             | 4       |
 
-    @ADY-99 @ADY-108 @bug
+    @ADY-99 @ADY-108
     Scenario: Uploading a new photo Id/Updating photo Id for shareholder to complete Identity Checks
         Given a new shop has been created in Mirakl with UBO Data for a Business
             | maxUbos | lastName |
