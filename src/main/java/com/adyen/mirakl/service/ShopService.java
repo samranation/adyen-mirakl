@@ -13,7 +13,6 @@ import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -179,15 +178,7 @@ public class ShopService {
         accountHolderDetails.setAddress(setAddressDetails(shop));
         accountHolderDetails.setBankAccountDetails(setBankAccountDetails(shop));
 
-        if (LegalEntityEnum.INDIVIDUAL.equals(legalEntity)) {
-            IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
-            accountHolderDetails.setIndividualDetails(individualDetails);
-        } else if (LegalEntityEnum.BUSINESS.equals(legalEntity)) {
-            BusinessDetails businessDetails = addBusinessDetailsFromShop(shop);
-            accountHolderDetails.setBusinessDetails(businessDetails);
-        } else {
-            throw new IllegalArgumentException(legalEntity.toString() + " not supported");
-        }
+        updateDetailsFromShop(accountHolderDetails, shop);
 
         // Set email
         MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
@@ -284,7 +275,6 @@ public class ShopService {
      * Check if AccountHolder already exists in Adyen
      */
     private GetAccountHolderResponse getAccountHolderFromShop(MiraklShop shop) throws Exception {
-
         // lookup accountHolder in Adyen
         GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
         getAccountHolderRequest.setAccountHolderCode(shop.getId());
@@ -324,10 +314,26 @@ public class ShopService {
         }
 
         final AccountHolderDetails accountHolderDetails = Optional.ofNullable(updateAccountHolderRequest.getAccountHolderDetails()).orElseGet(AccountHolderDetails::new);
-        accountHolderDetails.setBusinessDetails(addBusinessDetailsFromShop(shop, existingAccountHolder));
         updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
+        updateDetailsFromShop(accountHolderDetails, shop);
 
         return updateAccountHolderRequest;
+    }
+
+    private AccountHolderDetails updateDetailsFromShop(AccountHolderDetails accountHolderDetails, MiraklShop shop) {
+        LegalEntityEnum legalEntity = getLegalEntityFromShop(shop);
+
+        if (LegalEntityEnum.INDIVIDUAL == legalEntity) {
+            IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
+            accountHolderDetails.setIndividualDetails(individualDetails);
+        } else if (LegalEntityEnum.BUSINESS == legalEntity) {
+            BusinessDetails businessDetails = addBusinessDetailsFromShop(shop);
+            accountHolderDetails.setBusinessDetails(businessDetails);
+        } else {
+            throw new IllegalArgumentException(legalEntity.toString() + " not supported");
+        }
+
+        return accountHolderDetails;
     }
 
     /**

@@ -181,7 +181,7 @@ public class ShopServiceTest {
     public void testRetrieveUpdatedShopsUpdate() throws Exception {
         MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
         additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
-        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.INDIVIDUAL.toString());
+        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.BUSINESS.toString());
 
         final ImmutableList<MiraklAdditionalFieldValue> additionalFields = new ImmutableList.Builder<MiraklAdditionalFieldValue>()
             .add(additionalField).build();
@@ -236,6 +236,12 @@ public class ShopServiceTest {
         shop.setId("id");
         shop.setCurrencyIsoCode(MiraklIsoCurrencyCode.EUR);
 
+        MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue additionalField = new MiraklAdditionalFieldValue.MiraklValueListAdditionalFieldValue();
+        additionalField.setCode(String.valueOf(MiraklStartupValidator.CustomMiraklFields.ADYEN_LEGAL_ENTITY_TYPE));
+        additionalField.setValue(MiraklStartupValidator.AdyenLegalEntityType.BUSINESS.toString());
+        List<MiraklAdditionalFieldValue> additionalFields = new ArrayList<>();
+        additionalFields.add(additionalField);
+        shop.setAdditionalFieldValues(additionalFields);
 
         MiraklContactInformation miraklContactInformation = createMiraklContactInformation();
         shop.setContactInformation(miraklContactInformation);
