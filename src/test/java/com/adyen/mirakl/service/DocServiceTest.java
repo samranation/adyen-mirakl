@@ -1,14 +1,15 @@
 package com.adyen.mirakl.service;
 
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-
+import com.adyen.mirakl.config.Constants;
+import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.marketpay.*;
+import com.adyen.service.Account;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Resources;
+import com.mirakl.client.mmp.domain.common.FileWrapper;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -16,19 +17,17 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import com.adyen.mirakl.config.Constants;
-import com.adyen.service.Account;
-import com.google.common.io.Resources;
-import com.mirakl.client.mmp.domain.common.FileWrapper;
-import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
-import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 import static com.google.common.io.Files.toByteArray;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DocServiceTest {
@@ -49,6 +48,8 @@ public class DocServiceTest {
     private FileWrapper fileWrapperMock;
     @Mock
     private UploadDocumentResponse responseMock;
+    @Mock
+    private UboDocumentDTO uboDocumentDTOMock;
     @Captor
     private ArgumentCaptor<UploadDocumentRequest> uploadDocumentRequestCaptor;
 
@@ -99,8 +100,14 @@ public class DocServiceTest {
         File file = new File(url.getPath());
 
         when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));
-        when(miraklShopDocumentMock.getTypeCode()).thenReturn("typecCode");
-        when(uboServiceMock.extractUboDocuments(ImmutableList.of(miraklShopDocumentMock))).thenReturn(ImmutableMap.of(miraklShopDocumentMock, DocumentDetail.DocumentTypeEnum.ID_CARD));
+        when(miraklShopDocumentMock.getTypeCode()).thenReturn("typeCode");
+        when(miraklShopDocumentMock.getShopId()).thenReturn("shopId");
+
+        when(uboServiceMock.extractUboDocuments(ImmutableList.of(miraklShopDocumentMock))).thenReturn(ImmutableList.of(uboDocumentDTOMock));
+        when(uboDocumentDTOMock.getMiraklShopDocument()).thenReturn(miraklShopDocumentMock);
+        when(uboDocumentDTOMock.getDocumentTypeEnum()).thenReturn(DocumentDetail.DocumentTypeEnum.ID_CARD);
+        when(uboDocumentDTOMock.getShareholderCode()).thenReturn("shareholderCode");
+
         when(miraklMarketplacePlatformOperatorApiClientMock.downloadShopsDocuments(any())).thenReturn(fileWrapperMock);
         when(fileWrapperMock.getFile()).thenReturn(file);
         when(fileWrapperMock.getFilename()).thenReturn("fileName");
@@ -108,7 +115,13 @@ public class DocServiceTest {
 
         docService.processUpdatedDocuments();
 
-        verify(adyenAccountServiceMock).uploadDocument(any());
+        verify(adyenAccountServiceMock).uploadDocument(uploadDocumentRequestCaptor.capture());
+        UploadDocumentRequest uploadDocumentRequest = uploadDocumentRequestCaptor.getValue();
+        Assertions.assertThat(uploadDocumentRequest.getDocumentDetail().getShareholderCode()).isEqualTo("shareholderCode");
+        Assertions.assertThat(uploadDocumentRequest.getDocumentDetail().getAccountHolderCode()).isEqualTo("shopId");
+        Assertions.assertThat(uploadDocumentRequest.getShareholderCode()).isEqualTo("shareholderCode");
+        Assertions.assertThat(uploadDocumentRequest.getAccountHolderCode()).isEqualTo("shopId");
+
     }
 
 }
