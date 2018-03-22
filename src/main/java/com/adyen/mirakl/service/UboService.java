@@ -2,6 +2,7 @@ package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
+import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.*;
@@ -111,8 +112,9 @@ public class UboService {
         return builder.build();
     }
 
-    public Map<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> extractUboDocuments(List<MiraklShopDocument> miraklUbos) {
-        final ImmutableMap.Builder<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> builder = ImmutableMap.builder();
+    public List<UboDocumentDTO> extractUboDocuments(List<MiraklShopDocument> miraklUbos) {
+
+        ImmutableList.Builder<UboDocumentDTO> builder = ImmutableList.builder();
 
         Map<String, String> internalMemoryForDocs = new HashMap<>();
         miraklUbos.forEach(miraklShopDocument -> {
@@ -124,22 +126,34 @@ public class UboService {
         return builder.build();
     }
 
-    private void addToBuilder(ImmutableMap.Builder<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> builder, Map<String, String> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, int uboNumber) {
+    private void addToBuilder(ImmutableList.Builder<UboDocumentDTO> builder, Map<String, String> internalMemoryForDocs, MiraklShopDocument miraklShopDocument, int uboNumber) {
         String photoIdFront = ADYEN_UBO + uboNumber + "-photoid";
         String photoIdRear = ADYEN_UBO + uboNumber + "-photoid-rear";
         if (miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdFront)) {
             final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, uboNumber, "_FRONT");
             if(documentTypeEnum!=null){
-                builder.put(miraklShopDocument, documentTypeEnum.values().iterator().next());
+                addUboDocumentDTO(builder, miraklShopDocument, uboNumber, documentTypeEnum);
             }
         }
         if(miraklShopDocument.getTypeCode().equalsIgnoreCase(photoIdRear)){
             final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum = findCorrectEnum(internalMemoryForDocs, miraklShopDocument, uboNumber, "_BACK");
             //ignore if the result is could not convert to enum with suffix
             if(documentTypeEnum != null && documentTypeEnum.keySet().iterator().next()){
-                builder.put(miraklShopDocument, documentTypeEnum.values().iterator().next());
+                addUboDocumentDTO(builder, miraklShopDocument, uboNumber, documentTypeEnum);
             }
         }
+    }
+
+    private void addUboDocumentDTO(final ImmutableList.Builder<UboDocumentDTO> builder, final MiraklShopDocument miraklShopDocument, final int uboNumber, final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum) {
+        final UboDocumentDTO uboDocumentDTO = new UboDocumentDTO();
+        uboDocumentDTO.setDocumentTypeEnum(documentTypeEnum.values().iterator().next());
+        uboDocumentDTO.setMiraklShopDocument(miraklShopDocument);
+        uboDocumentDTO.setShareholderCode(getShareholderCode(uboNumber, miraklShopDocument.getShopId()));
+        builder.add(uboDocumentDTO);
+    }
+
+    private String getShareholderCode(final int uboNumber, final String shopId) {
+        return shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(shopId, uboNumber).orElseThrow(() -> new IllegalStateException("No UBO mapping for "+ shopId + uboNumber)).getAdyenShareholderCode();
     }
 
     private Map<Boolean, DocumentDetail.DocumentTypeEnum> findCorrectEnum(final Map<String, String> internalMemoryForDocs, final MiraklShopDocument miraklShopDocument, final int uboNumber, String suffix) {

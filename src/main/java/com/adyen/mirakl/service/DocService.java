@@ -52,21 +52,25 @@ public class DocService {
                 updateDocument(document, DocumentDetail.DocumentTypeEnum.BANK_STATEMENT);
             }
         }
-        for (Map.Entry<MiraklShopDocument, DocumentDetail.DocumentTypeEnum> uboDoc : uboService.extractUboDocuments(miraklShopDocumentList).entrySet()) {
-            updateDocument(uboDoc.getKey(), uboDoc.getValue());
-        }
+        uboService.extractUboDocuments(miraklShopDocumentList).forEach(uboDocumentDTO -> {
+            updateDocument(uboDocumentDTO.getMiraklShopDocument(), uboDocumentDTO.getDocumentTypeEnum(), uboDocumentDTO.getShareholderCode());
+        });
         deltaService.updateDocumentDelta(beforeProcessing);
     }
 
-    private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type) {
+    private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type, String shareholderCode) {
         FileWrapper fileWrapper = downloadSelectedDocument(document);
         try {
-            uploadDocumentToAdyen(type, fileWrapper, document.getShopId());
+            uploadDocumentToAdyen(type, fileWrapper, document.getShopId(), shareholderCode);
         } catch (ApiException e) {
             log.error("MarketPay Api Exception: {}", e.getError(), e);
         } catch (Exception e) {
             log.error("Exception: {}", e.getMessage(), e);
         }
+    }
+
+    private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type) {
+        updateDocument(document, type, null);
     }
 
     /**
@@ -94,9 +98,10 @@ public class DocService {
     /**
      * Encode document retrieved from Mirakl in Base64 and push it to Adyen, if the document type is BANK_STATEMENT/adyen-bankproof, a bank account is needed
      */
-    private void uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum documentType, FileWrapper fileWrapper, String shopId) throws Exception {
+    private void uploadDocumentToAdyen(DocumentDetail.DocumentTypeEnum documentType, FileWrapper fileWrapper, String shopId, String shareholderCode) throws Exception {
         UploadDocumentRequest request = new UploadDocumentRequest();
         request.setAccountHolderCode(shopId);
+        request.setShareholderCode(shareholderCode);
 
         //Encode file Base64
         byte[] bytes = toByteArray(fileWrapper.getFile());
@@ -115,8 +120,11 @@ public class DocService {
         DocumentDetail documentDetail = new DocumentDetail();
         documentDetail.setFilename(fileWrapper.getFilename());
         documentDetail.setDocumentType(documentType);
+        documentDetail.setShareholderCode(shareholderCode);
+        documentDetail.setAccountHolderCode(shopId);
         request.setDocumentDetail(documentDetail);
         UploadDocumentResponse response = adyenAccountService.uploadDocument(request);
+        log.debug("Account holder code: " + shareholderCode);
         log.debug("Shop ID: " + shopId);
         log.debug("DocumentType: " + documentType);
         log.debug("UploadDocumentResponse: ", response.toString());
