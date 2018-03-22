@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Account verification, awaiting data'"></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="shortcut icon" th:href="@{|${baseUrl}/favicon.ico|}" />
+</head>
+<body>
+<p th:text="|Hello ${shareholder.name.firstName} ${shareholder.name.lastName},|">
+</p>
+<p th:text="'We are currently awaiting identity verification data.'">
+</p>
+<p th:text="'Please click on the following link to upload this:'">
+</p>
+<p>
+    <a th:href="|${miraklCallBackShopUrl}|"
+       th:text="|${miraklCallBackShopUrl}|"></a>
+</p>
+</body>
+</html>
