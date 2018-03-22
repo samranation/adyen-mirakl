@@ -1,0 +1,14 @@
+{
+    "eventDate": "2018-03-21T12:16:22+01:00",
+    "eventType": "ACCOUNT_HOLDER_VERIFICATION",
+    "executingUserKey": "Account Holder Update",
+    "live": "false",
+    "pspReference": "8515216309812174",
+    "content": {
+        "accountHolderCode": "8255",
+        "shareholderCode": "24610d08-9d80-4a93-85f3-78d475274e08",
+        "statusSummaryItems": [],
+        "verificationStatus": "AWAITING_DATA",
+        "verificationType": "IDENTITY_VERIFICATION"
+    }
+}

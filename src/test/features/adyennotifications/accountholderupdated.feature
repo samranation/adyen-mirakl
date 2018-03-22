@@ -1,7 +1,7 @@
 @cucumber
 Feature: Account Holder Updated notification upon Mirakl shop changes
 
-    @ADY-11 @ADY-71 @ADY-83 @bug
+    @ADY-11 @ADY-71 @ADY-83
     Scenario: Updating Mirakl existing shop with contact details and verifying Adyen Account Holder Details are updated
         Given a new shop has been created in Mirakl for an Individual
             | lastName |
