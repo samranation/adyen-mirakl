@@ -31,10 +31,7 @@ public class SchedulerTrigger {
     @Resource
     private RetryPayoutService retryPayoutService;
 
-    @Scheduled(cron = "${application.shopUpdaterCron}")
-
     @Scheduled(cron = "${application.miraklPullCron}")
-
     public void runShopUpdates() {
         log.debug("Pulling shops from Mirakl");
         shopService.processUpdatedShops();
