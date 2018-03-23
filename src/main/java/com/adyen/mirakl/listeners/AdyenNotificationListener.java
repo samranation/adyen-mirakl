@@ -147,7 +147,7 @@ public class AdyenNotificationListener {
             mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.getDefault(), "payoutRevoked", "email.account.status.now.false.title");
         }
 
-        if (oldPayoutState.equals(false) && newPayoutState.equals(true)) {
+        if (FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)) {
             // check if there are payout errors to retrigger
             String accountHolderCode = accountHolderStatusChangeNotification.getContent().getAccountHolderCode();
             retryPayoutService.retryFailedPayoutsForAccountHolder(accountHolderCode);
