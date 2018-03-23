@@ -4,6 +4,7 @@ import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
+import com.adyen.mirakl.service.RetryPayoutService;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.ShareholderContact;
@@ -58,6 +59,8 @@ public class AdyenNotificationListenerTest {
     private ShareholderContact shareholderMock1, shareholderMock2;
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private GetAccountHolderResponse getAccountHolderResponseMock;
+    @Mock
+    private RetryPayoutService retryPayoutService;
     @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklShopsRequestCaptor;
     @Captor
@@ -65,7 +68,7 @@ public class AdyenNotificationListenerTest {
 
     @Before
     public void setup(){
-        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailTemplateServiceMock, miraklMarketplacePlatformOperatorApiClient, adyenAccountServiceMock);
+        adyenNotificationListener = new AdyenNotificationListener(new NotificationHandler(), adyenNotificationRepositoryMock, mailTemplateServiceMock, miraklMarketplacePlatformOperatorApiClient, adyenAccountServiceMock, retryPayoutService);
         when(eventMock.getDbId()).thenReturn(1L);
         when(adyenNotificationRepositoryMock.findOneById(1L)).thenReturn(adyenNotificationMock);
     }
@@ -83,7 +86,7 @@ public class AdyenNotificationListenerTest {
 
         final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
         Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("2146");
-        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "bankAccountVerificationEmail", "email.bank.verification.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
@@ -102,7 +105,7 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.getDefault(), "accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
@@ -120,7 +123,7 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.getDefault(), "accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
@@ -138,7 +141,7 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderInvalidPassportEmail", "email.account.verification.invalid.passport.title");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.getDefault(), "accountHolderInvalidPassportEmail", "email.account.verification.invalid.passport.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 
@@ -156,7 +159,75 @@ public class AdyenNotificationListenerTest {
 
         final GetAccountHolderRequest requestCaptorValue = accountHolderRequestCaptor.getValue();
         Assertions.assertThat(requestCaptorValue.getAccountHolderCode()).isEqualTo("8255");
-        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.ENGLISH, "accountHolderInvalidIdentityEmail", "email.account.verification.invalid.id.title");
+        verify(mailTemplateServiceMock).sendShareholderEmailFromTemplate(shareholderMock2, "8255", Locale.getDefault(), "accountHolderInvalidIdentityEmail", "email.account.verification.invalid.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForCompanyVerificationInvalidData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/COMPANY_VERIFICATION_INVALID_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("8837");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "companyInvalidIdData", "email.company.verification.invalid.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForCompanyVerificationAwaitingData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/COMPANY_VERIFICATION_AWAITING_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("8837");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "companyAwaitingIdData", "email.company.verification.awaiting.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForAllowPayout() throws Exception {
+        URL url = Resources.getResource("adyenRequests/ACCOUNT_HOLDER_STATUS_CHANGE_ALLOW_PAYOUT.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest requestCaptorValue = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getShopIds()).containsOnly("8278");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "nowPayable", "email.account.status.now.true.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForNotAllowedPayouts() throws Exception {
+        URL url = Resources.getResource("adyenRequests/ACCOUNT_HOLDER_STATUS_CHANGE_NOT_ALLOW_PAYOUT.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest requestCaptorValue = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(requestCaptorValue.getShopIds()).containsOnly("8278");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "payoutRevoked", "email.account.status.now.false.title");
         verify(adyenNotificationRepositoryMock).delete(1L);
     }
 

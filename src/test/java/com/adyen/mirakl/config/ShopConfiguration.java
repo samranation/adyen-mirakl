@@ -19,3 +19,4 @@ public class ShopConfiguration {
         this.shopIds = shopIds;
     }
 }
+

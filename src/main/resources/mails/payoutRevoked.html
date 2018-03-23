@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Payout for your account is no longer allowed'"></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="shortcut icon" th:href="@{|${baseUrl}/favicon.ico|}" />
+</head>
+<body>
+<p th:text="|Hello ${miraklShop.contactInformation.civility} ${miraklShop.contactInformation.firstname} ${miraklShop.contactInformation.lastname},|">
+</p>
+<p th:text="'Payout for your account is no longer allowed.'">
+</p>
+<p th:text="'To navigate to your shop please click the following link:'">
+</p>
+<p>
+    <a th:href="|${miraklCallBackShopUrl}|"
+       th:text="|${miraklCallBackShopUrl}|"></a>
+</p>
+<p th:text="'Kind Regards'">
+</p>
+</body>
+</html>

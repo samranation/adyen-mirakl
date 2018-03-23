@@ -118,7 +118,9 @@ application:
     miraklPullCron: "0 */1 * * * ?"
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
+    payoutRetryCron: "0 */10 * * * ?"
     initialDeltaDaysBack: 0
+    maxPayoutFailed: 10
 
 shops:
     shopIds:
@@ -128,6 +130,14 @@ shops:
         PayoutShop02: 4316
         UpdateShop01: 7492
         UpdateShop02: 7695
+        PayoutShop03: 7221
+        PayoutShop04: 8702
+
+accounts:
+    accountCode:
+        alessioIndividualTestPayout2: 131712554
+        PayoutShop03: 140254461
+        PayoutShop04: 199727045
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
