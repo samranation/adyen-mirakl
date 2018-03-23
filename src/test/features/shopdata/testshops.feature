@@ -6,9 +6,6 @@ Feature: Create payout shops which will be KYC'ed for seller payout tests
 #    it is not to be used as part of testing or regression testing hence the @exclude tag.
 #
 #    Sellers:
-#    PayoutShop01 will have a corresponding PayoutVoucher file in resources directory
-#    PayoutShop02 will be used for failure scenario see ADY-9 failure scenario
-#    PayoutShop04 will be used for ADY-34 where balance will removed/added to test failure scenarios
 #    UpdateShop01 will be used for the smoketest
 #    UpdateShop02 will be used for scenario ADY-42
 
@@ -21,10 +18,6 @@ Feature: Create payout shops which will be KYC'ed for seller payout tests
         Then the ACCOUNT_HOLDER_VERIFICATION notification is sent by Adyen comprising of BANK_ACCOUNT_VERIFICATION and DATA_PROVIDED
         Examples:
             | companyName  | city   | bank name | iban                   | bankOwnerName | lastName |
-            | PayoutShop01 | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
-            | PayoutShop02 | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
-            | PayoutShop03 | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
-            | PayoutShop04 | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
             | UpdateShop01 | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
 
 #   Business shops:
