@@ -53,7 +53,6 @@ public class MailTemplateServiceTest {
     @Before
     public void setup() {
         mailTemplateService = new MailTemplateService(jHipsterProperties, mailServiceMock, templateEngine, messageSource);
-        mailTemplateService.setSystemLocale(Locale.ENGLISH);
     }
 
     @Test
@@ -62,7 +61,7 @@ public class MailTemplateServiceTest {
         final CustomObjectMapper objectMapper = new CustomObjectMapper();
         final MiraklShop miraklShop = objectMapper.readValue(url, MiraklShops.class).getShops().iterator().next();
 
-        mailTemplateService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.ENGLISH, "testMiraklShopEmail", "email.test.title");
+        mailTemplateService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.UK, "testMiraklShopEmail", "email.test.title");
 
         verify(mailServiceMock).sendEmail("adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com",
                                           "test title",

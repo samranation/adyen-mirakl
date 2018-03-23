@@ -15,7 +15,6 @@ public class ApplicationProperties {
     private String emailRetryCron;
     private String removeSentEmailsCron;
     private Integer initialDeltaDaysBack;
-    private Locale systemLocale;
 
     public String getMiraklPullCron() {
         return miraklPullCron;
@@ -47,13 +46,5 @@ public class ApplicationProperties {
 
     public void setInitialDeltaDaysBack(Integer initialDeltaDaysBack) {
         this.initialDeltaDaysBack = initialDeltaDaysBack;
-    }
-
-    public Locale getSystemLocale() {
-        return systemLocale;
-    }
-
-    public void setSystemLocale(final Locale systemLocale) {
-        this.systemLocale = systemLocale;
     }
 }

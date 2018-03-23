@@ -119,7 +119,6 @@ application:
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
     initialDeltaDaysBack: 0
-    systemLocale: ENGLISH
 
 shops:
     shopIds:
