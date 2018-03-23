@@ -1,0 +1,53 @@
+{
+    "eventDate": "2018-03-21T17:51:15+01:00",
+    "eventType": "ACCOUNT_HOLDER_STATUS_CHANGE",
+    "executingUserKey": "Status Update",
+    "live": "false",
+    "pspReference": "8515216510743374",
+    "content": {
+        "accountHolderCode": "8278",
+        "oldStatus": {
+            "status": "Active",
+            "processingState": {
+                "disabled": "false",
+                "processedFrom": {
+                    "currency": "GBP",
+                    "value": 0
+                },
+                "processedTo": {
+                    "currency": "GBP",
+                    "value": 0
+                },
+                "tierNumber": 0
+            },
+            "payoutState": {
+                "allowPayout": "false",
+                "disabled": "false",
+                "tierNumber": 0
+            },
+            "events": []
+        },
+        "newStatus": {
+            "status": "Active",
+            "processingState": {
+                "disabled": "false",
+                "processedFrom": {
+                    "currency": "GBP",
+                    "value": 0
+                },
+                "processedTo": {
+                    "currency": "GBP",
+                    "value": 0
+                },
+                "tierNumber": 0
+            },
+            "payoutState": {
+                "allowPayout": "true",
+                "disabled": "false",
+                "tierNumber": 0
+            },
+            "events": []
+        },
+        "reason": "Account holder has been updated"
+    }
+}

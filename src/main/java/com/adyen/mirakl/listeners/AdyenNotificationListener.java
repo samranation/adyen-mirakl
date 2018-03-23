@@ -5,7 +5,10 @@ import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
 import com.adyen.mirakl.service.RetryPayoutService;
-import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.GetAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.KYCCheckStatusData;
+import com.adyen.model.marketpay.ShareholderContact;
 import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
@@ -27,6 +30,9 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 
 @Component
 public class AdyenNotificationListener {
@@ -97,7 +103,7 @@ public class AdyenNotificationListener {
         final String shopId = verificationNotification.getContent().getAccountHolderCode();
         if (KYCCheckStatusData.CheckStatusEnum.RETRY_LIMIT_REACHED.equals(verificationStatus) && KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)) {
             final MiraklShop shop = getShop(shopId);
-            mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.getDefault(), "bankAccountVerificationEmail", "email.bank.verification.title");
         }else if(awaitingDataForIdentityOrPassport(verificationStatus, verificationType) || invalidDataForIdentityOrPassport(verificationStatus, verificationType)){
             final GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
             getAccountHolderRequest.setAccountHolderCode(shopId);
@@ -106,7 +112,7 @@ public class AdyenNotificationListener {
             final ShareholderContact shareholderContact = accountHolderResponse.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
                 .filter(x -> x.getShareholderCode().equals(shareholderCode))
                 .findAny().orElseThrow(() -> new IllegalStateException("Unable to find shareholder: " + shareholderCode));
-            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, Locale.ENGLISH, templateMap.get(ImmutableMap.of(verificationType, verificationStatus)), subjectMap.get(ImmutableMap.of(verificationType, verificationStatus)));
+            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, Locale.getDefault(), templateMap.get(ImmutableMap.of(verificationType, verificationStatus)), subjectMap.get(ImmutableMap.of(verificationType, verificationStatus)));
         }
     }
 
@@ -132,10 +138,16 @@ public class AdyenNotificationListener {
 
 
     private void processAccountholderStatusChangeNotification(final AccountHolderStatusChangeNotification accountHolderStatusChangeNotification) {
-        final AccountPayoutState oldAccountPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState();
-        final AccountPayoutState newAccountPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState();
+        final Boolean oldPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState().getAllowPayout();
+        final Boolean newPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState().getAllowPayout();
 
-        if (oldAccountPayoutState.getAllowPayout().equals(false) && newAccountPayoutState.getAllowPayout().equals(true)) {
+        if(FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)){
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.getDefault(), "nowPayable", "email.account.status.now.true.title");
+        }else if(TRUE.equals(oldPayoutState) && FALSE.equals(newPayoutState)){
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.getDefault(), "payoutRevoked", "email.account.status.now.false.title");
+        }
+
+        if (FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)) {
             // check if there are payout errors to retrigger
             String accountHolderCode = accountHolderStatusChangeNotification.getContent().getAccountHolderCode();
             retryPayoutService.retryFailedPayoutsForAccountHolder(accountHolderCode);

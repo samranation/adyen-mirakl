@@ -2,6 +2,8 @@ package com.adyen.mirakl.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.Locale;
+
 /**
  * Properties specific to Adyen Mirakl Connector.
  * <p>
