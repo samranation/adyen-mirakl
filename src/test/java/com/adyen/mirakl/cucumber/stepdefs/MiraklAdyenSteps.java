@@ -1,6 +1,8 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
+import com.adyen.mirakl.domain.AdyenPayoutError;
+import com.adyen.model.Amount;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
@@ -42,6 +44,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     private String accountHolderCode;
     private String accountCode;
     private Scenario scenario;
+    private DocumentContext adyenNotificationBody;
     private GetUploadedDocumentsResponse uploadedDocuments;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
@@ -180,16 +183,16 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         });
     }
 
-    @And("^the previous BankAccountDetail will be removed$")
+    @And("^(?:the previous BankAccountDetail will be removed|a notification will be sent in relation to the balance change)$")
     public void thePreviousBankAccountDetailWillBeRemoved(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         String eventType = cucumberTable.get(0).get("eventType");
         String reason = cucumberTable.get(0).get("reason");
 
         await().untilAsserted(() -> {
-            DocumentContext adyenNotificationBody = JsonPath.parse(retrieveAdyenNotificationBody(eventType, shop.getId()));
+            adyenNotificationBody = JsonPath.parse(retrieveAdyenNotificationBody(eventType, accountHolderCode));
             Assertions.assertThat(adyenNotificationBody.read("content.reason").toString())
-                .isEqualTo(reason);
+                .contains(reason);
         });
     }
 
@@ -360,17 +363,20 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationWithStatusCode(String notification, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         waitForNotification();
-        Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
-        DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
-        Assertions.assertThat(cucumberTable.get(0).get("statusCode"))
-            .withFailMessage("Status was not correct.")
-            .isEqualTo(content.read("status.statusCode"));
+        await().untilAsserted(()->{
+            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, this.accountHolderCode);
+            DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
+            Assertions.assertThat(cucumberTable.get(0).get("statusCode"))
+                .withFailMessage("Status was not correct.")
+                .isEqualTo(content.read("status.statusCode"));
 
-        String message = cucumberTable.get(0).get("message");
-        String messageWithAccountCode = String.format("%s %s", message, accountCode);
+            String message = cucumberTable.get(0).get("message");
+            String messageWithAccountCode = String.format("%s %s", message, accountCode);
 
-        Assertions.assertThat(content.read("status.message ").toString())
-            .contains(messageWithAccountCode);
+            Assertions
+                .assertThat(content.read("status.message.text").toString())
+                .contains(messageWithAccountCode);
+        });
     }
 
     @And("^an AccountHolder will be created in Adyen with status Active$")
@@ -460,9 +466,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         String seller = cucumberTable.get(0).get("seller");
         accountHolderCode = shopConfiguration.shopIds.get(seller).toString();
 
-        GetAccountHolderRequest request = new GetAccountHolderRequest();
-        request.setAccountHolderCode(accountHolderCode);
-        GetAccountHolderResponse response = adyenConfiguration.adyenAccountService().getAccountHolder(request);
+        GetAccountHolderResponse response = retrieveAccountHolderResponse(accountHolderCode);
         Boolean allowPayout = response.getAccountHolderStatus().getPayoutState().getAllowPayout();
         accountCode = response.getAccounts()
             .stream()
@@ -483,6 +487,10 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             cucumberTable.forEach(row -> {
+
+                Assertions.assertThat(row.get("statusCode"))
+                    .isEqualTo(content.read("status.statusCode"));
+
                 Assertions.assertThat(row.get("currency"))
                     .isEqualTo(content.read("amounts[0].Amount.currency"));
 
@@ -491,9 +499,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
                 Assertions.assertThat(row.get("iban"))
                     .isEqualTo(content.read("bankAccountDetail.iban"));
-
-                Assertions.assertThat(row.get("statusCode"))
-                    .isEqualTo(content.read("status.statusCode"));
             });
         });
     }
@@ -502,6 +507,58 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     public void theMiraklShopDetailsHaveBeenUpdatedWithInvalidData(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         shop = miraklUpdateShopApi.updateUboDataWithInvalidData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+    }
+
+    @Given("^a AccountHolder exists who is eligible for payout with insufficient funds$")
+    public void aAccountHolderExistsWhoIsEligibleForPayoutWithInsufficientFunds(DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        String seller = cucumberTable.get(0).get("seller");
+        accountHolderCode = shopConfiguration.shopIds.get(seller).toString();
+        GetAccountHolderResponse response = retrieveAccountHolderResponse(accountHolderCode);
+        Boolean allowPayout = response.getAccountHolderStatus().getPayoutState().getAllowPayout();
+        accountCode = response.getAccounts()
+            .stream()
+            .map(com.adyen.model.marketpay.Account::getAccountCode)
+            .findFirst()
+            .orElse(null);
+
+        Assertions.assertThat(allowPayout)
+            .withFailMessage("Payout status is not true for accountHolderCode: <%s> (seller: <%s>)", accountHolderCode, seller)
+            .isEqualTo(Boolean.parseBoolean(cucumberTable.get(0).get("allowPayout")));
+
+        AccountHolderBalanceRequest request = new AccountHolderBalanceRequest();
+        request.accountHolderCode(accountHolderCode);
+        AccountHolderBalanceResponse accountHolderBalanceResponse = adyenFundService.AccountHolderBalance(request);
+
+        List<Amount> balance = accountHolderBalanceResponse.getTotalBalance().getBalance();
+
+        Long value = balance.stream().map(Amount::getValue).findAny().orElse(null);
+        Assertions
+            .assertThat(value)
+            .isEqualTo(Long.valueOf(cucumberTable.get(0).get("balance")));
+    }
+
+    @When("^the accountHolders balance is increased$")
+    public void theAccountHoldersBalanceIsIncreased(DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        Long transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
+        String sourceAccountHolderCode = cucumberTable.get(0).get("source accountHolderCode");
+        String destinationAccountHolderCode = cucumberTable.get(0).get("destination accountHolderCode");
+        Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get(sourceAccountHolderCode);
+        Integer destinationAccountCode = adyenAccountConfiguration.getAccountCode().get(destinationAccountHolderCode);
+
+        TransferFundsResponse response = transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
+        Assertions
+            .assertThat(response.getResultCode())
+            .isEqualTo("Received");
+    }
+
+    @And("^the failed payout record is removed from the Connector database$")
+    public void theFailedPayoutRecordIsRemovedFromTheConnectorDatabase() throws Throwable {
+        List<AdyenPayoutError> byAccountHolderCode = adyenPayoutErrorRepository.findByAccountHolderCode(this.accountHolderCode);
+        Assertions
+            .assertThat(byAccountHolderCode)
+            .isEmpty();
     }
 
     @When("^the seller uploads a document in Mirakl$")
