@@ -126,18 +126,12 @@ shops:
     shopIds:
         Cottons Shop: 2000
         Samras Supermarket: 2001
-        PayoutShop01: 4222
-        PayoutShop02: 4316
         UpdateShop01: 7492
         UpdateShop02: 7695
-        PayoutShop03: 7221
-        PayoutShop04: 8702
 
 accounts:
     accountCode:
         alessioIndividualTestPayout2: 131712554
-        PayoutShop03: 140254461
-        PayoutShop04: 199727045
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}

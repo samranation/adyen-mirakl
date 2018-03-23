@@ -4,8 +4,8 @@ import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.DataTable;
-import cucumber.api.PendingException;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Then;
@@ -36,12 +36,15 @@ public class ConnectorAppSteps extends StepDefsHelper {
 
     @When("^a payment voucher is sent to the Connector$")
     public void aPaymentVoucherIsSentToAdyen(DataTable table) throws Exception {
+        MiraklShop shop = (MiraklShop)cucumberMap.get("createdShop");
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         String paymentVoucher = cucumberTable.get(0).get("paymentVoucher");
         URL url = Resources.getResource("paymentvouchers/"+paymentVoucher);
         final String csvFile = Resources.toString(url, Charsets.UTF_8);
 
-        MockMultipartFile mockMultipartFile = new MockMultipartFile("file", paymentVoucher, "text/plain", csvFile.getBytes());
+        String csv = csvFile.replaceAll("\\$shopId\\$", shop.getId());
+
+        MockMultipartFile mockMultipartFile = new MockMultipartFile("file", paymentVoucher, "text/plain", csv.getBytes());
 
         restUserMockMvc.perform(MockMvcRequestBuilders.fileUpload("/api/mirakl-notifications/payout")
             .file(mockMultipartFile))

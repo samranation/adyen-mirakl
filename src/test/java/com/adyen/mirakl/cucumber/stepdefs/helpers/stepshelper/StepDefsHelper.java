@@ -4,7 +4,6 @@ import com.adyen.mirakl.config.AdyenAccountConfiguration;
 import com.adyen.mirakl.config.AdyenConfiguration;
 import com.adyen.mirakl.config.MailTrapConfiguration;
 import com.adyen.mirakl.config.ShopConfiguration;
-import com.adyen.mirakl.cucumber.stepdefs.ConnectorAppAdyenSteps;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
@@ -80,6 +79,12 @@ public class StepDefsHelper {
             boolean endpointHasReceivedANotification = restAssuredAdyenApi.endpointHasANotification(startUpTestingHook.getBaseRequestBinUrlPath());
             Assertions.assertThat(endpointHasReceivedANotification).isTrue();
         });
+    }
+
+    protected GetAccountHolderResponse getGetAccountHolderResponse(MiraklShop shop) throws Exception {
+        GetAccountHolderRequest getAccountHolderRequest = new GetAccountHolderRequest();
+        getAccountHolderRequest.setAccountHolderCode(shop.getId());
+        return adyenAccountService.getAccountHolder(getAccountHolderRequest);
     }
 
     // use for scenarios which don't require verificationType verification

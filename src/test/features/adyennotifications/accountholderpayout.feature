@@ -3,9 +3,14 @@ Feature: Payout notifications for seller payout
 
     @ADY-9 @ADY-86
     Scenario: Successful payout notification is received upon successful seller payout
-        Given a AccountHolder exists who is eligible for payout
-            | seller       | allowPayout |
-            | PayoutShop01 | true        |
+        Given a shop has been created in Mirakl for an Individual with mandatory KYC data
+            | city   | bank name | iban                   | bankOwnerName | lastName |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
+        And we process the data and push to Adyen
+        And a passport has been uploaded to Adyen
+        And the accountHolders balance is increased
+            | source accountHolderCode     | transfer amount |
+            | alessioIndividualTestPayout2 | 9900            |
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
             | PaymentVoucher_PayoutShop01.csv |
@@ -15,9 +20,10 @@ Feature: Payout notifications for seller payout
 
     @ADY-9 @ADY-86
     Scenario: Failure status is received for payout notification
-        Given a AccountHolder exists who is not eligible for payout
-            | seller       | allowPayout |
-            | PayoutShop02 | false       |
+        Given a shop has been created in Mirakl for an Individual with mandatory KYC data
+            | city   | bank name | iban                   | bankOwnerName | lastName |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
+        And we process the data and push to Adyen
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
             | PaymentVoucher_PayoutShop02.csv |
@@ -27,9 +33,11 @@ Feature: Payout notifications for seller payout
 
     @ADY-34
     Scenario: The connector forces payout-retry upon accountHolder payable state change
-        Given a AccountHolder exists who is eligible for payout with insufficient funds
-            | seller       | allowPayout | balance |
-            | PayoutShop04 | true        | 100     |
+        Given a shop has been created in Mirakl for an Individual with mandatory KYC data
+            | city   | bank name | iban                   | bankOwnerName | lastName |
+            | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
+        And we process the data and push to Adyen
+        And a passport has been uploaded to Adyen
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
             | PaymentVoucher_PayoutShop04.csv |
@@ -37,11 +45,8 @@ Feature: Payout notifications for seller payout
             | statusCode | message                                           |
             | Failed     | There is not enough balance available for account |
         When the accountHolders balance is increased
-            | source accountHolderCode     | transfer amount | destination accountHolderCode |
-            | alessioIndividualTestPayout2 | 9900            | PayoutShop04                  |
-        And a notification will be sent in relation to the balance change
-            | eventType                    | reason                   |
-            | ACCOUNT_HOLDER_STATUS_CHANGE | transfer has been booked |
+            | source accountHolderCode     | transfer amount |
+            | alessioIndividualTestPayout2 | 9900            |
         Then the Connector will trigger payout retry
         And adyen will send the ACCOUNT_HOLDER_PAYOUT notification
             | currency | amount | statusCode | iban                   |
