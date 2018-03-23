@@ -5,6 +5,7 @@ import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Then;
@@ -57,4 +58,8 @@ public class ConnectorAppSteps extends StepDefsHelper {
         docService.processUpdatedDocuments();
     }
 
+    @Then("^the Connector will trigger payout retry$")
+    public void theConnectorWillTriggerPayoutRetry() throws Throwable {
+        retryPayoutService.retryFailedPayouts();
+    }
 }

@@ -2,16 +2,17 @@ package com.adyen.mirakl.cucumber.stepdefs;
 
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.TestUtil;
+import com.jayway.jsonpath.DocumentContext;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 
 public class ConnectorAppAdyenSteps extends StepDefs {
 
@@ -34,4 +35,6 @@ public class ConnectorAppAdyenSteps extends StepDefs {
             .content(notification))
             .andExpect(status().is(201));
     }
+
+
 }

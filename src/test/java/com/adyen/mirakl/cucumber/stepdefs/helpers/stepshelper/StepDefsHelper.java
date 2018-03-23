@@ -1,15 +1,25 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
+import com.adyen.mirakl.config.AdyenAccountConfiguration;
 import com.adyen.mirakl.config.AdyenConfiguration;
 import com.adyen.mirakl.config.MailTrapConfiguration;
 import com.adyen.mirakl.config.ShopConfiguration;
+import com.adyen.mirakl.cucumber.stepdefs.ConnectorAppAdyenSteps;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.restassured.RestAssuredAdyenApi;
+import com.adyen.mirakl.repository.AdyenPayoutErrorRepository;
 import com.adyen.mirakl.service.DocService;
+import com.adyen.mirakl.service.RetryPayoutService;
 import com.adyen.mirakl.service.ShopService;
+import com.adyen.model.Amount;
+import com.adyen.model.marketpay.GetAccountHolderRequest;
+import com.adyen.model.marketpay.GetAccountHolderResponse;
+import com.adyen.model.marketpay.TransferFundsRequest;
+import com.adyen.model.marketpay.TransferFundsResponse;
 import com.adyen.service.Account;
+import com.adyen.service.Fund;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -47,7 +57,11 @@ public class StepDefsHelper {
     @Resource
     protected Account adyenAccountService;
     @Resource
+    protected Fund adyenFundService;
+    @Resource
     protected ShopConfiguration shopConfiguration;
+    @Resource
+    protected AdyenAccountConfiguration adyenAccountConfiguration;
     @Resource
     protected AdyenConfiguration adyenConfiguration;
     @Resource
@@ -56,6 +70,10 @@ public class StepDefsHelper {
     protected MailTrapConfiguration mailTrapConfiguration;
     @Resource
     protected Map<String, Object> cucumberMap;
+    @Resource
+    protected RetryPayoutService retryPayoutService;
+    @Resource
+    protected AdyenPayoutErrorRepository adyenPayoutErrorRepository;
 
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {
@@ -97,5 +115,23 @@ public class StepDefsHelper {
     protected MiraklShop retrieveCreatedShop(MiraklCreatedShops shopForIndividualWithBankDetails) {
         return shopForIndividualWithBankDetails.getShopReturns()
             .stream().map(MiraklCreatedShopReturn::getShopCreated).findFirst().orElse(null);
+    }
+
+    protected GetAccountHolderResponse retrieveAccountHolderResponse(String accountHolderCode) throws Exception {
+        GetAccountHolderRequest request = new GetAccountHolderRequest();
+        request.setAccountHolderCode(accountHolderCode);
+        return adyenConfiguration.adyenAccountService().getAccountHolder(request);
+    }
+
+    protected TransferFundsResponse transferFundsAndRetrieveResponse(Long transferAmount, Integer sourceAccountCode, Integer destinationAccountCode) throws Exception {
+        TransferFundsRequest transferFundsRequest = new TransferFundsRequest();
+        Amount amount = new Amount();
+        amount.setValue(transferAmount);
+        amount.setCurrency("EUR");
+        transferFundsRequest.setAmount(amount);
+        transferFundsRequest.setSourceAccountCode(sourceAccountCode.toString());
+        transferFundsRequest.setDestinationAccountCode(destinationAccountCode.toString());
+        transferFundsRequest.setTransferCode("TransferCode_1");
+        return adyenFundService.transferFunds(transferFundsRequest);
     }
 }
