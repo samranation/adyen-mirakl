@@ -3,6 +3,7 @@ package com.adyen.mirakl.scheduling;
 
 import com.adyen.mirakl.service.DocService;
 import com.adyen.mirakl.service.RetryEmailService;
+import com.adyen.mirakl.service.RetryPayoutService;
 import com.adyen.mirakl.service.ShopService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,9 @@ public class SchedulerTrigger {
     @Resource
     private RetryEmailService retryEmailService;
 
+    @Resource
+    private RetryPayoutService retryPayoutService;
+
     @Scheduled(cron = "${application.miraklPullCron}")
     public void runShopUpdates() {
         log.debug("Pulling shops from Mirakl");
@@ -45,12 +49,9 @@ public class SchedulerTrigger {
         retryEmailService.removeSentEmails();
     }
 
-    public void setShopService(final ShopService shopService) {
-        this.shopService = shopService;
-    }
-
-    public void setDocService(DocService docService) {
-        this.docService = docService;
+    @Scheduled(cron = "${application.payoutRetryCron}")
+    public void retryPayout() {
+        retryPayoutService.retryFailedPayouts();
     }
 
 }

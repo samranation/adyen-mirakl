@@ -14,7 +14,10 @@ public class ApplicationProperties {
     private String miraklPullCron;
     private String emailRetryCron;
     private String removeSentEmailsCron;
+    private String docsUpdaterCron;
+    private String payoutRetryCron;
     private Integer initialDeltaDaysBack;
+    private Integer maxPayoutFailed;
 
     public String getMiraklPullCron() {
         return miraklPullCron;
@@ -40,11 +43,27 @@ public class ApplicationProperties {
         this.removeSentEmailsCron = removeSentEmailsCron;
     }
 
+    public String getPayoutRetryCron() {
+        return payoutRetryCron;
+    }
+
+    public void setPayoutRetryCron(String payoutRetryCron) {
+        this.payoutRetryCron = payoutRetryCron;
+    }
+
     public Integer getInitialDeltaDaysBack() {
         return initialDeltaDaysBack;
     }
 
     public void setInitialDeltaDaysBack(Integer initialDeltaDaysBack) {
         this.initialDeltaDaysBack = initialDeltaDaysBack;
+    }
+
+    public Integer getMaxPayoutFailed() {
+        return maxPayoutFailed;
+    }
+
+    public void setMaxPayoutFailed(Integer maxPayoutFailed) {
+        this.maxPayoutFailed = maxPayoutFailed;
     }
 }
