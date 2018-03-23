@@ -2,6 +2,8 @@ package com.adyen.mirakl.domain;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 
@@ -41,9 +43,11 @@ public class AdyenPayoutError implements Serializable {
     private Boolean processing;
 
     @Column(name = "created_at")
+    @CreationTimestamp
     private ZonedDateTime createdAt;
 
     @Column(name = "updated_at")
+    @UpdateTimestamp
     private ZonedDateTime updatedAt;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -120,27 +124,6 @@ public class AdyenPayoutError implements Serializable {
         this.processing = processing;
     }
 
-    public ZonedDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public AdyenPayoutError createdAt(ZonedDateTime createdAt) {
-        this.createdAt = createdAt;
-        return this;
-    }
-
-    public void setCreatedAt(ZonedDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public ZonedDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public AdyenPayoutError updatedAt(ZonedDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-        return this;
-    }
 
     public void setUpdatedAt(ZonedDateTime updatedAt) {
         this.updatedAt = updatedAt;
@@ -176,8 +159,8 @@ public class AdyenPayoutError implements Serializable {
             ", accountHolderCode='" + getAccountHolderCode() + "'" +
             ", retry=" + getRetry() +
             ", processing='" + isProcessing() + "'" +
-            ", createdAt='" + getCreatedAt() + "'" +
-            ", updatedAt='" + getUpdatedAt() + "'" +
+            ", createdAt='" + createdAt + "'" +
+            ", updatedAt='" + updatedAt + "'" +
             "}";
     }
 }
