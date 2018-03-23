@@ -164,6 +164,40 @@ public class AdyenNotificationListenerTest {
     }
 
     @Test
+    public void shouldSendEmailForCompanyVerificationInvalidData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/COMPANY_VERIFICATION_INVALID_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("8837");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "companyInvalidIdData", "email.company.verification.invalid.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
+    public void shouldSendEmailForCompanyVerificationAwaitingData() throws Exception {
+        URL url = Resources.getResource("adyenRequests/COMPANY_VERIFICATION_AWAITING_DATA.json");
+        final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
+        when(adyenNotificationMock.getRawAdyenNotification()).thenReturn(adyenRequestJson);
+
+        when(miraklMarketplacePlatformOperatorApiClient.getShops(miraklShopsRequestCaptor.capture())).thenReturn(miraklShopsMock);
+        when(miraklShopsMock.getShops()).thenReturn(ImmutableList.of(miraklShopMock));
+
+        adyenNotificationListener.handleContextRefresh(eventMock);
+
+        final MiraklGetShopsRequest miraklGetShopRequest = miraklShopsRequestCaptor.getValue();
+        Assertions.assertThat(miraklGetShopRequest.getShopIds()).containsOnly("8837");
+        verify(mailTemplateServiceMock).sendMiraklShopEmailFromTemplate(miraklShopMock, Locale.getDefault(), "companyAwaitingIdData", "email.company.verification.awaiting.id.title");
+        verify(adyenNotificationRepositoryMock).delete(1L);
+    }
+
+    @Test
     public void shouldSendEmailForAllowPayout() throws Exception {
         URL url = Resources.getResource("adyenRequests/ACCOUNT_HOLDER_STATUS_CHANGE_ALLOW_PAYOUT.json");
         final String adyenRequestJson = Resources.toString(url, Charsets.UTF_8);
