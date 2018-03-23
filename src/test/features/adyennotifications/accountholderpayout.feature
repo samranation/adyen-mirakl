@@ -32,7 +32,7 @@ Feature: Payout notifications for seller payout
             | PayoutShop04 | true        | 100     |
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
-            | PaymentVoucher_PayoutShop03.csv |
+            | PaymentVoucher_PayoutShop04.csv |
         Then adyen will send the ACCOUNT_HOLDER_PAYOUT notification with status
             | statusCode | message                                           |
             | Failed     | There is not enough balance available for account |
