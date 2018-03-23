@@ -87,8 +87,6 @@ public class PayoutService {
 
             adyenPayoutError.setProcessing(false);
             adyenPayoutError.setRetry(0);
-            adyenPayoutError.setCreatedAt(ZonedDateTime.now());
-            adyenPayoutError.setUpdatedAt(ZonedDateTime.now());
             adyenPayoutErrorRepository.save(adyenPayoutError);
         }
     }
