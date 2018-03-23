@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 @Service
 public class RestAssuredAdyenApi {
@@ -54,12 +54,11 @@ public class RestAssuredAdyenApi {
         return null;
     }
 
-    public List<Map<String, Object>> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType, List<String> shareholderCodes, int maxUbos) {
+    public List<DocumentContext> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType, List<String> shareholderCodes) {
         ResponseBody body = getResponseBody(endpoint);
         List<String> allNotifications = body.jsonPath().get("body");
-        ImmutableList.Builder<Map<String, Object>> listBuilder = new ImmutableList.Builder<>();
-        Map<String, Object> notifications = new HashMap<>();
-
+        List<String> notifications = new LinkedList<>();
+        // filter through all notifications and add all that match criteria to String List
         for (String notification : allNotifications) {
             Map contentMap = JsonPath.parse(notification).read("content");
             DocumentContext content = JsonPath.parse(contentMap);
@@ -68,18 +67,24 @@ public class RestAssuredAdyenApi {
                 content.read("accountHolderCode").equals(miraklShopId) &&
                 content.read("verificationType").equals(verificationType)) {
 
-                if (content.read("shareholderCode") != null) {
-                    IntStream.rangeClosed(1, maxUbos).forEach(i->{
-                        for (String shareholderCode : shareholderCodes) {
-                            if (content.read("shareholderCode").toString().equals(shareholderCode)) {
-                                notifications.put("content-" + i, contentMap);
-                            }
-                        }
-                    });
+                notifications.add(notification);
+            }
+        }
+
+        // filter through String List of notifications to see if shareholderCode matches
+        // add all that match to list builder
+        ImmutableList.Builder<DocumentContext> listBuilder = new ImmutableList.Builder<>();
+        for (String notification : notifications) {
+            DocumentContext parsedNotification = JsonPath.parse(notification);
+
+            if (parsedNotification.read("content.shareholderCode") != null) {
+                for (String shareholderCode : shareholderCodes) {
+                    if (parsedNotification.read("content.shareholderCode").toString().equals(shareholderCode)) {
+                        listBuilder.add(JsonPath.parse(notification));
+                    }
                 }
             }
         }
-        listBuilder.add(notifications);
         return listBuilder.build();
     }
 
@@ -90,9 +95,9 @@ public class RestAssuredAdyenApi {
     private ResponseBody getResponseBody(String endpoint) {
         ResponseBody body = RestAssured.get(endpoint).getBody();
 
-        try{
+        try {
             body.jsonPath().get("error");
-        }catch (Exception e){
+        } catch (Exception e) {
             log.info("\n-------------------------------------------------------");
             log.info("\nget body response was: \n{}", body.prettyPrint());
             log.info("\n-------------------------------------------------------");

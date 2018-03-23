@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
+class MiraklShopProperties extends AbstractMiraklShopSharedProperties {
 
     @Resource
     private UboService uboService;
@@ -102,6 +102,7 @@ class MiraklShopProperties extends AbstractMiraklShopSharedProperties{
     }
 
     void buildShareHolderMinimumData(ImmutableList.Builder<MiraklRequestAdditionalFieldValue> builder, int i, Map<Integer, Map<String, String>> uboKeys, String civility) {
+        String email = "adyen-mirakl-".concat(UUID.randomUUID().toString()).concat("@mailtrap.com");
         builder.add(createAdditionalField(uboKeys.get(i).get(UboService.CIVILITY), civility));
         builder.add(createAdditionalField(uboKeys.get(i).get(UboService.FIRSTNAME), FAKER.name().firstName()));
         builder.add(createAdditionalField(uboKeys.get(i).get(UboService.LASTNAME), FAKER.name().lastName()));

@@ -47,6 +47,8 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
+
+
     public MiraklShop updateUboData(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows){
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
@@ -83,12 +85,24 @@ public class MiraklUpdateShopApi extends MiraklUpdateShopProperties {
         return updateMiraklRequest(client, miraklUpdateShopBuilder);
     }
 
-    public MiraklShop updateExistingShopAddressFirstLine(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client){
+    public MiraklShop updateExistingShopAddressFirstLine(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client) {
         MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
         miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
 
         // update shop first line of address to random UUID
         MiraklShopAddress address = updateMiraklShopFirstLineAddress(miraklShop);
+        miraklUpdateShop.setAddress(address);
+
+        ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
+        return updateMiraklRequest(client, miraklUpdateShopBuilder);
+    }
+
+    public MiraklShop updateExistingShopCity(MiraklShop miraklShop, String shopId, MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows) {
+        MiraklUpdateShop miraklUpdateShop = new MiraklUpdateShop();
+        miraklUpdateShop = populateAllMandatoryFields(miraklShop, shopId, miraklUpdateShop);
+
+        // update shop first line of address to random UUID
+        MiraklShopAddress address = udpateMiraklShopCity(miraklShop, rows.get(0));
         miraklUpdateShop.setAddress(address);
 
         ImmutableList.Builder<MiraklUpdateShop> miraklUpdateShopBuilder = miraklUpdateShopBuilder(miraklUpdateShop);
