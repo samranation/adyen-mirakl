@@ -1,0 +1,13 @@
+{
+    "eventDate": "2018-03-23T16:37:53+01:00",
+    "eventType": "ACCOUNT_HOLDER_VERIFICATION",
+    "executingUserKey": "Account Holder Update",
+    "live": "false",
+    "pspReference": "8515218194712303",
+    "content": {
+        "accountHolderCode": "8837",
+        "statusSummaryItems": [],
+        "verificationStatus": "INVALID_DATA",
+        "verificationType": "COMPANY_VERIFICATION"
+    }
+}
