@@ -1,6 +1,5 @@
 package com.adyen.mirakl.service;
 
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -37,7 +36,7 @@ public class PayoutServiceTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testGetBankAccountUUIDException(){
+    public void testGetBankAccountUUIDException() {
         GetAccountHolderResponse getAccountHolderResponse = getResponseWithBankDetails();
         payoutService.getBankAccountUUID(getAccountHolderResponse, "invalidiban");
     }
@@ -46,12 +45,12 @@ public class PayoutServiceTest {
     public void testPayout() throws Exception {
         GetAccountHolderResponse getAccountHolderResponse = getResponseWithBankDetails();
         when(adyenAccountServiceMock.getAccountHolder(getAccountHolderRequestArgumentCaptor.capture())).thenReturn(getAccountHolderResponse);
-        PayoutAccountHolderRequest request = payoutService.payoutAccountHolder("2000", "10.25", "EUR", "GB29NWBK60161331926819", "Description");
+        PayoutAccountHolderRequest request = payoutService.createPayoutAccountHolderRequest("2000", "10.25", "EUR", "GB29NWBK60161331926819", "Description");
         assertEquals("2000", getAccountHolderRequestArgumentCaptor.getValue().getAccountHolderCode());
         assertEquals("2a421c72-ead7-4ad3-8741-80a0aebb8758", request.getBankAccountUUID());
         assertEquals("2000", request.getAccountHolderCode());
         assertEquals("123456", request.getAccountCode());
-        assertEquals(1025L, (long)request.getAmount().getValue());
+        assertEquals(1025L, (long) request.getAmount().getValue());
         assertEquals("EUR", request.getAmount().getCurrency());
         assertEquals("Description", request.getDescription());
     }

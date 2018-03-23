@@ -4,10 +4,9 @@ import com.adyen.mirakl.config.MailTemplateService;
 import com.adyen.mirakl.domain.AdyenNotification;
 import com.adyen.mirakl.events.AdyenNotifcationEvent;
 import com.adyen.mirakl.repository.AdyenNotificationRepository;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.KYCCheckStatusData;
-import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.mirakl.service.RetryPayoutService;
+import com.adyen.model.marketpay.*;
+import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
 import com.adyen.notification.NotificationHandler;
@@ -50,14 +49,21 @@ public class AdyenNotificationListener {
     private AdyenNotificationRepository adyenNotificationRepository;
     private MailTemplateService mailTemplateService;
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
+    private RetryPayoutService retryPayoutService;
     private Account adyenAccountService;
 
-    public AdyenNotificationListener(final NotificationHandler notificationHandler, final AdyenNotificationRepository adyenNotificationRepository, final MailTemplateService mailTemplateService, MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient, Account adyenAccountService) {
+    public AdyenNotificationListener(final NotificationHandler notificationHandler,
+                                     final AdyenNotificationRepository adyenNotificationRepository,
+                                     final MailTemplateService mailTemplateService,
+                                     final MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient,
+                                     final Account adyenAccountService,
+                                     final RetryPayoutService retryPayoutService) {
         this.notificationHandler = notificationHandler;
         this.adyenNotificationRepository = adyenNotificationRepository;
         this.mailTemplateService = mailTemplateService;
         this.miraklMarketplacePlatformOperatorApiClient = miraklMarketplacePlatformOperatorApiClient;
         this.adyenAccountService = adyenAccountService;
+        this.retryPayoutService = retryPayoutService;
     }
 
     @Async
@@ -77,8 +83,11 @@ public class AdyenNotificationListener {
     }
 
     private void processNotification(final GenericNotification genericNotification) throws Exception {
-        if(genericNotification instanceof AccountHolderVerificationNotification){
+        if (genericNotification instanceof AccountHolderVerificationNotification) {
             processAccountholderVerificationNotification((AccountHolderVerificationNotification) genericNotification);
+        }
+        if(genericNotification instanceof AccountHolderStatusChangeNotification) {
+            processAccountholderStatusChangeNotification((AccountHolderStatusChangeNotification) genericNotification);
         }
     }
 
@@ -86,8 +95,7 @@ public class AdyenNotificationListener {
         final KYCCheckStatusData.CheckStatusEnum verificationStatus = verificationNotification.getContent().getVerificationStatus();
         final KYCCheckStatusData.CheckTypeEnum verificationType = verificationNotification.getContent().getVerificationType();
         final String shopId = verificationNotification.getContent().getAccountHolderCode();
-        if(KYCCheckStatusData.CheckStatusEnum.RETRY_LIMIT_REACHED.equals(verificationStatus) &&
-            KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)){
+        if (KYCCheckStatusData.CheckStatusEnum.RETRY_LIMIT_REACHED.equals(verificationStatus) && KYCCheckStatusData.CheckTypeEnum.BANK_ACCOUNT_VERIFICATION.equals(verificationType)) {
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.ENGLISH, "bankAccountVerificationEmail", "email.bank.verification.title");
         }else if(awaitingDataForIdentityOrPassport(verificationStatus, verificationType) || invalidDataForIdentityOrPassport(verificationStatus, verificationType)){
@@ -112,14 +120,26 @@ public class AdyenNotificationListener {
             && (KYCCheckStatusData.CheckTypeEnum.IDENTITY_VERIFICATION.equals(verificationType) ||  KYCCheckStatusData.CheckTypeEnum.PASSPORT_VERIFICATION.equals(verificationType));
     }
 
-    private MiraklShop getShop(String shopId){
+    private MiraklShop getShop(String shopId) {
         final MiraklGetShopsRequest miraklGetShopsRequest = new MiraklGetShopsRequest();
         miraklGetShopsRequest.setShopIds(ImmutableSet.of(shopId));
         final List<MiraklShop> shops = miraklMarketplacePlatformOperatorApiClient.getShops(miraklGetShopsRequest).getShops();
-        if(CollectionUtils.isEmpty(shops)){
-            throw new IllegalStateException("Cannot find shop: "+shopId);
+        if (CollectionUtils.isEmpty(shops)) {
+            throw new IllegalStateException("Cannot find shop: " + shopId);
         }
         return shops.iterator().next();
+    }
+
+
+    private void processAccountholderStatusChangeNotification(final AccountHolderStatusChangeNotification accountHolderStatusChangeNotification) {
+        final AccountPayoutState oldAccountPayoutState = accountHolderStatusChangeNotification.getContent().getOldStatus().getPayoutState();
+        final AccountPayoutState newAccountPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState();
+
+        if (oldAccountPayoutState.getAllowPayout().equals(false) && newAccountPayoutState.getAllowPayout().equals(true)) {
+            // check if there are payout errors to retrigger
+            String accountHolderCode = accountHolderStatusChangeNotification.getContent().getAccountHolderCode();
+            retryPayoutService.retryFailedPayoutsForAccountHolder(accountHolderCode);
+        }
     }
 
 }
