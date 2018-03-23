@@ -43,10 +43,12 @@
         "value": "2525"
     },
     "MAIL_USER": {
-         "description": "User, update with smtp user"
+         "description": "User, update with smtp user",
+         "required": false
     },
     "MAIL_PASS": {
-          "decription": "Update with smtp password"
+          "decription": "Update with smtp password",
+          "required": false
     },
     "MIRAKL_SDK_USER": {
           "description" : "Your artifactory.mirakl.net user (required to download Mirakl SDK)"

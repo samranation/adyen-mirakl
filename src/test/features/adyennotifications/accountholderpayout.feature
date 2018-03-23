@@ -31,7 +31,7 @@ Feature: Payout notifications for seller payout
             | statusCode | message                                           |
             | Failed     | There is not enough balance available for account |
 
-    @ADY-34
+    @ADY-34 @bug @ADY-111
     Scenario: The connector forces payout-retry upon accountHolder payable state change
         Given a shop has been created in Mirakl for an Individual with mandatory KYC data
             | city   | bank name | iban                   | bankOwnerName | lastName |
