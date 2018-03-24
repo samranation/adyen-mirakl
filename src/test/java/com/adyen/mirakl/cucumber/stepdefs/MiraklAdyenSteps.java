@@ -45,18 +45,12 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     private MiraklShop shop;
     private DocumentContext notificationResponse;
     private String accountHolderCode;
-    private Scenario scenario;
-    private List<DocumentContext> notifications;
     private DocumentContext adyenNotificationBody;
     private GetUploadedDocumentsResponse uploadedDocuments;
     private Long transferAmount;
+    protected List<DocumentContext> notifications;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-
-    @Before
-    public void getScenario(Scenario scenario) {
-        this.scenario = scenario;
-    }
 
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
@@ -65,10 +59,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             .createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         shop = retrieveCreatedShop(shops);
 
-        // only used for 1 scenario (ADY-23)
-        if (scenario.getSourceTagNames().contains("@ADY-23")) {
-            cucumberMap.put("createdShop", shop);
-        }
+        cucumberMap.put("createdShop", shop);
     }
 
     @Given("^a new shop has been created in Mirakl for an (.*)$")
@@ -106,10 +97,8 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithMissingUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         shop = retrieveCreatedShop(shops);
-        //  used for scenario (ADY-17)
-        if (scenario.getSourceTagNames().contains("@ADY-17")) {
-            cucumberMap.put("createdShop", shop);
-        }
+
+        cucumberMap.put("createdShop", shop);
     }
 
     @Given("^a new (.*) shop has been created in Mirakl with invalid data$")
