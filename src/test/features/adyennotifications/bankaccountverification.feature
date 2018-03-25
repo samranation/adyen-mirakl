@@ -56,5 +56,3 @@ Feature: Bank Account Verification
         And the document is successfully uploaded to Adyen
             | documentType   | filename          |
             | BANK_STATEMENT | BankStatement.jpg |
-
-

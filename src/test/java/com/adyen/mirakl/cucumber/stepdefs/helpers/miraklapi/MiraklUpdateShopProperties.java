@@ -193,6 +193,18 @@ class MiraklUpdateShopProperties extends AbstractMiraklShopSharedProperties {
         return address;
     }
 
+    MiraklShopAddress udpateMiraklShopCity(MiraklShop miraklShop, Map<String, String> row) {
+        MiraklShopAddress address = new MiraklShopAddress();
+        address.setFirstname(miraklShop.getContactInformation().getFirstname());
+        address.setCity(row.get("city"));
+        address.setCivility(miraklShop.getContactInformation().getCivility());
+        address.setCountry(miraklShop.getContactInformation().getCountry());
+        address.setLastname(miraklShop.getContactInformation().getLastname());
+        address.setStreet1(miraklShop.getContactInformation().getStreet1());
+        address.setZipCode(miraklShop.getContactInformation().getZipCode());
+        return address;
+    }
+
     // Mandatory for shop update
     void populateMiraklShopPremiumSuspendAndPaymentBlockedStatus(MiraklShop miraklShop,
                                                                  MiraklUpdateShop miraklUpdateShop) {

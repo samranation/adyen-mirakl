@@ -29,9 +29,9 @@ Feature: Identity verification check
             | maxUbos |
             | 4       |
 
-    @ADY-18 @ADY-102
+    @ADY-18 @ADY-102 @excluded
     Scenario: Share Holder mandatory information is not provided therefore Identity Check will return AWAITING_DATA
-        Given a new Business shop has been created in Mirakl without mandatory Shareholder Information
+        Given a new Business shop has been created in Mirakl with some Mandatory data missing
             | maxUbos | lastName |
             | 4       | testData |
         And we process the data and push to Adyen

@@ -32,10 +32,10 @@ import org.testng.annotations.Test;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
@@ -45,17 +45,12 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     private MiraklShop shop;
     private DocumentContext notificationResponse;
     private String accountHolderCode;
-    private Scenario scenario;
     private DocumentContext adyenNotificationBody;
     private GetUploadedDocumentsResponse uploadedDocuments;
     private Long transferAmount;
+    protected List<DocumentContext> notifications;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-
-    @Before
-    public void getScenario(Scenario scenario) {
-        this.scenario = scenario;
-    }
 
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithBankInformation(String legalEntity, DataTable table) {
@@ -64,10 +59,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             .createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         shop = retrieveCreatedShop(shops);
 
-        // only used for 1 scenario (ADY-23)
-        if (scenario.getSourceTagNames().contains("@ADY-23")) {
-            cucumberMap.put("createdShop", shop);
-        }
+        cucumberMap.put("createdShop", shop);
     }
 
     @Given("^a new shop has been created in Mirakl for an (.*)$")
@@ -100,11 +92,22 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         shop = retrieveCreatedShop(shops);
     }
 
-    @Given("^a new (.*) shop has been created in Mirakl without mandatory Shareholder Information$")
-    public void aNewBusinessShopHasBeenCreatedInMiraklWithoutMandatoryShareholderInformation(String legalEntity, DataTable table) throws Throwable {
+    @Given("^a new (.*) shop has been created in Mirakl with some Mandatory data missing$")
+    public void aNewBusinessShopHasBeenCreatedInMiraklWithoutMandatoryShareholderInformation(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithMissingUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         shop = retrieveCreatedShop(shops);
+
+        cucumberMap.put("createdShop", shop);
+    }
+
+    @Given("^a new (.*) shop has been created in Mirakl with invalid data$")
+    public void aNewBusinessShopHasBeenCreatedInMiraklWithInvalidData(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithMissingUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        shop = retrieveCreatedShop(shops);
+
+        cucumberMap.put("createdShop", shop);
     }
 
     @When("^the seller uploads a Bank Statement in Mirakl$")
@@ -188,6 +191,19 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         });
     }
 
+    @And("^(?:the previous BankAccountDetail will be removed|a notification will be sent in relation to the balance change)$")
+    public void thePreviousBankAccountDetailWillBeRemoved(DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        String eventType = cucumberTable.get(0).get("eventType");
+        String reason = cucumberTable.get(0).get("reason");
+
+        await().untilAsserted(() -> {
+            adyenNotificationBody = JsonPath.parse(retrieveAdyenNotificationBody(eventType, accountHolderCode));
+            Assertions.assertThat(adyenNotificationBody.read("content.reason").toString())
+                .contains(reason);
+        });
+    }
+
     @Then("^adyen will send the (.*) comprising of (\\w*) and status of (.*)")
     public void adyenWillSendTheACCOUNT_HOLDER_VERIFICATIONComprisingOfCOMPANY_VERIFICATION(String eventType, String verificationType, String status) {
         waitForNotification();
@@ -249,22 +265,25 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
         await().untilAsserted(() -> {
             Integer maxUbos = cucumberTable.get(0).get("maxUbos");
+
             // get all ACCOUNT_HOLDER_VERIFICATION notifications
-            List<Map<String, Object>> notifications = restAssuredAdyenApi
+            this.notifications = restAssuredAdyenApi
                 .getMultipleAdyenNotificationBodies
-                    (startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType, shareholderCodes, maxUbos);
+                    (startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType, shareholderCodes);
 
-            Assertions.assertThat(notifications).isNotEmpty();
-            Assertions.assertThat(notifications.get(0)).hasSize(maxUbos);
-
-            IntStream.rangeClosed(1, maxUbos).forEach(i -> {
-                for (Map<String, Object> notification : notifications) {
-                    Assertions
-                        .assertThat(JsonPath.parse(notification.get("content-" + i)).read("verificationStatus").toString())
-                        .isEqualTo(verificationStatus);
-                }
-            });
+            Assertions
+                .assertThat(this.notifications)
+                .withFailMessage("Notification is empty.")
+                .isNotEmpty();
+            Assertions.assertThat(this.notifications).hasSize(maxUbos);
         });
+
+        for (DocumentContext notification : this.notifications) {
+            Assertions
+                .assertThat(notification.read("content.verificationStatus").toString())
+                .isEqualTo(verificationStatus);
+        }
+        cucumberMap.put("notifications", this.notifications);
     }
 
     @And("^getAccountHolder will have the correct amount of shareholders and data in Adyen$")
@@ -317,7 +336,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     public void anEmailWillBeSentToTheSeller() {
         String email = shop.getContactInformation().getEmail();
 
-        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+        await().untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
                 List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
@@ -629,5 +648,48 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         UploadDocumentResponse response = adyenAccountService.uploadDocument(uploadDocumentRequest);
 
         Assertions.assertThat(response.getAccountHolderCode()).isEqualTo(this.shop.getId());
+    }
+
+    @Then("^a remedial email will be sent for each ubo$")
+    public void aRemedialEmailWillBeSentForEachUbo(String title) throws Throwable {
+
+        GetAccountHolderResponse accountHolder = retrieveAccountHolderResponse(this.shop.getId());
+
+        List<String> uboEmails = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
+            .map(ShareholderContact::getEmail)
+            .collect(Collectors.toList());
+
+        await().untilAsserted(() -> {
+                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
+
+                List<String> htmlBody = new LinkedList<>();
+
+                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
+
+                boolean foundEmail = emailLists.stream()
+                    .anyMatch(map -> map.get("to_email").equals(uboEmails.iterator().next()));
+
+                Assertions.assertThat(foundEmail).isTrue();
+
+                for (String uboEmail : uboEmails) {
+                    emailLists.stream()
+                        .filter(map -> map.get("to_email").equals(uboEmail))
+                        .findAny()
+                        .ifPresent(map -> htmlBody.add(map.get("html_body").toString()));
+                }
+
+                Assertions.assertThat(htmlBody).isNotEmpty();
+
+                for (String body : htmlBody) {
+                    Document parsedBody = Jsoup.parse(body);
+                    Assertions
+                        .assertThat(parsedBody.body().text())
+                        .contains(shop.getId());
+
+                    Assertions.assertThat(parsedBody.title()).isEqualTo(title);
+                }
+            }
+        );
     }
 }

@@ -1,0 +1,14 @@
+{
+    "eventDate": "2018-03-21T12:16:22+01:00",
+    "eventType": "ACCOUNT_HOLDER_VERIFICATION",
+    "executingUserKey": "Account Holder Update",
+    "live": "false",
+    "pspReference": "8515216309812174",
+    "content": {
+        "accountHolderCode": "$accountHolderCode$",
+        "shareholderCode": "$shareholderCode$",
+        "statusSummaryItems": [],
+        "verificationStatus": "INVALID_DATA",
+        "verificationType": "IDENTITY_VERIFICATION"
+    }
+}
