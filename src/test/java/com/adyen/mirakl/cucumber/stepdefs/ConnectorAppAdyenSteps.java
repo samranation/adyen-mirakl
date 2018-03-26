@@ -5,6 +5,7 @@ import com.adyen.mirakl.web.rest.TestUtil;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.ShareholderContact;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
@@ -53,7 +54,7 @@ public class ConnectorAppAdyenSteps extends StepDefs {
 
     @And("^the notifications are sent to Connector App$")
     public void theNotificationsAreSentToConnectorApp() throws Exception {
-        List<DocumentContext> notifications = (List<DocumentContext>) cucumberMap.get("notifications");
+        ImmutableList<DocumentContext> notifications = (ImmutableList<DocumentContext>) cucumberMap.get("notifications");
         for (DocumentContext notification : notifications) {
             restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -93,5 +94,18 @@ public class ConnectorAppAdyenSteps extends StepDefs {
                 .andExpect(status().is(201));
             log.info("Notification posted to Connector: [%s]", notification);
         }
+    }
+
+    @When("^the (.*) notifications containing (.*) status are sent to the Connector$")
+    public void theCOMPANY_VERIFICATIONNotificationsContainingINVALID_DATAStatusAreSentToTheConnector(String eventType, String verificationType) throws Throwable {
+        URL url = Resources.getResource("adyenRequests/CUCUMBER_"+eventType+"_"+verificationType+".json");
+        String stringJson = Resources.toString(url, Charsets.UTF_8);
+        MiraklShop shop = (MiraklShop) cucumberMap.get("createdShop");
+        String notification = stringJson.replaceAll("\\$accountHolderCode\\$", shop.getId());
+        restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(notification))
+            .andExpect(status().is(201));
+        log.info("Notification posted to Connector: [%s]", notification);
     }
 }

@@ -250,42 +250,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         });
     }
 
-    @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
-    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
-        String eventType, String verificationType, String verificationStatus, DataTable table) throws Throwable {
-        List<Map<String, Integer>> cucumberTable = table.getTableConverter().toMaps(table, String.class, Integer.class);
-        waitForNotification();
-
-        // get shareholderCodes from Adyen
-        GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
-
-        List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
-            .map(ShareholderContact::getShareholderCode)
-            .collect(Collectors.toList());
-
-        await().untilAsserted(() -> {
-            Integer maxUbos = cucumberTable.get(0).get("maxUbos");
-
-            // get all ACCOUNT_HOLDER_VERIFICATION notifications
-            this.notifications = restAssuredAdyenApi
-                .getMultipleAdyenNotificationBodies
-                    (startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType, shareholderCodes);
-
-            Assertions
-                .assertThat(this.notifications)
-                .withFailMessage("Notification is empty.")
-                .isNotEmpty();
-            Assertions.assertThat(this.notifications).hasSize(maxUbos);
-        });
-
-        for (DocumentContext notification : this.notifications) {
-            Assertions
-                .assertThat(notification.read("content.verificationStatus").toString())
-                .isEqualTo(verificationStatus);
-        }
-        cucumberMap.put("notifications", this.notifications);
-    }
-
     @And("^getAccountHolder will have the correct amount of shareholders and data in Adyen$")
     public void getaccountholderWillHaveTheCorrectAmountOfShareholdersAndDataInAdyen(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
@@ -330,40 +294,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         Assertions.assertThat(documentTypeAndFilenameMatch)
             .withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocResponse).toString()))
             .isTrue();
-    }
-
-    @Then("^an email will be sent to the seller$")
-    public void anEmailWillBeSentToTheSeller() {
-        String email = shop.getContactInformation().getEmail();
-
-        await().untilAsserted(() -> {
-                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
-
-                String htmlBody = null;
-                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
-                for (Map list : emailLists) {
-                    if (list.get("to_email").equals(email)) {
-                        htmlBody = list.get("html_body").toString();
-                        Assertions.assertThat(email).isEqualTo(list.get("to_email"));
-                        break;
-                    } else {
-                        Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
-                    }
-                }
-                Assertions
-                    .assertThat(htmlBody).isNotNull();
-                Document parsedBody = Jsoup.parse(htmlBody);
-                Assertions
-                    .assertThat(parsedBody.body().text())
-                    .contains(shop.getId())
-                    .contains(shop.getContactInformation().getCivility())
-                    .contains(shop.getContactInformation().getFirstname())
-                    .contains(shop.getContactInformation().getLastname());
-
-                Assertions.assertThat(parsedBody.title()).isEqualTo("Account verification");
-            }
-        );
     }
 
     @Then("^adyen will send the (.*) notification with status$")
@@ -652,7 +582,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
     @Then("^a remedial email will be sent for each ubo$")
     public void aRemedialEmailWillBeSentForEachUbo(String title) throws Throwable {
-
         GetAccountHolderResponse accountHolder = retrieveAccountHolderResponse(this.shop.getId());
 
         List<String> uboEmails = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
@@ -680,6 +609,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 }
 
                 Assertions.assertThat(htmlBody).isNotEmpty();
+                Assertions.assertThat(htmlBody).hasSize(uboEmails.size());
 
                 for (String body : htmlBody) {
                     Document parsedBody = Jsoup.parse(body);
@@ -691,5 +621,77 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 }
             }
         );
+    }
+
+    @Then("^an email will be sent to the seller$")
+    public void anEmailWillBeSentToTheSeller(String title) {
+        String email = shop.getContactInformation().getEmail();
+
+        await().untilAsserted(() -> {
+                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
+
+                String htmlBody = null;
+                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
+                for (Map list : emailLists) {
+                    if (list.get("to_email").equals(email)) {
+                        htmlBody = list.get("html_body").toString();
+                        Assertions.assertThat(email).isEqualTo(list.get("to_email"));
+                        break;
+                    } else {
+                        Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
+                    }
+                }
+                Assertions
+                    .assertThat(htmlBody).isNotNull();
+                Document parsedBody = Jsoup.parse(htmlBody);
+                Assertions
+                    .assertThat(parsedBody.body().text())
+                    .contains(shop.getId())
+                    .contains(shop.getContactInformation().getCivility())
+                    .contains(shop.getContactInformation().getFirstname())
+                    .contains(shop.getContactInformation().getLastname());
+
+                Assertions.assertThat(parsedBody.title()).isEqualTo(title);
+            }
+        );
+    }
+
+    @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
+    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
+        String eventType, String verificationType, String verificationStatus, DataTable table) throws Throwable {
+        List<Map<String, Integer>> cucumberTable = table.getTableConverter().toMaps(table, String.class, Integer.class);
+        waitForNotification();
+
+        // get shareholderCodes from Adyen
+        GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
+
+        List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
+            .map(ShareholderContact::getShareholderCode)
+            .collect(Collectors.toList());
+
+        await().untilAsserted(() -> {
+            // get all ACCOUNT_HOLDER_VERIFICATION notifications
+            List<DocumentContext> notifications = restAssuredAdyenApi
+                .getMultipleAdyenNotificationBodies
+                    (startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
+
+            ImmutableList<DocumentContext> shareHolderNotifications = restAssuredAdyenApi
+                .extractShareHolderNotifications(notifications, shareholderCodes);
+
+            Assertions
+                .assertThat(notifications)
+                .withFailMessage("Notification is empty.")
+                .isNotEmpty();
+            Integer maxUbos = cucumberTable.get(0).get("maxUbos");
+            Assertions.assertThat(notifications).hasSize(maxUbos);
+
+            for (DocumentContext notification : notifications) {
+                Assertions
+                    .assertThat(notification.read("content.verificationStatus").toString())
+                    .isEqualTo(verificationStatus);
+            }
+            cucumberMap.put("notifications", shareHolderNotifications);
+        });
     }
 }
