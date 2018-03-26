@@ -652,7 +652,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
     @Then("^a remedial email will be sent for each ubo$")
     public void aRemedialEmailWillBeSentForEachUbo(String title) throws Throwable {
-
         GetAccountHolderResponse accountHolder = retrieveAccountHolderResponse(this.shop.getId());
 
         List<String> uboEmails = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
@@ -680,6 +679,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 }
 
                 Assertions.assertThat(htmlBody).isNotEmpty();
+                Assertions.assertThat(htmlBody).hasSize(uboEmails.size());
 
                 for (String body : htmlBody) {
                     Document parsedBody = Jsoup.parse(body);

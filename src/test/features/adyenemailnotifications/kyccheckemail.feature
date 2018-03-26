@@ -16,7 +16,7 @@ Feature: KYC check intervention emails
         Account verification, awaiting data
         """
 
-    @ADY-17 @ADY-112 @bug
+    @ADY-17 @ADY-112
     Scenario: email is sent to seller upon IDENTITY_VERIFICATION INVALID_DATA notification
         Given a new Business shop has been created in Mirakl with invalid data
             | maxUbos | lastName    | city        |
