@@ -46,8 +46,8 @@ public class PayoutService {
     @Value("${payoutService.subscriptionTransferCode}")
     private String subscriptionTransferCode;
 
-    @Value("${payoutService.liableAccountCodeE2yMirakl}")
-    private String liableAccountCodeE2yMirakl;
+    @Value("${payoutService.liableAccountCode}")
+    private String liableAccountCode;
 
     protected final static Gson GSON = new Gson();
 
@@ -172,7 +172,7 @@ public class PayoutService {
         transferFundsRequest.setAmount(adyenAmount);
 
         transferFundsRequest.setSourceAccountCode(getAccountCode(accountHolderResponse));
-        transferFundsRequest.setDestinationAccountCode(liableAccountCodeE2yMirakl);
+        transferFundsRequest.setDestinationAccountCode(liableAccountCode);
 
         transferFundsRequest.setTransferCode(subscriptionTransferCode);
         return transferFundsRequest;

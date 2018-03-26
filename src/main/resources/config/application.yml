@@ -178,4 +178,4 @@ mail.max.retries: 10
 
 payoutService:
     subscriptionTransferCode: SUBSCRIPTION
-    liableAccountCodeE2yMirakl: ${ADYEN_LIABLE_ACCOUNT_CODE}
+    liableAccountCode: ${ADYEN_LIABLE_ACCOUNT_CODE}
