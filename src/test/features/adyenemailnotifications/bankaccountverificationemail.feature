@@ -34,4 +34,7 @@ Feature: Bank Account Verification email notification
                 }
             """
         Then an email will be sent to the seller
+        """
+        Account verification
+        """
 

@@ -54,10 +54,10 @@ public class RestAssuredAdyenApi {
         return null;
     }
 
-    public List<DocumentContext> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType, List<String> shareholderCodes) {
+    public ImmutableList<DocumentContext> getMultipleAdyenNotificationBodies(String endpoint, String miraklShopId, String eventType, String verificationType) {
         ResponseBody body = getResponseBody(endpoint);
         List<String> allNotifications = body.jsonPath().get("body");
-        List<String> notifications = new LinkedList<>();
+        ImmutableList.Builder<DocumentContext> notifications = new ImmutableList.Builder<>();
         // filter through all notifications and add all that match criteria to String List
         for (String notification : allNotifications) {
             Map contentMap = JsonPath.parse(notification).read("content");
@@ -66,26 +66,26 @@ public class RestAssuredAdyenApi {
             if (JsonPath.parse(notification).read("eventType").toString().equals(eventType) &&
                 content.read("accountHolderCode").equals(miraklShopId) &&
                 content.read("verificationType").equals(verificationType)) {
-
-                notifications.add(notification);
+                notifications.add(JsonPath.parse(notification));
             }
         }
+        return notifications.build();
+    }
 
+    public ImmutableList<DocumentContext> extractShareHolderNotifications(List<DocumentContext> notifications, List<String> shareholderCodes) {
         // filter through String List of notifications to see if shareholderCode matches
         // add all that match to list builder
-        ImmutableList.Builder<DocumentContext> listBuilder = new ImmutableList.Builder<>();
-        for (String notification : notifications) {
-            DocumentContext parsedNotification = JsonPath.parse(notification);
-
-            if (parsedNotification.read("content.shareholderCode") != null) {
+        ImmutableList.Builder<DocumentContext> notificationsBuilder = new ImmutableList.Builder<>();
+        for (DocumentContext notification : notifications) {
+            if (notification.read("content.shareholderCode") != null) {
                 for (String shareholderCode : shareholderCodes) {
-                    if (parsedNotification.read("content.shareholderCode").toString().equals(shareholderCode)) {
-                        listBuilder.add(JsonPath.parse(notification));
+                    if (notification.read("content.shareholderCode").toString().equals(shareholderCode)) {
+                        notificationsBuilder.add(notification);
                     }
                 }
             }
         }
-        return listBuilder.build();
+        return notificationsBuilder.build();
     }
 
     public boolean endpointHasANotification(String endpoint) {
