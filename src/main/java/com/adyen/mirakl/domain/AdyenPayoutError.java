@@ -76,6 +76,19 @@ public class AdyenPayoutError implements Serializable {
         this.rawRequest = rawRequest;
     }
 
+    public String getRawSubscriptionRequest() {
+        return rawSubscriptionRequest;
+    }
+
+    public AdyenPayoutError rawSubscriptionRequest(String rawSubscriptionRequest) {
+        this.rawSubscriptionRequest = rawSubscriptionRequest;
+        return this;
+    }
+
+    public void setRawSubscriptionRequest(String rawSubscriptionRequest) {
+        this.rawSubscriptionRequest = rawSubscriptionRequest;
+    }
+
     public String getRawResponse() {
         return rawResponse;
     }
@@ -87,14 +100,6 @@ public class AdyenPayoutError implements Serializable {
 
     public void setRawResponse(String rawResponse) {
         this.rawResponse = rawResponse;
-    }
-
-    public String getRawSubscriptionRequest() {
-        return rawSubscriptionRequest;
-    }
-
-    public void setRawSubscriptionRequest(String rawSubscriptionRequest) {
-        this.rawSubscriptionRequest = rawSubscriptionRequest;
     }
 
     public String getAccountHolderCode() {
@@ -167,6 +172,7 @@ public class AdyenPayoutError implements Serializable {
         return "AdyenPayoutError{" +
             "id=" + getId() +
             ", rawRequest='" + getRawRequest() + "'" +
+            ", rawSubscriptionRequest='" + getRawSubscriptionRequest() + "'" +
             ", rawResponse='" + getRawResponse() + "'" +
             ", accountHolderCode='" + getAccountHolderCode() + "'" +
             ", retry=" + getRetry() +
