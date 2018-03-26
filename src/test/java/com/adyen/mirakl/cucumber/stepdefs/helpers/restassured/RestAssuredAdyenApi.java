@@ -72,6 +72,21 @@ public class RestAssuredAdyenApi {
         return notifications.build();
     }
 
+    public ImmutableList<DocumentContext> getMultipleAdyenTransferNotifications(String endpoint, String eventType, String transferCode) {
+        ResponseBody body = getResponseBody(endpoint);
+        List<String> allNotifications = body.jsonPath().get("body");
+
+        ImmutableList.Builder<DocumentContext> notifications = new ImmutableList.Builder<>();
+        allNotifications.forEach(notification -> {
+            DocumentContext jsonBody = JsonPath.parse(notification);
+            if (jsonBody.read("eventType").toString().equals(eventType) &&
+                jsonBody.read("content.transferCode").toString().equals(transferCode)) {
+                notifications.add(jsonBody);
+            }
+        });
+        return notifications.build();
+    }
+
     public ImmutableList<DocumentContext> extractShareHolderNotifications(List<DocumentContext> notifications, List<String> shareholderCodes) {
         // filter through String List of notifications to see if shareholderCode matches
         // add all that match to list builder
@@ -86,6 +101,14 @@ public class RestAssuredAdyenApi {
             }
         }
         return notificationsBuilder.build();
+    }
+
+    public DocumentContext extractCorrectTransferNotification(DocumentContext notification, String liableAccountCode, String accountCode) {
+        if (notification.read("content.sourceAccountCode").equals(accountCode) &&
+            notification.read("content.destinationAccountCode").equals(liableAccountCode)) {
+            return notification;
+        }
+        return null;
     }
 
     public boolean endpointHasANotification(String endpoint) {

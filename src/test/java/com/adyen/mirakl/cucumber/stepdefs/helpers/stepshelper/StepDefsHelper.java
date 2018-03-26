@@ -27,6 +27,7 @@ import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Duration;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -73,6 +74,12 @@ public class StepDefsHelper {
     protected RetryPayoutService retryPayoutService;
     @Resource
     protected AdyenPayoutErrorRepository adyenPayoutErrorRepository;
+
+    @Value("${payoutService.subscriptionTransferCode}")
+    protected String subscriptionTransferCode;
+
+    @Value("${payoutService.liableAccountCode}")
+    protected String liableAccountCode;
 
     protected void waitForNotification() {
         await().atMost(new Duration(30, TimeUnit.MINUTES)).untilAsserted(() -> {

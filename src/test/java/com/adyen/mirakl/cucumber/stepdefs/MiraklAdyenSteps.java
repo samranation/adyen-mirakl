@@ -258,6 +258,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         });
     }
 
+
     @And("^getAccountHolder will have the correct amount of shareholders and data in Adyen$")
     public void getaccountholderWillHaveTheCorrectAmountOfShareholdersAndDataInAdyen(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
@@ -304,6 +305,40 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             .isTrue();
     }
 
+    @Then("^an email will be sent to the seller$")
+    public void anEmailWillBeSentToTheSeller() {
+        String email = shop.getContactInformation().getEmail();
+
+        await().untilAsserted(() -> {
+                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
+
+                String htmlBody = null;
+                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
+                for (Map list : emailLists) {
+                    if (list.get("to_email").equals(email)) {
+                        htmlBody = list.get("html_body").toString();
+                        Assertions.assertThat(email).isEqualTo(list.get("to_email"));
+                        break;
+                    } else {
+                        Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
+                    }
+                }
+                Assertions
+                    .assertThat(htmlBody).isNotNull();
+                Document parsedBody = Jsoup.parse(htmlBody);
+                Assertions
+                    .assertThat(parsedBody.body().text())
+                    .contains(shop.getId())
+                    .contains(shop.getContactInformation().getCivility())
+                    .contains(shop.getContactInformation().getFirstname())
+                    .contains(shop.getContactInformation().getLastname());
+
+                Assertions.assertThat(parsedBody.title()).isEqualTo("Account verification");
+            }
+        );
+    }
+
     @Then("^adyen will send the (.*) notification with status$")
     public void adyenWillSendTheACCOUNT_HOLDER_PAYOUTNotificationWithStatusCode(String notification, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
@@ -316,11 +351,12 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 .isEqualTo(content.read("status.statusCode"));
 
             String message = cucumberTable.get(0).get("message");
+            if (!message.equals("")) {
+                Assertions
+                    .assertThat(content.read("status.message.text").toString())
+                    .contains(message);
 
-            Assertions
-                .assertThat(content.read("status.message.text").toString())
-                .contains(message);
-
+            }
             log.info(content.toString());
         });
     }
@@ -632,40 +668,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         );
     }
 
-    @Then("^an email will be sent to the seller$")
-    public void anEmailWillBeSentToTheSeller(String title) {
-        String email = shop.getContactInformation().getEmail();
-
-        await().untilAsserted(() -> {
-                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
-
-                String htmlBody = null;
-                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
-                for (Map list : emailLists) {
-                    if (list.get("to_email").equals(email)) {
-                        htmlBody = list.get("html_body").toString();
-                        Assertions.assertThat(email).isEqualTo(list.get("to_email"));
-                        break;
-                    } else {
-                        Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
-                    }
-                }
-                Assertions
-                    .assertThat(htmlBody).isNotNull();
-                Document parsedBody = Jsoup.parse(htmlBody);
-                Assertions
-                    .assertThat(parsedBody.body().text())
-                    .contains(shop.getId())
-                    .contains(shop.getContactInformation().getCivility())
-                    .contains(shop.getContactInformation().getFirstname())
-                    .contains(shop.getContactInformation().getLastname());
-
-                Assertions.assertThat(parsedBody.title()).isEqualTo(title);
-            }
-        );
-    }
-
     @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
     public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
         String eventType, String verificationType, String verificationStatus, DataTable table) throws Throwable {
@@ -701,6 +703,51 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                     .isEqualTo(verificationStatus);
             }
             cucumberMap.put("notifications", shareHolderNotifications);
+        });
+    }
+
+    @Then("^the (.*) notification will be sent by Adyen$")
+    public void theTRANSFER_FUNDSNotificationWillBeSentByAdyen(String eventType) throws Throwable {
+        waitForNotification();
+        await().untilAsserted(() -> {
+            Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
+                .getAdyenNotificationBody(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
+
+            Assertions.assertThat(adyenNotificationBody).withFailMessage("No data received from notification endpoint").isNotNull();
+            Assertions.assertThat(JsonPath.parse(adyenNotificationBody.get("content"))
+                .read("eventType").toString()).isEqualTo(eventType);
+        });
+    }
+
+    @Then("^multiple (.*) notifications will be sent by Adyen$")
+    public void multipleTRANSFER_FUNDSNotificationsWillBeSentByAdyen(String eventType, String status) throws Throwable {
+        waitForNotification();
+
+        GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
+        String accountCode = response.getAccounts().stream()
+            .map(Account::getAccountCode)
+            .findAny()
+            .orElse(null);
+
+        await().untilAsserted(() -> {
+            ImmutableList<DocumentContext> notificationBodies = restAssuredAdyenApi
+                .getMultipleAdyenTransferNotifications(startUpCucumberHook.getBaseRequestBinUrlPath(), eventType, subscriptionTransferCode);
+
+            Assertions.assertThat(notificationBodies).isNotEmpty();
+            Assertions.assertThat(notificationBodies.size()).isGreaterThan(1);
+
+            DocumentContext transferNotification = null;
+            for (DocumentContext notification : notificationBodies) {
+                transferNotification = restAssuredAdyenApi
+                    .extractCorrectTransferNotification(notification, liableAccountCode, accountCode);
+                if (transferNotification != null) {
+                    break;
+                }
+            }
+            Assertions.assertThat(transferNotification).isNotNull();
+            Assertions
+                .assertThat(transferNotification.read("content.status.statusCode").toString())
+                .isEqualTo(status);
         });
     }
 }
