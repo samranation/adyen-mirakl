@@ -199,5 +199,5 @@ mailtrapConfig:
     apiToken: ${MAILTRAP_API_TOKEN}
 
 payoutService:
-    subscriptionTransferCode: SUBSCRIPTION
+    subscriptionTransferCode: ${ADYEN_SUBSCRIPTION_TRANSFER_CODE}
     liableAccountCode: ${ADYEN_LIABLE_ACCOUNT_CODE}
