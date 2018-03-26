@@ -156,9 +156,9 @@ public class ShopServiceTest {
         assertEquals(Name.GenderEnum.FEMALE, individualDetails.getName().getGender());
 
         final Address address = request.getAccountHolderDetails().getAddress();
-        Assertions.assertThat(address.getHouseNumberOrName()).isEqualTo("1");
+        Assertions.assertThat(address.getHouseNumberOrName()).isEqualTo("2");
         Assertions.assertThat(address.getPostalCode()).isEqualTo("zipCode");
-        Assertions.assertThat(address.getStreet()).isEqualTo("street");
+        Assertions.assertThat(address.getStreet()).isEqualTo("street 2");
         Assertions.assertThat(address.getCountry()).isEqualTo("GB");
         Assertions.assertThat(address.getCity()).isEqualTo("city");
 
@@ -169,7 +169,7 @@ public class ShopServiceTest {
         Assertions.assertThat(bankDetails.getOwnerName()).isEqualTo("owner");
         Assertions.assertThat(bankDetails.getBankBicSwift()).isEqualTo("BIC");
         Assertions.assertThat(bankDetails.getCountryCode()).isEqualTo("GB");
-        Assertions.assertThat(bankDetails.getOwnerHouseNumberOrName()).isEqualTo("1");
+        Assertions.assertThat(bankDetails.getOwnerHouseNumberOrName()).isEqualTo("2");
         Assertions.assertThat(bankDetails.getIban()).isEqualTo("GB00IBAN");
         Assertions.assertThat(bankDetails.getCurrencyCode()).isEqualTo("EUR");
         Assertions.assertThat(bankDetails.getBankCity()).isEqualTo("bankCity");
@@ -262,7 +262,7 @@ public class ShopServiceTest {
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
         assertEquals("1111AA", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerPostalCode());
         assertEquals("BIC", request.getAccountHolderDetails().getBankAccountDetails().get(0).getBankBicSwift());
-        assertEquals("1", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
+        assertEquals("2", request.getAccountHolderDetails().getBankAccountDetails().get(0).getOwnerHouseNumberOrName());
 
 
 
@@ -339,7 +339,7 @@ public class ShopServiceTest {
         miraklContactInformation.setEmail("email");
         miraklContactInformation.setFirstname("firstName");
         miraklContactInformation.setLastname("lastName");
-        miraklContactInformation.setStreet1("1 street");
+        miraklContactInformation.setStreet1("street 2");
         miraklContactInformation.setZipCode("1111AA");
         miraklContactInformation.setCivility("Mrs");
         return miraklContactInformation;
@@ -361,7 +361,7 @@ public class ShopServiceTest {
         contactInformation.setCountry("GBR");
         contactInformation.setCivility("Mrs");
         contactInformation.setCity("city");
-        contactInformation.setStreet1("street");
+        contactInformation.setStreet1("street 2");
         contactInformation.setZipCode("zipCode");
         contactInformation.setState("state");
 

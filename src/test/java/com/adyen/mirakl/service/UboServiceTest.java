@@ -171,6 +171,29 @@ public class UboServiceTest {
     }
 
     @Test
+    public void shouldTakeFromStreetIfHouseNumberIsMissing() {
+        uboService.setMaxUbos(2);
+        List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("2", ImmutableSet.of("firstname","lastname","email", "streetname"), ImmutableMap.of("civility", "Mr"));
+        when(miraklShopMock.getAdditionalFieldValues()).thenReturn(ubo1);
+        when(miraklShopMock.getId()).thenReturn("shopCode");
+        when(shareholderMappingRepositoryMock.findOneByMiraklShopIdAndMiraklUboNumber("shopCode", 2)).thenReturn(Optional.empty());
+
+
+        final List<ShareholderContact> result = uboService.extractUbos(miraklShopMock);
+
+        Assertions.assertThat(result.size()).isOne();
+        final ShareholderContact shareholderContact = result.iterator().next();
+        Assertions.assertThat(shareholderContact.getName().getGender()).isEqualTo(Name.GenderEnum.MALE);
+        Assertions.assertThat(shareholderContact.getName().getFirstName()).isEqualTo("firstname2");
+        Assertions.assertThat(shareholderContact.getName().getLastName()).isEqualTo("lastname2");
+        Assertions.assertThat(shareholderContact.getEmail()).isEqualTo("email2");
+        Assertions.assertThat(shareholderContact.getAddress().getHouseNumberOrName()).isEqualTo("2");
+        Assertions.assertThat(shareholderContact.getPersonalData()).isNull();
+        Assertions.assertThat(shareholderContact.getPhoneNumber()).isNull();
+        Assertions.assertThat(shareholderContact.getShareholderCode()).isNull();
+    }
+
+    @Test
     public void shouldUseMappingFromExistingShop(){
         uboService.setMaxUbos(4);
         List<MiraklAdditionalFieldValue> ubo1 = createMiraklAdditionalUboField("1", UBO_FIELDS, UBO_FIELDS_ENUMS);

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +53,7 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 public class ShopService {
 
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
+    private final static Pattern pattern = Pattern.compile("(\\d+)\\D*$");
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
@@ -425,10 +428,18 @@ public class ShopService {
 
 
     /**
-     * TODO: implement method to retrieve housenumber from street
+     * Finds a number in the string street starting at the end of the string e.g.
+     * 1 street name house 5
+     * returns 5
      */
     private String getHouseNumberFromStreet(String street) {
-        return "1";
+        Matcher matcher = pattern.matcher(street);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }else{
+            log.warn("Unable to retrieve house number from street: {}", street);
+            return null;
+        }
     }
 
     /**
