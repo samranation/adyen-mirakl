@@ -11,10 +11,12 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -52,7 +54,6 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 @Transactional
 public class ShopService {
 
-    private final static Pattern lastDigitInString = Pattern.compile("(\\d+)\\D*$");
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     @Resource
@@ -73,6 +74,15 @@ public class ShopService {
     @Resource
     private InvalidFieldsNotificationService invalidFieldsNotificationService;
 
+    private Pattern houseNumberPattern;
+
+    @Value("${extract.house.number.regex}")
+    private String houseNumberRegex;
+
+    @PostConstruct
+    public void postConstruct() {
+        houseNumberPattern = Pattern.compile(houseNumberRegex);
+    }
 
     public void processUpdatedShops() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
@@ -429,7 +439,7 @@ public class ShopService {
      * returns 5
      */
     private String getHouseNumberFromStreet(String street) {
-        Matcher matcher = lastDigitInString.matcher(street);
+        Matcher matcher = houseNumberPattern.matcher(street);
         if (matcher.find()) {
             return matcher.group(1);
         }else{
@@ -463,4 +473,7 @@ public class ShopService {
         return countryCodes;
     }
 
+    public void setHouseNumberPattern(final Pattern houseNumberPattern) {
+        this.houseNumberPattern = houseNumberPattern;
+    }
 }

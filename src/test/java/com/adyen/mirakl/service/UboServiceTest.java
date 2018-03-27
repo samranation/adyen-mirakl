@@ -17,12 +17,14 @@ import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.when;
@@ -76,7 +78,10 @@ public class UboServiceTest {
     @Captor
     private ArgumentCaptor<MiraklGetShopsRequest> miraklGetShopsRequestCaptor;
 
-
+    @Before
+    public void setup(){
+        uboService.setHouseNumberPattern(Pattern.compile("(\\d+)\\D*$"));
+    }
 
     @Test
     public void shouldCreateAllShareholdersFromUbos() {

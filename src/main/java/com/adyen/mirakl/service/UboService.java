@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,6 @@ import java.util.stream.IntStream;
 @Service
 public class UboService {
 
-    private final static Pattern lastDigitInString = Pattern.compile("(\\d+)\\D*$");
     private static final Logger log = LoggerFactory.getLogger(UboService.class);
 
     private static final String ADYEN_UBO = "adyen-ubo";
@@ -60,14 +60,24 @@ public class UboService {
         .put("Miss", Name.GenderEnum.FEMALE)
         .build();
 
+    private Pattern houseNumberPattern;
+
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
+
+    @Value("${extract.house.number.regex}")
+    private String houseNumberRegex;
 
     @Resource
     private ShareholderMappingRepository shareholderMappingRepository;
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
+
+    @PostConstruct
+    public void postConstruct() {
+        houseNumberPattern = Pattern.compile(houseNumberRegex);
+    }
 
     /**
      * Extract shareholder contact data in a adyen format from a mirakl shop
@@ -313,12 +323,16 @@ public class UboService {
      * returns 5
      */
     private String getHouseNumberFromStreet(String street) {
-        Matcher matcher = lastDigitInString.matcher(street);
+        Matcher matcher = houseNumberPattern.matcher(street);
         if (matcher.find()) {
             return matcher.group(1);
         }else{
             log.warn("Unable to retrieve house number from street: {}", street);
             return null;
         }
+    }
+
+    public void setHouseNumberPattern(final Pattern houseNumberPattern) {
+        this.houseNumberPattern = houseNumberPattern;
     }
 }
