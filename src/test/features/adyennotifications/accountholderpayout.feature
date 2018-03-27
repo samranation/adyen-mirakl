@@ -74,5 +74,5 @@ Feature: Payout notifications for seller payout
             | <statusCode> | <message> |
         Examples:
             | transfer amount | statusCode | message                                           |
-            | 10              | Failed     | There is not enough balance available for account |
+            | 100             | Failed     | There is not enough balance available for account |
             | 200             | Initiated  |                                                   |
