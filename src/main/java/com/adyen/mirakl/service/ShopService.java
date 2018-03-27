@@ -180,7 +180,7 @@ public class ShopService {
         AccountHolderDetails accountHolderDetails = new AccountHolderDetails();
         accountHolderDetails.setBankAccountDetails(setBankAccountDetails(shop));
 
-        updateDetailsFromShop(accountHolderDetails, shop);
+        updateDetailsFromShop(accountHolderDetails, shop, null);
 
         // Set email
         MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
@@ -237,10 +237,6 @@ public class ShopService {
         }
         businessDetails.setShareholders(uboService.extractUbos(shop, existingAccountHolder));
         return businessDetails;
-    }
-
-    private BusinessDetails addBusinessDetailsFromShop(final MiraklShop shop) {
-        return addBusinessDetailsFromShop(shop, null);
     }
 
     private IndividualDetails createIndividualDetailsFromShop(MiraklShop shop) {
@@ -316,19 +312,19 @@ public class ShopService {
 
         final AccountHolderDetails accountHolderDetails = Optional.ofNullable(updateAccountHolderRequest.getAccountHolderDetails()).orElseGet(AccountHolderDetails::new);
         updateAccountHolderRequest.setAccountHolderDetails(accountHolderDetails);
-        updateDetailsFromShop(accountHolderDetails, shop);
+        updateDetailsFromShop(accountHolderDetails, shop, existingAccountHolder);
 
         return updateAccountHolderRequest;
     }
 
-    private AccountHolderDetails updateDetailsFromShop(AccountHolderDetails accountHolderDetails, MiraklShop shop) {
+    private AccountHolderDetails updateDetailsFromShop(AccountHolderDetails accountHolderDetails, MiraklShop shop, GetAccountHolderResponse existingAccountHolder) {
         LegalEntityEnum legalEntity = getLegalEntityFromShop(shop);
 
         if (LegalEntityEnum.INDIVIDUAL == legalEntity) {
             IndividualDetails individualDetails = createIndividualDetailsFromShop(shop);
             accountHolderDetails.setIndividualDetails(individualDetails);
         } else if (LegalEntityEnum.BUSINESS == legalEntity) {
-            BusinessDetails businessDetails = addBusinessDetailsFromShop(shop);
+            BusinessDetails businessDetails = addBusinessDetailsFromShop(shop, existingAccountHolder);
             accountHolderDetails.setBusinessDetails(businessDetails);
         } else {
             throw new IllegalArgumentException(legalEntity.toString() + " not supported");
