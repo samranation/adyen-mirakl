@@ -743,8 +743,8 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         });
     }
 
-    @And("^the accountHolder PayoutState is true$")
-    public void theAccountHolderPayoutStateIsTrue(DataTable table) throws Throwable {
+    @And("^the accountHolder receives balance$")
+    public void theAccountHolderReceivesBalance(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         uploadPassportToAdyen(this.shop);
         transferAccountHolderBalance(cucumberTable, shop);

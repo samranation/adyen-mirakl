@@ -7,7 +7,7 @@ Feature: As an Operator I would like to be notified when a Seller Payout Status 
             | city   | bank name | iban                   | bankOwnerName | lastName |
             | PASSED | testBank  | GB26TEST40051512347366 | TestData      | TestData |
         And we process the data and push to Adyen
-        And the accountHolder PayoutState is true
+        And the accountHolder receives balance
             | transfer amount |
             | 1000            |
         And the PayoutState allowPayout changes from false to true
