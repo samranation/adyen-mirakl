@@ -34,8 +34,8 @@ import java.util.stream.IntStream;
 @Service
 public class UboService {
 
+    private final static Pattern lastDigitInString = Pattern.compile("(\\d+)\\D*$");
     private static final Logger log = LoggerFactory.getLogger(UboService.class);
-    private final static Pattern pattern = Pattern.compile("(\\d+)\\D*$");
 
     private static final String ADYEN_UBO = "adyen-ubo";
 
@@ -313,7 +313,7 @@ public class UboService {
      * returns 5
      */
     private String getHouseNumberFromStreet(String street) {
-        Matcher matcher = pattern.matcher(street);
+        Matcher matcher = lastDigitInString.matcher(street);
         if (matcher.find()) {
             return matcher.group(1);
         }else{

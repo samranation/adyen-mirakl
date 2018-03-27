@@ -52,8 +52,8 @@ import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 @Transactional
 public class ShopService {
 
+    private final static Pattern lastDigitInString = Pattern.compile("(\\d+)\\D*$");
     private final Logger log = LoggerFactory.getLogger(ShopService.class);
-    private final static Pattern pattern = Pattern.compile("(\\d+)\\D*$");
 
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
@@ -429,7 +429,7 @@ public class ShopService {
      * returns 5
      */
     private String getHouseNumberFromStreet(String street) {
-        Matcher matcher = pattern.matcher(street);
+        Matcher matcher = lastDigitInString.matcher(street);
         if (matcher.find()) {
             return matcher.group(1);
         }else{
