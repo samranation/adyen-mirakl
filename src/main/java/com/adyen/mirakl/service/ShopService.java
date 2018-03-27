@@ -213,7 +213,6 @@ public class ShopService {
             Address address = new Address();
             address.setHouseNumberOrName(getHouseNumberFromStreet(contactInformation.getStreet1()));
             address.setPostalCode(contactInformation.getZipCode());
-            address.setStateOrProvince(contactInformation.getState());
             address.setStreet(contactInformation.getStreet1());
             address.setCountry(getIso2CountryCodeFromIso3(contactInformation.getCountry()));
             address.setCity(contactInformation.getCity());
