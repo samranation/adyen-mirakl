@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +42,7 @@ public class RestAssuredAdyenApi {
                         log.info("found from url: {} : {}", endpoint, list);
                         return mapResult;
                     }
-                } else {
+                } else if (contentMap.get("accountHolderCode") != null) {
                     if (contentMap.get("accountHolderCode").equals(miraklShopId) && mapResult.get("eventType").equals(eventType)) {
                         log.info("found from url: {} : {}", endpoint, list);
                         return mapResult;

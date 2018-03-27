@@ -1,38 +1,10 @@
 package com.adyen.mirakl.cucumber.stepdefs;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.assertj.core.api.Assertions;
-import org.awaitility.Duration;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.Test;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper.StepDefsHelper;
 import com.adyen.mirakl.domain.AdyenPayoutError;
-import com.adyen.model.Amount;
-import com.adyen.model.marketpay.Account;
-import com.adyen.model.marketpay.AccountHolderBalanceRequest;
-import com.adyen.model.marketpay.AccountHolderBalanceResponse;
-import com.adyen.model.marketpay.BusinessDetails;
-import com.adyen.model.marketpay.DocumentDetail;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.GetUploadedDocumentsRequest;
-import com.adyen.model.marketpay.GetUploadedDocumentsResponse;
-import com.adyen.model.marketpay.ShareholderContact;
-import com.adyen.model.marketpay.TransferFundsResponse;
-import com.adyen.model.marketpay.UploadDocumentRequest;
-import com.adyen.model.marketpay.UploadDocumentResponse;
+import com.adyen.model.marketpay.*;
 import com.adyen.service.exception.ApiException;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
@@ -45,6 +17,20 @@ import cucumber.api.java.en.When;
 import io.restassured.RestAssured;
 import io.restassured.response.ResponseBody;
 import net.minidev.json.JSONArray;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Duration;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import static junit.framework.TestCase.fail;
 import static org.awaitility.Awaitility.await;
 
@@ -55,9 +41,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     private String accountHolderCode;
     private DocumentContext adyenNotificationBody;
     private GetUploadedDocumentsResponse uploadedDocuments;
-    private Long transferAmount;
-    protected List<DocumentContext> notifications;
-
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Given("^a shop has been created in Mirakl for an (.*) with Bank Information$")
@@ -306,37 +289,36 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     }
 
     @Then("^an email will be sent to the seller$")
-    public void anEmailWillBeSentToTheSeller() {
+    public void anEmailWillBeSentToTheSeller(String title) {
         String email = shop.getContactInformation().getEmail();
 
         await().untilAsserted(() -> {
-                ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
+            ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+            List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
-                String htmlBody = null;
-                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
-                for (Map list : emailLists) {
-                    if (list.get("to_email").equals(email)) {
-                        htmlBody = list.get("html_body").toString();
-                        Assertions.assertThat(email).isEqualTo(list.get("to_email"));
-                        break;
-                    } else {
-                        Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
-                    }
+            String htmlBody = null;
+            Assertions.assertThat(emailLists.size()).isGreaterThan(0);
+            for (Map list : emailLists) {
+                if (list.get("to_email").equals(email)) {
+                    htmlBody = list.get("html_body").toString();
+                    Assertions.assertThat(email).isEqualTo(list.get("to_email"));
+                    break;
+                } else {
+                    Assertions.fail("Email was not found in mailtrap. Email: [%s]", email);
                 }
-                Assertions
-                    .assertThat(htmlBody).isNotNull();
-                Document parsedBody = Jsoup.parse(htmlBody);
-                Assertions
-                    .assertThat(parsedBody.body().text())
-                    .contains(shop.getId())
-                    .contains(shop.getContactInformation().getCivility())
-                    .contains(shop.getContactInformation().getFirstname())
-                    .contains(shop.getContactInformation().getLastname());
-
-                Assertions.assertThat(parsedBody.title()).isEqualTo("Account verification");
             }
-        );
+            Assertions
+                .assertThat(htmlBody).isNotNull();
+            Document parsedBody = Jsoup.parse(htmlBody);
+            Assertions
+                .assertThat(parsedBody.body().text())
+                .contains(shop.getId())
+                .contains(shop.getContactInformation().getCivility())
+                .contains(shop.getContactInformation().getFirstname())
+                .contains(shop.getContactInformation().getLastname());
+
+            Assertions.assertThat(parsedBody.title()).isEqualTo(title);
+        });
     }
 
     @Then("^adyen will send the (.*) notification with status$")
@@ -476,51 +458,8 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     @When("^the accountHolders balance is increased$")
     public void theAccountHoldersBalanceIsIncreased(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
-        String sourceAccountHolderCode = cucumberTable.get(0).get("source accountHolderCode");
-
-        GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
-
-        accountHolderCode = this.shop.getId();
-
-        accountHolder.getAccounts().stream()
-            .map(Account::getAccountCode)
-            .findAny()
-            .ifPresent(accountCode -> {
-                Integer destinationAccountCode = Integer.valueOf(accountCode);
-                Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get(sourceAccountHolderCode);
-
-                TransferFundsResponse response = null;
-                try {
-                    response = transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                assert response != null;
-                Assertions
-                    .assertThat(response.getResultCode())
-                    .isEqualTo("Received");
-            });
-
-        await().untilAsserted(() -> {
-            AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
-            accountHolderBalanceRequest.setAccountHolderCode(this.shop.getId());
-            AccountHolderBalanceResponse balance = adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
-
-            Assertions
-                .assertThat(balance.getTotalBalance().getBalance()
-                    .stream()
-                    .map(Amount::getValue)
-                    .findAny().orElse(null))
-                .isEqualTo(transferAmount);
-
-            GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
-
-            Assertions
-                .assertThat(account.getAccountHolderStatus().getPayoutState().getAllowPayout())
-                .isTrue();
-        });
-        log.info("Amount transferred successfully.");
+        accountHolderCode = shop.getId();
+        transferAccountHolderBalance(cucumberTable, shop);
     }
 
     @And("^the failed payout record is removed from the Connector database$")
@@ -611,18 +550,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
     @And("^a passport has been uploaded to Adyen$")
     public void aPassportHasBeenUploadedToAdyen() throws Throwable {
-        URL url = Resources.getResource("adyenRequests/PassportDocumentContent.txt");
-        UploadDocumentRequest uploadDocumentRequest = new UploadDocumentRequest();
-        uploadDocumentRequest.setDocumentContent(Resources.toString(url, Charsets.UTF_8));
-        DocumentDetail documentDetail = new DocumentDetail();
-        documentDetail.setAccountHolderCode(this.shop.getId());
-        documentDetail.setDescription("PASSED");
-        documentDetail.setDocumentType(DocumentDetail.DocumentTypeEnum.valueOf("PASSPORT"));
-        documentDetail.setFilename("passport.jpg");
-        uploadDocumentRequest.setDocumentDetail(documentDetail);
-        UploadDocumentResponse response = adyenAccountService.uploadDocument(uploadDocumentRequest);
-
-        Assertions.assertThat(response.getAccountHolderCode()).isEqualTo(this.shop.getId());
+        uploadPassportToAdyen(this.shop);
     }
 
     @Then("^a remedial email will be sent for each ubo$")
@@ -722,7 +650,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     @Then("^multiple (.*) notifications will be sent by Adyen$")
     public void multipleTRANSFER_FUNDSNotificationsWillBeSentByAdyen(String eventType, String status) throws Throwable {
         waitForNotification();
-
         GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
         String accountCode = response.getAccounts().stream()
             .map(Account::getAccountCode)
@@ -749,5 +676,12 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 .assertThat(transferNotification.read("content.status.statusCode").toString())
                 .isEqualTo(status);
         });
+    }
+
+    @And("^the accountHolder PayoutState is true$")
+    public void theAccountHolderPayoutStateIsTrue(DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        uploadPassportToAdyen(this.shop);
+        transferAccountHolderBalance(cucumberTable, shop);
     }
 }
