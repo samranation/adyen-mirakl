@@ -65,7 +65,7 @@ Feature: Payout notifications for seller payout
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
             | PaymentVoucher_Subscription.csv |
-        Then multiple TRANSFER_FUNDS notifications will be sent by Adyen
+        Then TRANSFER_FUNDS notification will be sent by Adyen
         """
         Success
         """
@@ -74,5 +74,5 @@ Feature: Payout notifications for seller payout
             | <statusCode> | <message> |
         Examples:
             | transfer amount | statusCode | message                                           |
-            | 100             | Failed     | There is not enough balance available for account |
+            | 10              | Failed     | There is not enough balance available for account |
             | 200             | Initiated  |                                                   |
