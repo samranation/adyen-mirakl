@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.startup.MiraklStartupValidator;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
@@ -223,12 +224,16 @@ public class ShopService {
     private Address createAddressFromShop(MiraklShop shop) {
         MiraklContactInformation contactInformation = getContactInformationFromShop(shop);
         if (contactInformation != null && ! StringUtils.isEmpty(contactInformation.getCountry())) {
+
             Address address = new Address();
-            address.setHouseNumberOrName(getHouseNumberFromStreet(contactInformation.getStreet1()));
             address.setPostalCode(contactInformation.getZipCode());
-            address.setStreet(contactInformation.getStreet1());
             address.setCountry(getIso2CountryCodeFromIso3(contactInformation.getCountry()));
             address.setCity(contactInformation.getCity());
+
+            StreetDetails streetDetails = getStreetDetailsFromSingleLine(contactInformation.getStreet1());
+            address.setStreet(streetDetails.getStreetName());
+            address.setHouseNumberOrName(streetDetails.getHouseNumberOrName());
+
             return address;
         }
         return null;
@@ -408,10 +413,12 @@ public class ShopService {
         bankAccountDetail.setCountryCode(getBankCountryFromIban(miraklIbanBankAccountInformation.getIban())); // required field
         bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
-
         if (shop.getContactInformation() != null) {
+            StreetDetails streetDetails = getStreetDetailsFromSingleLine(shop.getContactInformation().getStreet1());
+            bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
+            bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
+
             bankAccountDetail.setOwnerPostalCode(shop.getContactInformation().getZipCode());
-            bankAccountDetail.setOwnerHouseNumberOrName(getHouseNumberFromStreet(shop.getContactInformation().getStreet1()));
             bankAccountDetail.setOwnerName(shop.getPaymentInformation().getOwner());
         }
 
@@ -432,20 +439,23 @@ public class ShopService {
         return iban.substring(0, 2);
     }
 
-
-    /**
-     * Finds a number in the string street starting at the end of the string e.g.
-     * 1 street name house 5
-     * returns 5
-     */
-    private String getHouseNumberFromStreet(String street) {
+    private StreetDetails getStreetDetailsFromSingleLine(String street) {
+        StreetDetails streetDetails = new StreetDetails();
         Matcher matcher = houseNumberPattern.matcher(street);
         if (matcher.find()) {
-            return matcher.group(1);
-        }else{
-            log.warn("Unable to retrieve house number from street: {}", street);
-            return null;
+            String houseNumber = matcher.group(1);
+            StringBuilder sb = new StringBuilder();
+            sb.append(street.substring(0, matcher.start()));
+            if (matcher.end() + 1 < street.length()) {
+                sb.append(street.substring(matcher.end()));
+            }
+            streetDetails.setStreetName(sb.toString());
+            streetDetails.setHouseNumberOrName(houseNumber);
+        } else {
+            streetDetails.setStreetName(street);
         }
+
+        return streetDetails;
     }
 
     /**

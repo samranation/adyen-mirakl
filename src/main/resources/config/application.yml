@@ -177,7 +177,7 @@ shopService:
 mail.max.retries: 10
 
 
-extract.house.number.regex: "(\\d+)\\D*$"
+extract.house.number.regex: "\\s([a-zA-Z]*\\d+[a-zA-Z]*)$"
 
 payoutService:
     subscriptionTransferCode: ${ADYEN_SUBSCRIPTION_TRANSFER_CODE}
