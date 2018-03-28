@@ -230,7 +230,7 @@ public class ShopService {
             address.setCountry(getIso2CountryCodeFromIso3(contactInformation.getCountry()));
             address.setCity(contactInformation.getCity());
 
-            StreetDetails streetDetails = getStreetDetailsFromSingleLine(contactInformation.getStreet1());
+            StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(contactInformation.getStreet1(), houseNumberPattern);
             address.setStreet(streetDetails.getStreetName());
             address.setHouseNumberOrName(streetDetails.getHouseNumberOrName());
 
@@ -414,7 +414,7 @@ public class ShopService {
         bankAccountDetail.setCurrencyCode(shop.getCurrencyIsoCode().toString());
 
         if (shop.getContactInformation() != null) {
-            StreetDetails streetDetails = getStreetDetailsFromSingleLine(shop.getContactInformation().getStreet1());
+            StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(shop.getContactInformation().getStreet1(), houseNumberPattern);
             bankAccountDetail.setOwnerStreet(streetDetails.getStreetName());
             bankAccountDetail.setOwnerHouseNumberOrName(streetDetails.getHouseNumberOrName());
 
@@ -437,25 +437,6 @@ public class ShopService {
      */
     private String getBankCountryFromIban(String iban) {
         return iban.substring(0, 2);
-    }
-
-    private StreetDetails getStreetDetailsFromSingleLine(String street) {
-        StreetDetails streetDetails = new StreetDetails();
-        Matcher matcher = houseNumberPattern.matcher(street);
-        if (matcher.find()) {
-            String houseNumber = matcher.group(1);
-            StringBuilder sb = new StringBuilder();
-            sb.append(street.substring(0, matcher.start()));
-            if (matcher.end() + 1 < street.length()) {
-                sb.append(street.substring(matcher.end()));
-            }
-            streetDetails.setStreetName(sb.toString());
-            streetDetails.setHouseNumberOrName(houseNumber);
-        } else {
-            streetDetails.setStreetName(street);
-        }
-
-        return streetDetails;
     }
 
     /**
