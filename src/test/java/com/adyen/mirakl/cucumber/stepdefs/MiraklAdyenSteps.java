@@ -773,7 +773,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         String ownerHouseNumberOrName = notificationResponse.read("content.accountHolderDetails.bankAccountDetails[0]BankAccountDetail.ownerHouseNumberOrName").toString();
 
         Assertions
-            .assertThat(shop.getContactInformation().getStreet1())
-            .contains(ownerStreet+" "+ownerHouseNumberOrName);
+            .assertThat(ownerStreet+" "+ownerHouseNumberOrName)
+            .contains(shop.getContactInformation().getStreet1());
     }
 }
