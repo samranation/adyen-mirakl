@@ -201,8 +201,6 @@ mailtrapConfig:
     mailTrapInboxId: 356812
     apiToken: ${MAILTRAP_API_TOKEN}
 
-extract.house.number.regex: "\\s([a-zA-Z]*\\d+[a-zA-Z]*)$"
-
 payoutService:
     subscriptionTransferCode: SUBSCRIPTION
     liableAccountCode: ${ADYEN_LIABLE_ACCOUNT_CODE}
