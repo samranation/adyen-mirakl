@@ -7,6 +7,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.adyen.mirakl.service.util.IsoUtil;
+import com.google.common.collect.ImmutableMap;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,18 +87,12 @@ public class ShopServiceTest {
 
     @Before
     public void setup() {
-        shopService.setHouseNumberPattern(Pattern.compile("\\s([a-zA-Z]*\\d+[a-zA-Z]*)$"));
+        shopService.setHouseNumberPatterns(ImmutableMap.of("NL", Pattern.compile("\\s([a-zA-Z]*\\d+[a-zA-Z]*)$")));
     }
 
 
     @Test
-    public void testGetIso2CountryCode() {
-        assertEquals("GB", shopService.getIso2CountryCodeFromIso3("GBR"));
-    }
-
-
-    @Test
-    public void testIsIbanChanged() throws Exception {
+    public void testIsIbanChanged() {
 
         MiraklShop shop = new MiraklShop();
         shop.setId("id");
@@ -183,7 +180,7 @@ public class ShopServiceTest {
         Assertions.assertThat(address.getHouseNumberOrName()).isEqualTo("610b");
         Assertions.assertThat(address.getPostalCode()).isEqualTo("zipCode");
         Assertions.assertThat(address.getStreet()).isEqualTo("Kosterpark");
-        Assertions.assertThat(address.getCountry()).isEqualTo("GB");
+        Assertions.assertThat(address.getCountry()).isEqualTo("NL");
         Assertions.assertThat(address.getCity()).isEqualTo("city");
 
         final List<BankAccountDetail> bankAccountDetails = request.getAccountHolderDetails().getBankAccountDetails();
@@ -363,6 +360,7 @@ public class ShopServiceTest {
         miraklContactInformation.setLastname("lastName");
         miraklContactInformation.setStreet1("Kosterpark 610b");
         miraklContactInformation.setZipCode("1111AA");
+        miraklContactInformation.setCountry("NLD");
         miraklContactInformation.setCivility("Mrs");
         return miraklContactInformation;
     }
@@ -380,7 +378,7 @@ public class ShopServiceTest {
         contactInformation.setEmail("email");
         contactInformation.setFirstname("firstName");
         contactInformation.setLastname("lastName");
-        contactInformation.setCountry("GBR");
+        contactInformation.setCountry("NLD");
         contactInformation.setCivility("Mrs");
         contactInformation.setCity("city");
         contactInformation.setStreet1("Kosterpark 610b");

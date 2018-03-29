@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+
+import com.adyen.mirakl.service.util.IsoUtil;
 import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +65,6 @@ public class UboService {
                                                                                                                          .put("MISS", Name.GenderEnum.FEMALE)
                                                                                                                          .build();
 
-    private Pattern houseNumberPattern;
-
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
 
@@ -77,10 +77,8 @@ public class UboService {
     @Resource
     private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
-    @PostConstruct
-    public void postConstruct() {
-        houseNumberPattern = Pattern.compile(houseNumberRegex);
-    }
+    @Resource
+    private Map<String, Pattern> houseNumberPatterns;
 
     /**
      * Extract shareholder contact data in a adyen format from a mirakl shop
@@ -120,7 +118,7 @@ public class UboService {
                 addShareholderCode(shop, uboNumber, shareholderContact, existingAccountHolder);
                 addMandatoryData(civility, firstName, lastName, email, shareholderContact);
                 addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
-                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact);
+                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact, shop.getContactInformation().getCountry());
                 addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
                 builder.add(shareholderContact);
             }
@@ -271,19 +269,11 @@ public class UboService {
                                 final String city,
                                 final String postalCode,
                                 final String country,
-                                final ShareholderContact shareholderContact) {
+                                final ShareholderContact shareholderContact, final String contactCountry) {
         if (country != null || street != null || houseNumberOrName != null || city != null || postalCode != null) {
             final Address address = new Address();
 
-            StreetDetails streetDetails;
-            if (street != null && houseNumberOrName == null) {
-                // In case houseNumberOrName not provided, extract from street
-                streetDetails = StreetDetails.createStreetDetailsFromSingleLine(street, houseNumberPattern);
-            } else {
-                streetDetails = new StreetDetails();
-                streetDetails.setStreetName(street);
-                streetDetails.setHouseNumberOrName(houseNumberOrName);
-            }
+            StreetDetails streetDetails = StreetDetails.createStreetDetailsFromSingleLine(houseNumberOrName, street, houseNumberPatterns.get(IsoUtil.getIso2CountryCodeFromIso3(contactCountry)));
 
             address.setStreet(streetDetails.getStreetName());
             address.setHouseNumberOrName(streetDetails.getHouseNumberOrName());
@@ -346,7 +336,7 @@ public class UboService {
         this.maxUbos = maxUbos;
     }
 
-    public void setHouseNumberPattern(final Pattern houseNumberPattern) {
-        this.houseNumberPattern = houseNumberPattern;
+    public void setHouseNumberPatterns(final Map<String, Pattern> houseNumberPatterns) {
+        this.houseNumberPatterns = houseNumberPatterns;
     }
 }
