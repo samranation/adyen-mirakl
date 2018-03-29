@@ -717,8 +717,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 .assertThat(notifications)
                 .withFailMessage("Notification is empty.")
                 .isNotEmpty();
-            Integer maxUbos = cucumberTable.get(0).get("maxUbos");
-            Assertions.assertThat(notifications).hasSize(maxUbos);
 
             for (DocumentContext notification : notifications) {
                 Assertions
