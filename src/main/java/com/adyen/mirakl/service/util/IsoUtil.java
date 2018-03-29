@@ -21,6 +21,7 @@ public final class IsoUtil {
     }
 
     public IsoUtil() {
+        //empty constructor
     }
 
     /**

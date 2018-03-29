@@ -68,9 +68,6 @@ public class UboService {
     @Value("${shopService.maxUbos}")
     private Integer maxUbos = 4;
 
-    @Value("${extract.house.number.regex}")
-    private String houseNumberRegex;
-
     @Resource
     private ShareholderMappingRepository shareholderMappingRepository;
 

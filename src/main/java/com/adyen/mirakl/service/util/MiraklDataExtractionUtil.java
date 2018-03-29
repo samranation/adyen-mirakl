@@ -11,6 +11,7 @@ import java.util.List;
 public final class MiraklDataExtractionUtil {
 
     public MiraklDataExtractionUtil() {
+        //empty constructor
     }
 
     public static CreateAccountHolderRequest.LegalEntityEnum getLegalEntityFromShop(List<MiraklAdditionalFieldValue> additionalFields) {
