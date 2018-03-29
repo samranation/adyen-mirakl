@@ -726,7 +726,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 .getMultipleAdyenTransferNotifications(startUpCucumberHook.getBaseRequestBinUrlPath(), eventType, subscriptionTransferCode);
 
             Assertions.assertThat(notificationBodies).isNotEmpty();
-            Assertions.assertThat(notificationBodies.size()).isGreaterThan(1);
 
             DocumentContext transferNotification = null;
             for (DocumentContext notification : notificationBodies) {
