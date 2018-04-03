@@ -8,6 +8,13 @@
         "java"
     ],
     "env": {
+        "HEROKU_APP_NAME": {
+            "description": "Required for the notification endpoint creation"
+        },
+        "ADYEN_ENV": {
+            "description": "TEST or LIVE",
+            "value": "TEST"
+        },
         "NOTIFY_USERNAME": {
             "description": "User name for notification endpoint",
             "value": "admin"
