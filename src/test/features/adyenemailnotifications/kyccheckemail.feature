@@ -8,8 +8,6 @@ Feature: KYC check intervention emails
             | 4       | testData |
         And we process the data and push to Adyen
         Then adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status AWAITING_DATA
-            | maxUbos |
-            | 4       |
         When the notifications are sent to Connector App
         Then a remedial email will be sent for each ubo
         """

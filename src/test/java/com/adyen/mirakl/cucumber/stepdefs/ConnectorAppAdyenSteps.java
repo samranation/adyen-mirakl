@@ -12,6 +12,7 @@ import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.When;
+import org.awaitility.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,11 +58,12 @@ public class ConnectorAppAdyenSteps extends StepDefs {
     public void theNotificationsAreSentToConnectorApp() throws Exception {
         ImmutableList<DocumentContext> notifications = (ImmutableList<DocumentContext>) cucumberMap.get("notifications");
         for (DocumentContext notification : notifications) {
+            Thread.sleep(10000);
             restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(notification.jsonString()))
                 .andExpect(status().is(201));
-            log.info("Notification posted to Connector: [%s]", notification.jsonString());
+            log.info("Notification posted to Connector: [{}]", notification.jsonString());
         }
     }
 
@@ -91,7 +94,7 @@ public class ConnectorAppAdyenSteps extends StepDefs {
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(notification))
                 .andExpect(status().is(201));
-            log.info("Notification posted to Connector: [%s]", notification);
+            log.info("Notification posted to Connector: [{}]", notification);
         }
     }
 
@@ -105,7 +108,7 @@ public class ConnectorAppAdyenSteps extends StepDefs {
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(notification))
             .andExpect(status().is(201));
-        log.info("Notification posted to Connector: [%s]", notification);
+        log.info("Notification posted to Connector: [{}]", notification);
     }
 
     @When("^the notification is sent to the Connector$")
@@ -115,6 +118,6 @@ public class ConnectorAppAdyenSteps extends StepDefs {
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(notification.jsonString()))
             .andExpect(status().is(201));
-        log.info(String.format("Notification posted to Connector: [%s]", notification.jsonString()));
+        log.info(String.format("Notification posted to Connector: [{}]", notification.jsonString()));
     }
 }
