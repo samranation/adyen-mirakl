@@ -17,6 +17,7 @@ import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
 import com.adyen.service.Fund;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
 import com.mirakl.client.mmp.domain.shop.MiraklShops;
@@ -118,14 +119,12 @@ public class StepDefsHelper {
         return adyenNotificationBody;
     }
 
-    protected MiraklShop getMiraklShop(MiraklMarketplacePlatformOperatorApiClient client, String seller) {
+    protected MiraklShop getMiraklShop(MiraklMarketplacePlatformOperatorApiClient client, String shopId) {
         MiraklGetShopsRequest shopsRequest = new MiraklGetShopsRequest();
-        shopsRequest.setPaginate(false);
+        shopsRequest.setShopIds(ImmutableList.of(shopId));
 
         MiraklShops shops = client.getShops(shopsRequest);
-        return shops.getShops().stream()
-            .filter(shop -> seller.equals(shop.getId())).findAny()
-            .orElseThrow(() -> new IllegalStateException("Cannot find shop"));
+        return shops.getShops().iterator().next();
     }
 
     protected MiraklShop retrieveCreatedShop(MiraklCreatedShops shopForIndividualWithBankDetails) {
