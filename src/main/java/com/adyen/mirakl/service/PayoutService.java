@@ -62,7 +62,8 @@ public class PayoutService {
             String iban = record.get("payment-info-ibantype-iban");
             String invoiceNumber = record.get("invoice-number");
             String shopName = record.get("shop-name");
-            String description = "Payout shop " + shopName + " (" + accountHolderCode + "), " + "Invoice number: " + invoiceNumber;
+            // make sure that you start with the invoiceNumber because long shopper statements could be stripped off
+            String description = "Invoice number: " + invoiceNumber + ", Payout shop " + shopName + " (" + accountHolderCode + ")";
 
             PayoutAccountHolderRequest payoutAccountHolderRequest = null;
             PayoutAccountHolderResponse payoutAccountHolderResponse = null;
@@ -73,7 +74,7 @@ public class PayoutService {
                 //Call Adyen to retrieve the accountCode from the accountHolderCode
                 GetAccountHolderResponse accountHolderResponse = getAccountHolderResponse(accountHolderCode);
 
-                payoutAccountHolderRequest = createPayoutAccountHolderRequest(accountHolderResponse, amount, currency, iban, description);
+                payoutAccountHolderRequest = createPayoutAccountHolderRequest(accountHolderResponse, amount, currency, iban, description, invoiceNumber);
                 if (! subscriptionAmount.isEmpty() && ! subscriptionAmount.equals("0")) {
                     transferFundsRequest = createTransferFundsSubscription(accountHolderResponse, subscriptionAmount, currency);
                     TransferFundsResponse transferFundsResponse = adyenFundService.transferFunds(transferFundsRequest);
@@ -126,7 +127,8 @@ public class PayoutService {
                                                                           String amount,
                                                                           String currency,
                                                                           String iban,
-                                                                          String description) throws Exception {
+                                                                          String description,
+                                                                          String invoiceNumber) throws Exception {
 
         //Retrieve the bankAccountUUID from Adyen matching to the iban provided from Mirakl
         String bankAccountUUID = getBankAccountUUID(accountHolderResponse, iban);
@@ -135,6 +137,7 @@ public class PayoutService {
         payoutAccountHolderRequest.setBankAccountUUID(bankAccountUUID);
         payoutAccountHolderRequest.setAccountHolderCode(accountHolderResponse.getAccountHolderCode());
         payoutAccountHolderRequest.setDescription(description);
+        payoutAccountHolderRequest.setMerchantReference(invoiceNumber);
         Amount adyenAmount = Util.createAmount(amount, currency);
         payoutAccountHolderRequest.setAmount(adyenAmount);
 
