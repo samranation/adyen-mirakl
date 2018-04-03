@@ -32,13 +32,14 @@ public class PayoutServiceTest {
     @Test
     public void testPayout() throws Exception {
         GetAccountHolderResponse getAccountHolderResponse = getResponseWithBankDetails();
-        PayoutAccountHolderRequest request = payoutService.createPayoutAccountHolderRequest(getAccountHolderResponse, "10.25", "EUR", "GB29NWBK60161331926819", "Description");
+        PayoutAccountHolderRequest request = payoutService.createPayoutAccountHolderRequest(getAccountHolderResponse, "10.25", "EUR", "GB29NWBK60161331926819", "Description", "1111");
         assertEquals("2a421c72-ead7-4ad3-8741-80a0aebb8758", request.getBankAccountUUID());
         assertEquals("2000", request.getAccountHolderCode());
         assertEquals("123456", request.getAccountCode());
         assertEquals(1025L, (long) request.getAmount().getValue());
         assertEquals("EUR", request.getAmount().getCurrency());
         assertEquals("Description", request.getDescription());
+        assertEquals("1111", request.getMerchantReference());
     }
 
     public GetAccountHolderResponse getResponseWithBankDetails() {
