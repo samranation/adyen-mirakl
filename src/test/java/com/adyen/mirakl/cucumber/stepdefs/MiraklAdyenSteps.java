@@ -773,9 +773,12 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     }
 
     @Then("^the documents will be removed for each of the UBOs$")
-    public void theDocumentsWillBeRemovedForEachOfTheUBOs() throws Throwable {
-        MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(ImmutableList.of(shop.getId()));
-        List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
-        Assertions.assertThat(shopDocuments).isEmpty();
+    public void theDocumentsWillBeRemovedForEachOfTheUBOs() {
+        await().atMost(Duration.TEN_SECONDS).untilAsserted(() -> {
+            MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(ImmutableList.of(shop.getId()));
+            List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
+            Assertions.assertThat(shopDocuments).isEmpty();
+        });
+
     }
 }

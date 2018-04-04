@@ -58,7 +58,6 @@ public class ConnectorAppAdyenSteps extends StepDefs {
     public void theNotificationsAreSentToConnectorApp() throws Exception {
         ImmutableList<DocumentContext> notifications = (ImmutableList<DocumentContext>) cucumberMap.get("notifications");
         for (DocumentContext notification : notifications) {
-            Thread.sleep(10000);
             restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(notification.jsonString()))
