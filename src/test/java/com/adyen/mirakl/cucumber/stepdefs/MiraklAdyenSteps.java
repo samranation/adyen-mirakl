@@ -300,7 +300,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 log.warn("Mail throttled, will try again");
             }
             Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
-            
+
             List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
             String htmlBody = null;
@@ -717,6 +717,8 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             .map(ShareholderContact::getShareholderCode)
             .collect(Collectors.toList());
 
+        log.info("Shareholders found: [{}]", shareholderCodes.size());
+
         await().untilAsserted(() -> {
             // get all ACCOUNT_HOLDER_VERIFICATION notifications
             List<DocumentContext> notifications = restAssuredAdyenApi
@@ -736,6 +738,9 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                     .assertThat(notification.read("content.verificationStatus").toString())
                     .isEqualTo(verificationStatus);
             }
+
+            Assertions.assertThat(shareholderCodes.size()).isEqualTo(shareHolderNotifications.size());
+
             cucumberMap.put("notifications", shareHolderNotifications);
         });
     }
