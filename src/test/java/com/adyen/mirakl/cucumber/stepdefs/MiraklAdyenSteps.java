@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 public class MiraklAdyenSteps extends StepDefsHelper {
 
@@ -291,7 +292,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     public void anEmailWillBeSentToTheSeller(String title) {
         String email = shop.getContactInformation().getEmail();
 
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
             Assertions.assertThat(responseBody.asString()).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
             List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
@@ -661,7 +662,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             .map(ShareholderContact::getEmail)
             .collect(Collectors.toList());
 
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
                 Assertions.assertThat(responseBody.asString()).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
                 List<Map<String, Object>> emails = responseBody.jsonPath().getList("");
