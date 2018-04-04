@@ -293,6 +293,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
         await().untilAsserted(() -> {
             ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+            Assertions.assertThat(responseBody.asString()).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
             List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
             String htmlBody = null;
@@ -662,7 +663,8 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
         await().untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                List<Map<String, Object>> emails = JsonPath.parse(responseBody.jsonPath().getList("")).read("*");
+                Assertions.assertThat(responseBody.asString()).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+                List<Map<String, Object>> emails = responseBody.jsonPath().getList("");
                 Assertions.assertThat(emails).size().isGreaterThan(0);
 
                 boolean foundEmail = emails.stream()
