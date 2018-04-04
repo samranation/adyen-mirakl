@@ -294,7 +294,13 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-            Assertions.assertThat(responseBody.asString()).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+
+            final String response = responseBody.asString();
+            if(response.equalsIgnoreCase("{\"error\":\"Throttled\"}")){
+                log.warn("Mail throttled, will try again");
+            }
+            Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+            
             List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
             String htmlBody = null;
@@ -664,7 +670,13 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                Assertions.assertThat(responseBody.asString()).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+
+                final String response = responseBody.asString();
+                if(response.equalsIgnoreCase("{\"error\":\"Throttled\"}")){
+                    log.warn("Mail throttled, will try again");
+                }
+                Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+
                 List<Map<String, Object>> emails = responseBody.jsonPath().getList("");
                 Assertions.assertThat(emails).size().isGreaterThan(0);
 
