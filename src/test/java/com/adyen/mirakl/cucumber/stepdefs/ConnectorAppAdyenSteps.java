@@ -33,8 +33,6 @@ import java.util.stream.Collectors;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-on;
-
 
 public class ConnectorAppAdyenSteps extends StepDefsHelper {
 
