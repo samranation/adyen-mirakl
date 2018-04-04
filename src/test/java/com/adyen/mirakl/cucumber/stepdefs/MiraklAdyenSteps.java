@@ -729,17 +729,17 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 .extractShareHolderNotifications(notifications, shareholderCodes);
 
             Assertions
-                .assertThat(notifications)
+                .assertThat(shareHolderNotifications)
                 .withFailMessage("Notification is empty.")
                 .isNotEmpty();
 
-            for (DocumentContext notification : notifications) {
+            for (DocumentContext notification : shareHolderNotifications) {
                 Assertions
                     .assertThat(notification.read("content.verificationStatus").toString())
                     .isEqualTo(verificationStatus);
             }
 
-            Assertions.assertThat(shareholderCodes.size()).isEqualTo(shareHolderNotifications.size());
+            Assertions.assertThat(shareHolderNotifications.size()).isEqualTo(shareholderCodes.size());
 
             cucumberMap.put("notifications", shareHolderNotifications);
         });
