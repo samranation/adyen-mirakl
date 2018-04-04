@@ -13,11 +13,11 @@
       "description": "TEST or LIVE",
       "value": "TEST"
     },
-    "ADYEN_NOTIFY_USERNAME" : {
+    "NOTIFY_USERNAME" : {
       "description": "User name for notification endpoint",
       "value": "admin"
     },
-    "ADYEN_NOTIFY_PASSWORD" : {
+    "NOTIFY_PASSWORD" : {
       "description": "Password of the Connector notification endpoint",
       "generator" : "secret"
     },
@@ -29,14 +29,14 @@
     },
     "ADYEN_LIABLE_ACCOUNT_CODE" : {
       "description": "Liable Account Code for the Operator (format LiableAccountHolder{account})",
-      "value": "LiableAccountHolder<account>"  
+      "value": "LiableAccountHolder<account>"
     },
     "MIRAKL_ENV_URL": {
       "description": "The base URL of your Mirakl Environment",
       "value": "https://<yourproject>-dev.mirakl.net"
     },
     "MIRAKL_API_OPERATOR_KEY": {
-      "description": "Operator API key for your Mirakl Environment" 
+      "description": "Operator API key for your Mirakl Environment"
     },
     "MAIL_HOST": {
        "description": "Mail host",
