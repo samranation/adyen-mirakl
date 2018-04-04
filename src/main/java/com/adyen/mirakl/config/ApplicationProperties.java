@@ -23,6 +23,8 @@ public class ApplicationProperties {
     private Integer initialDeltaDaysBack;
     private Integer maxPayoutFailed;
     private Map<String, String> houseNumbersRegex;
+    private String basicUsername;
+    private String basicPassword;
 
     @Bean
     public Map<String, Pattern> houseNumberPatterns(){
@@ -85,5 +87,21 @@ public class ApplicationProperties {
 
     public void setHouseNumbersRegex(final Map<String, String> houseNumbersRegex) {
         this.houseNumbersRegex = houseNumbersRegex;
+    }
+
+    public String getBasicUsername() {
+        return basicUsername;
+    }
+
+    public void setBasicUsername(String basicUsername) {
+        this.basicUsername = basicUsername;
+    }
+
+    public String getBasicPassword() {
+        return basicPassword;
+    }
+
+    public void setBasicPassword(String basicPassword) {
+        this.basicPassword = basicPassword;
     }
 }

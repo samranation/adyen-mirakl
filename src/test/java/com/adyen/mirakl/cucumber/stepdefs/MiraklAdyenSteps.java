@@ -5,6 +5,7 @@ import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonArray;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
@@ -658,24 +659,20 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
         await().untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
+                List<Map<String, Object>> emails = JsonPath.parse(responseBody.jsonPath().getList("")).read("*");
+                Assertions.assertThat(emails).size().isGreaterThan(0);
 
-                List<String> htmlBody = new LinkedList<>();
-
-                Assertions.assertThat(emailLists.size()).isGreaterThan(0);
-
-                boolean foundEmail = emailLists.stream()
+                boolean foundEmail = emails.stream()
                     .anyMatch(map -> map.get("to_email").equals(uboEmails.iterator().next()));
-
                 Assertions.assertThat(foundEmail).isTrue();
 
+                List<String> htmlBody = new LinkedList<>();
                 for (String uboEmail : uboEmails) {
-                    emailLists.stream()
+                    emails.stream()
                         .filter(map -> map.get("to_email").equals(uboEmail))
                         .findAny()
                         .ifPresent(map -> htmlBody.add(map.get("html_body").toString()));
                 }
-
                 Assertions.assertThat(htmlBody).isNotEmpty();
                 Assertions.assertThat(htmlBody).hasSize(uboEmails.size());
 
@@ -684,7 +681,6 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                     Assertions
                         .assertThat(parsedBody.body().text())
                         .contains(shop.getId());
-
                     Assertions.assertThat(parsedBody.title()).isEqualTo(title);
                 }
             }
@@ -770,7 +766,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         String ownerHouseNumberOrName = notificationResponse.read("content.accountHolderDetails.bankAccountDetails[0]BankAccountDetail.ownerHouseNumberOrName").toString();
 
         Assertions
-            .assertThat(ownerStreet+" "+ownerHouseNumberOrName)
+            .assertThat(ownerStreet + " " + ownerHouseNumberOrName)
             .contains(shop.getContactInformation().getStreet1());
     }
 }

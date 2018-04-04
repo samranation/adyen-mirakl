@@ -16,15 +16,19 @@ export MIRAKL_API_OPERATOR_KEY=<miraklApiOperatorKey>
 export MIRAKL_API_FRONT_KEY=<miraklApiFrontKey>
 ```
 
-Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_NOTIFY_URL`, `ADYEN_NOTIFY_USERNAME`, `ADYEN_NOTIFY_PASSWORD` AND `ADYEN_LIABLE_ACCOUNT_CODE`. 
+Same goes for Adyen: `ADYEN_USER_NAME`, `ADYEN_PASS`, `ADYEN_ENV`, `ADYEN_NOTIFY_URL` AND `ADYEN_LIABLE_ACCOUNT_CODE`. 
 ```
 export ADYEN_USER_NAME=<user>
 export ADYEN_PASS=<pass>
 export ADYEN_ENV=<TEST|LIVE>
-export ADYEN_NOTIFY_URL=<notifyUrl>
-export ADYEN_NOTIFY_USERNAME=<notifyUsername>
-export ADYEN_NOTIFY_PASSWORD=<notifyPassword>
+export ADYEN_NOTIFY_URL=<e.g. http://adyen-mirakl-connector.domain.com/api/adyen-notifications>
 export ADYEN_LIABLE_ACCOUNT_CODE=<accountCode>
+```
+
+And settings for receiving notifications from Adyen and Mirakl: `NOTIFY_USERNAME` and `NOTIFY_PASSWORD`
+```
+export NOTIFY_USERNAME=<notifyUsername>
+export NOTIFY_PASSWORD=<notifyPassword>
 ```
 
 We use heroku mailtrap for development, please add the user and password in application.yml
