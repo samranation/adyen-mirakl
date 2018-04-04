@@ -1,6 +1,8 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.config.Constants;
+import com.adyen.mirakl.domain.ShareholderMapping;
+import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
@@ -9,6 +11,8 @@ import com.google.common.io.Resources;
 import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.document.MiraklDeleteShopDocumentRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,6 +27,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.io.Files.toByteArray;
 import static org.junit.Assert.assertEquals;
@@ -50,8 +55,18 @@ public class DocServiceTest {
     private UploadDocumentResponse responseMock;
     @Mock
     private UboDocumentDTO uboDocumentDTOMock;
+    @Mock
+    private ShareholderMappingRepository shareholderMappingRepositoryMock;
+    @Mock
+    private ShareholderMapping shareholderMappingMock;
+    @Mock
+    private MiraklShopDocument miraklShopDocumentMock1, miraklShopDocumentMock2, miraklShopDocumentMock3;
     @Captor
     private ArgumentCaptor<UploadDocumentRequest> uploadDocumentRequestCaptor;
+    @Captor
+    private ArgumentCaptor<MiraklGetShopDocumentsRequest> miraklGetShopDocumentsRequestCaptor;
+    @Captor
+    private ArgumentCaptor<MiraklDeleteShopDocumentRequest> miraklDeleteShopDocumentRequestCaptor;
 
 
     @Test
@@ -122,6 +137,34 @@ public class DocServiceTest {
         Assertions.assertThat(uploadDocumentRequest.getShareholderCode()).isEqualTo("shareholderCode");
         Assertions.assertThat(uploadDocumentRequest.getAccountHolderCode()).isEqualTo("shopId");
 
+    }
+
+    @Test
+    public void shouldRemoveShareHolderMedia(){
+        when(shareholderMappingRepositoryMock.findOneByAdyenShareholderCode("shareHolderCode")).thenReturn(Optional.of(shareholderMappingMock));
+        when(shareholderMappingMock.getMiraklShopId()).thenReturn("miraklShopID");
+        when(shareholderMappingMock.getMiraklUboNumber()).thenReturn(2);
+
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(miraklGetShopDocumentsRequestCaptor.capture())).thenReturn(ImmutableList.of(miraklShopDocumentMock1, miraklShopDocumentMock2, miraklShopDocumentMock3));
+        //ignored as we're looking to delete only ubo 2 documents
+        when(miraklShopDocumentMock1.getTypeCode()).thenReturn("adyen-ubo1-photoid");
+
+        //will delete both these documents
+        when(miraklShopDocumentMock2.getTypeCode()).thenReturn("adyen-ubo2-photoid");
+        when(miraklShopDocumentMock2.getId()).thenReturn("ubo2DocId1");
+        when(miraklShopDocumentMock3.getTypeCode()).thenReturn("adyen-ubo2-photoid-rear");
+        when(miraklShopDocumentMock3.getId()).thenReturn("ubo2DocId2");
+
+        docService.removeMiraklMediaForShareHolder("shareHolderCode");
+
+        verify(miraklMarketplacePlatformOperatorApiClientMock, times(2)).deleteShopDocument(miraklDeleteShopDocumentRequestCaptor.capture());
+
+        final MiraklGetShopDocumentsRequest getShopsRequest = miraklGetShopDocumentsRequestCaptor.getValue();
+        Assertions.assertThat(getShopsRequest.getShopIds()).containsOnly("miraklShopID");
+
+        final List<MiraklDeleteShopDocumentRequest> deleteRequests = miraklDeleteShopDocumentRequestCaptor.getAllValues();
+        Assertions.assertThat(deleteRequests.get(0).getDocumentId()).isEqualTo("ubo2DocId1");
+        Assertions.assertThat(deleteRequests.get(1).getDocumentId()).isEqualTo("ubo2DocId2");
     }
 
 }

@@ -9,8 +9,11 @@ import com.google.gson.JsonArray;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.domain.shop.create.MiraklCreatedShops;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
 import cucumber.api.DataTable;
+import cucumber.api.PendingException;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -33,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 
 public class MiraklAdyenSteps extends StepDefsHelper {
 
@@ -288,8 +292,15 @@ public class MiraklAdyenSteps extends StepDefsHelper {
     public void anEmailWillBeSentToTheSeller(String title) {
         String email = shop.getContactInformation().getEmail();
 
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
+
+            final String response = responseBody.asString();
+            if(response.equalsIgnoreCase("{\"error\":\"Throttled\"}")){
+                log.warn("Mail throttled, will try again");
+            }
+            Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+
             List<Map<String, Object>> emailLists = responseBody.jsonPath().get();
 
             String htmlBody = null;
@@ -657,9 +668,16 @@ public class MiraklAdyenSteps extends StepDefsHelper {
             .map(ShareholderContact::getEmail)
             .collect(Collectors.toList());
 
-        await().untilAsserted(() -> {
+        await().with().pollInterval(fibonacci()).untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
-                List<Map<String, Object>> emails = JsonPath.parse(responseBody.jsonPath().getList("")).read("*");
+
+                final String response = responseBody.asString();
+                if(response.equalsIgnoreCase("{\"error\":\"Throttled\"}")){
+                    log.warn("Mail throttled, will try again");
+                }
+                Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
+
+                List<Map<String, Object>> emails = responseBody.jsonPath().getList("");
                 Assertions.assertThat(emails).size().isGreaterThan(0);
 
                 boolean foundEmail = emails.stream()
@@ -689,8 +707,7 @@ public class MiraklAdyenSteps extends StepDefsHelper {
 
     @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
     public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
-        String eventType, String verificationType, String verificationStatus, DataTable table) throws Throwable {
-        List<Map<String, Integer>> cucumberTable = table.getTableConverter().toMaps(table, String.class, Integer.class);
+        String eventType, String verificationType, String verificationStatus) throws Throwable {
         waitForNotification();
 
         // get shareholderCodes from Adyen
@@ -699,6 +716,8 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
             .map(ShareholderContact::getShareholderCode)
             .collect(Collectors.toList());
+
+        log.info("Shareholders found: [{}]", shareholderCodes.size());
 
         await().untilAsserted(() -> {
             // get all ACCOUNT_HOLDER_VERIFICATION notifications
@@ -710,15 +729,18 @@ public class MiraklAdyenSteps extends StepDefsHelper {
                 .extractShareHolderNotifications(notifications, shareholderCodes);
 
             Assertions
-                .assertThat(notifications)
+                .assertThat(shareHolderNotifications)
                 .withFailMessage("Notification is empty.")
                 .isNotEmpty();
 
-            for (DocumentContext notification : notifications) {
+            for (DocumentContext notification : shareHolderNotifications) {
                 Assertions
                     .assertThat(notification.read("content.verificationStatus").toString())
                     .isEqualTo(verificationStatus);
             }
+
+            Assertions.assertThat(shareHolderNotifications.size()).isEqualTo(shareholderCodes.size());
+
             cucumberMap.put("notifications", shareHolderNotifications);
         });
     }
@@ -768,5 +790,15 @@ public class MiraklAdyenSteps extends StepDefsHelper {
         Assertions
             .assertThat(ownerStreet + " " + ownerHouseNumberOrName)
             .contains(shop.getContactInformation().getStreet1());
+    }
+
+    @Then("^the documents will be removed for each of the UBOs$")
+    public void theDocumentsWillBeRemovedForEachOfTheUBOs() {
+        await().atMost(Duration.TEN_SECONDS).untilAsserted(() -> {
+            MiraklGetShopDocumentsRequest request = new MiraklGetShopDocumentsRequest(ImmutableList.of(shop.getId()));
+            List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
+            Assertions.assertThat(shopDocuments).isEmpty();
+        });
+
     }
 }
