@@ -18,7 +18,8 @@ spring:
         hikari:
             maximumPoolSize: 8
 
-
+adyenConfig:
+    environment: TEST
 
 adyenNotificationsConfig:
     notificationConfigurationDetails:
