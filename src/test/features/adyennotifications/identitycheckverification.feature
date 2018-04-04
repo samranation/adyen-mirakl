@@ -8,8 +8,6 @@ Feature: Identity verification check
             | 4       | testData |
         And we process the data and push to Adyen
         Then adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status DATA_PROVIDED
-            | maxUbos |
-            | 4       |
 
     @ADY-18
     Scenario: Mandatory shareholder data is updated and sent to Adyen to re-perform KYC Identity Check
@@ -36,10 +34,8 @@ Feature: Identity verification check
             | 4       | testData |
         And we process the data and push to Adyen
         Then adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status AWAITING_DATA
-            | maxUbos |
-            | 4       |
 
-    @ADY-99 @ADY-108
+    @ADY-99 @ADY-94 @ADY-108
     Scenario: Uploading a new photo Id/Updating photo Id for shareholder to complete Identity Checks
         Given a new shop has been created in Mirakl with UBO Data for a Business
             | maxUbos | lastName |
@@ -74,3 +70,6 @@ Feature: Identity verification check
         Then the updated documents are successfully uploaded to Adyen
             | documentType | filename          |
             | PASSPORT     | passportFront.jpg |
+        When adyen will send multiple ACCOUNT_HOLDER_VERIFICATION notifications with IDENTITY_VERIFICATION of status DATA_PROVIDED
+        And the notifications are sent to Connector App
+        Then the documents will be removed for each of the UBOs

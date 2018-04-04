@@ -1,25 +1,31 @@
 package com.adyen.mirakl.service;
 
-import java.time.ZonedDateTime;
-import java.util.*;
-import javax.annotation.Resource;
+import com.adyen.mirakl.config.Constants;
+import com.adyen.mirakl.domain.ShareholderMapping;
+import com.adyen.mirakl.repository.ShareholderMappingRepository;
+import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
+import com.adyen.model.marketpay.*;
+import com.adyen.service.Account;
+import com.adyen.service.exception.ApiException;
+import com.google.common.collect.ImmutableList;
+import com.mirakl.client.mmp.domain.common.FileWrapper;
+import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.document.MiraklDeleteShopDocumentRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsRequest;
+import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.adyen.mirakl.config.Constants;
-import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
-import com.adyen.model.marketpay.DocumentDetail;
-import com.adyen.model.marketpay.GetAccountHolderRequest;
-import com.adyen.model.marketpay.GetAccountHolderResponse;
-import com.adyen.model.marketpay.UploadDocumentRequest;
-import com.adyen.model.marketpay.UploadDocumentResponse;
-import com.adyen.service.Account;
-import com.adyen.service.exception.ApiException;
-import com.mirakl.client.mmp.domain.common.FileWrapper;
-import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
-import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
-import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsRequest;
+
+import javax.annotation.Resource;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.google.common.io.Files.toByteArray;
 
 @Service
@@ -39,6 +45,9 @@ public class DocService {
 
     @Resource
     private UboService uboService;
+
+    @Resource
+    private ShareholderMappingRepository shareholderMappingRepository;
 
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
@@ -143,4 +152,22 @@ public class DocService {
         return null;
     }
 
+    public void removeMiraklMediaForShareHolder(final String shareHolderCode) {
+        ShareholderMapping shareholderMapping = shareholderMappingRepository.findOneByAdyenShareholderCode(shareHolderCode).orElseThrow(() -> new IllegalStateException("No shareholder mapping found for shareholder code: "+shareHolderCode));
+        final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(ImmutableList.of(shareholderMapping.getMiraklShopId())));
+        List<String> documentIdsToDelete = extractDocumentsToDelete(shopDocuments, shareholderMapping.getMiraklUboNumber());
+
+        documentIdsToDelete.forEach(docIdToDel -> {
+            final MiraklDeleteShopDocumentRequest request = new MiraklDeleteShopDocumentRequest(docIdToDel);
+            miraklMarketplacePlatformOperatorApiClient.deleteShopDocument(request);
+        });
+    }
+
+    private List<String> extractDocumentsToDelete(final List<MiraklShopDocument> shopDocuments, Integer uboNumber) {
+        String uboStartingTypeCode = "adyen-ubo"+uboNumber;
+        return shopDocuments.stream()
+            .filter(x -> x.getTypeCode().startsWith(uboStartingTypeCode))
+            .map(MiraklShopDocument::getId)
+            .collect(Collectors.toList());
+    }
 }
