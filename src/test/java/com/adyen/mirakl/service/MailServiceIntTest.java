@@ -78,7 +78,8 @@ public class MailServiceIntTest {
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         MockitoAnnotations.initMocks(this);
-        mailService = new MailService(jHipsterProperties, javaMailSender, "bccEmail");
+        mailService = new MailService(jHipsterProperties, javaMailSender);
+        mailService.setBccEmail("bccEmail");
     }
 
     //See comments on RetryTemplate
