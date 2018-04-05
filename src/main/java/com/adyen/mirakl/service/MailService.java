@@ -26,10 +26,12 @@ public class MailService {
 
     private final JavaMailSender javaMailSender;
 
-    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender) {
+    private final String miraklOperatorEmail;
 
+    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, String miraklOperatorEmail) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
+        this.miraklOperatorEmail = miraklOperatorEmail;
     }
 
     @Async
@@ -42,6 +44,7 @@ public class MailService {
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, CharEncoding.UTF_8);
             message.setTo(to);
+            message.setBcc(miraklOperatorEmail);
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
