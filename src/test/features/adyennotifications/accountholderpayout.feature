@@ -18,7 +18,7 @@ Feature: Payout notifications for seller payout
             | currency | amount | statusCode | iban                   |
             | EUR      | 2914.0 | Initiated  | GB26TEST40051512347366 |
 
-    @ADY-34 @ADY-111 @ADY-9 @ADY-86
+    @ADY-34 @ADY-111 @ADY-9 @ADY-86 @ADY-24
     Scenario: The connector forces payout-retry upon accountHolder payable state change
         Given a shop has been created in Mirakl for an Individual with mandatory KYC data
             | city   | bank name | iban                   | bankOwnerName | lastName |
@@ -31,6 +31,11 @@ Feature: Payout notifications for seller payout
         Then adyen will send the ACCOUNT_HOLDER_PAYOUT notification with status
             | statusCode | message                                           |
             | Failed     | There is not enough balance available for account |
+        When the notification is sent to the Connector
+        Then a payout email will be sent to the operator
+        """
+        Account Payout Failed
+        """
         When the accountHolders balance is increased
             | transfer amount |
             | 9900            |

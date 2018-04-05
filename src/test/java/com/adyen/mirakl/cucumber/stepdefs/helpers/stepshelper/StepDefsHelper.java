@@ -1,10 +1,7 @@
 package com.adyen.mirakl.cucumber.stepdefs.helpers.stepshelper;
 
 import com.adyen.mirakl.AdyenMiraklConnectorApp;
-import com.adyen.mirakl.config.AdyenAccountConfiguration;
-import com.adyen.mirakl.config.AdyenConfiguration;
-import com.adyen.mirakl.config.MailTrapConfiguration;
-import com.adyen.mirakl.config.ShopConfiguration;
+import com.adyen.mirakl.config.*;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.hooks.StartUpTestingHook;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklShopApi;
 import com.adyen.mirakl.cucumber.stepdefs.helpers.miraklapi.MiraklUpdateShopApi;
@@ -87,11 +84,13 @@ public class StepDefsHelper {
     @Resource
     protected MiraklUpdateShopApi miraklUpdateShopApi;
     @Resource
-    protected MailTrapConfiguration mailTrapConfiguration;
+    private MailTrapConfiguration mailTrapConfiguration;
     @Resource
     protected RetryPayoutService retryPayoutService;
     @Resource
     protected AdyenPayoutErrorRepository adyenPayoutErrorRepository;
+    @Resource
+    protected MiraklOperatorConfiguration miraklOperatorConfiguration;
 
     @Value("${payoutService.subscriptionTransferCode}")
     protected String subscriptionTransferCode;
