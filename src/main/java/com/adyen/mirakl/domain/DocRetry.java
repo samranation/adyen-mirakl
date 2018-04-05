@@ -1,11 +1,14 @@
 package com.adyen.mirakl.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Objects;
 
 /**
@@ -28,11 +31,13 @@ public class DocRetry implements Serializable {
     @Column(name = "shop_id")
     private String shopId;
 
-    @Column(name = "error")
-    private String error;
-
     @Column(name = "times_failed")
     private Integer timesFailed;
+
+    @OneToMany(mappedBy = "docRetry")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DocError> docErrors = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -69,19 +74,6 @@ public class DocRetry implements Serializable {
         this.shopId = shopId;
     }
 
-    public String getError() {
-        return error;
-    }
-
-    public DocRetry error(String error) {
-        this.error = error;
-        return this;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
     public Integer getTimesFailed() {
         return timesFailed;
     }
@@ -93,6 +85,31 @@ public class DocRetry implements Serializable {
 
     public void setTimesFailed(Integer timesFailed) {
         this.timesFailed = timesFailed;
+    }
+
+    public Set<DocError> getDocErrors() {
+        return docErrors;
+    }
+
+    public DocRetry docErrors(Set<DocError> docErrors) {
+        this.docErrors = docErrors;
+        return this;
+    }
+
+    public DocRetry addDocError(DocError docError) {
+        this.docErrors.add(docError);
+        docError.setDocRetry(this);
+        return this;
+    }
+
+    public DocRetry removeDocError(DocError docError) {
+        this.docErrors.remove(docError);
+        docError.setDocRetry(null);
+        return this;
+    }
+
+    public void setDocErrors(Set<DocError> docErrors) {
+        this.docErrors = docErrors;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
@@ -122,7 +139,6 @@ public class DocRetry implements Serializable {
             "id=" + getId() +
             ", docId='" + getDocId() + "'" +
             ", shopId='" + getShopId() + "'" +
-            ", error='" + getError() + "'" +
             ", timesFailed=" + getTimesFailed() +
             "}";
     }

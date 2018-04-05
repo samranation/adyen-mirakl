@@ -1,6 +1,13 @@
 {
     "fluentMethods": true,
-    "relationships": [],
+    "relationships": [
+        {
+            "relationshipName": "docError",
+            "otherEntityName": "docError",
+            "relationshipType": "one-to-many",
+            "otherEntityField": "id"
+        }
+    ],
     "fields": [
         {
             "fieldName": "docId",
@@ -8,10 +15,6 @@
         },
         {
             "fieldName": "shopId",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "error",
             "fieldType": "String"
         },
         {
