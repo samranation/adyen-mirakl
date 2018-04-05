@@ -1,0 +1,28 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "docId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "shopId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "error",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "timesFailed",
+            "fieldType": "Integer"
+        }
+    ],
+    "changelogDate": "20180405153559",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "doc_retry",
+    "jpaMetamodelFiltering": false,
+    "pagination": "no"
+}
