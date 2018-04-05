@@ -35,7 +35,7 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class IdentityVerificationSteps extends StepDefsHelper{
+public class IdentityVerificationSteps extends StepDefsHelper {
 
     @Autowired
     private AdyenNotificationResource adyenNotificationResource;
@@ -57,6 +57,7 @@ public class IdentityVerificationSteps extends StepDefsHelper{
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithFullUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
         this.shop = retrieveCreatedShop(shops);
     }
+
     @Given("^a seller creates a shop as a (.*) without providing UBO mandatory data$")
     public void waNewBusinessShopHasBeenCreatedInMiraklWithoutMandatoryShareholderInformation(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
@@ -72,7 +73,7 @@ public class IdentityVerificationSteps extends StepDefsHelper{
     }
 
     @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
-    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(String eventType, String verificationType, String verificationStatus) throws Exception{
+    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(String eventType, String verificationType, String verificationStatus) throws Exception {
         notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, verificationStatus, shop);
     }
 
@@ -122,23 +123,26 @@ public class IdentityVerificationSteps extends StepDefsHelper{
     }
 
     @Then("^the documents are successfully uploaded to Adyen$")
-    public void theDocumentsAreSuccessfullyUploadedToAdyen(DataTable table) throws Exception {
+    public void theDocumentsAreSuccessfullyUploadedToAdyen(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
-        getUploadedDocumentsRequest.setAccountHolderCode(shop.getId());
-        uploadedDocuments = adyenAccountService.getUploadedDocuments(getUploadedDocumentsRequest);
-        ArrayList<DocumentDetail> documentDetails = new ArrayList<>(uploadedDocuments.getDocumentDetails());
-        for (Map<String, String> stringStringMap : cucumberTable) {
-            String documentType = stringStringMap.get("documentType");
-            String filename = stringStringMap.get("filename");
-            boolean fileMatch = documentDetails.stream()
-                .anyMatch(detail ->
-                    documentType.equals(DocumentDetail.DocumentTypeEnum.valueOf(documentType).toString())
-                        && detail.getFilename().equals(filename));
-            Assertions.assertThat(fileMatch)
-                .withFailMessage(String.format("Document upload response:[%s]", JsonPath.parse(uploadedDocuments).toString()))
-                .isTrue();
-        }
+
+        await().atMost(Duration.ONE_MINUTE).untilAsserted(() -> {
+            GetUploadedDocumentsRequest getUploadedDocumentsRequest = new GetUploadedDocumentsRequest();
+            getUploadedDocumentsRequest.setAccountHolderCode(shop.getId());
+            uploadedDocuments = adyenAccountService.getUploadedDocuments(getUploadedDocumentsRequest);
+            ArrayList<DocumentDetail> documentDetails = new ArrayList<>(uploadedDocuments.getDocumentDetails());
+            for (Map<String, String> stringStringMap : cucumberTable) {
+                String documentType = stringStringMap.get("documentType");
+                String filename = stringStringMap.get("filename");
+                boolean fileMatch = documentDetails.stream()
+                    .anyMatch(detail ->
+                        documentType.equals(DocumentDetail.DocumentTypeEnum.valueOf(documentType).toString())
+                            && detail.getFilename().equals(filename));
+                Assertions.assertThat(fileMatch)
+                    .withFailMessage("Found the following docs: <%s>", documentDetails.toString())
+                    .isTrue();
+            }
+        });
     }
 
     @And("^the following document will not be uploaded to Adyen$")
