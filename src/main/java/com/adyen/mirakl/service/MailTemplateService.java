@@ -28,9 +28,6 @@ public class MailTemplateService {
     @Value("${miraklOperator.miraklEnvUrl}")
     private String miraklEnvUrl;
 
-    @Value("${miraklOperator.miraklOperatorEmail}")
-    private String bcc;
-
 
     private final JHipsterProperties jHipsterProperties;
     private final MailService mailService;
@@ -52,7 +49,7 @@ public class MailTemplateService {
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, locale);
-        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), bcc, subject, content, false, true);
+        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
     @Async
@@ -63,7 +60,7 @@ public class MailTemplateService {
         context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(shopId));
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, locale);
-        mailService.sendEmail(shareholder.getEmail(), bcc, subject, content, false, true);
+        mailService.sendEmail(shareholder.getEmail(), subject, content, false, true);
     }
 
     @Async
@@ -75,7 +72,7 @@ public class MailTemplateService {
         context.setVariable(ERRORS, errors);
         String content = templateEngine.process("shopNotifications/sellerEmailWithErrors", context);
         String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE, null, Locale.getDefault());
-        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), bcc, subject, content, false, true);
+        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
     @Async
@@ -87,7 +84,7 @@ public class MailTemplateService {
         context.setVariable(ERRORS, errors);
         String content = templateEngine.process("shopNotifications/operatorEmailWithErrors", context);
         String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_VALIDATION_TITLE, null, Locale.getDefault());
-        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), bcc, subject, content, false, true);
+        mailService.sendEmail(miraklShop.getContactInformation().getEmail(), subject, content, false, true);
     }
 
     private String getMiraklShopUrl(String miraklShopId) {
@@ -102,7 +99,4 @@ public class MailTemplateService {
         this.miraklEnvUrl = miraklEnvUrl;
     }
 
-    public void setBcc(final String bcc) {
-        this.bcc = bcc;
-    }
 }

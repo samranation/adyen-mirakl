@@ -4,7 +4,6 @@ public abstract class MiraklProperties {
 
     private String miraklEnvUrl;
     private String miraklApiKey;
-    private String miraklOperatorEmail;
 
 
     public String getMiraklEnvUrl() {
@@ -23,11 +22,4 @@ public abstract class MiraklProperties {
         this.miraklApiKey = miraklApiKey;
     }
 
-    public String getMiraklOperatorEmail() {
-        return miraklOperatorEmail;
-    }
-
-    public void setMiraklOperatorEmail(final String miraklOperatorEmail) {
-        this.miraklOperatorEmail = miraklOperatorEmail;
-    }
 }

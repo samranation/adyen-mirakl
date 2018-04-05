@@ -11,7 +11,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 
@@ -26,20 +25,16 @@ public class FailSafeEmailAspect {
     @Resource
     private EmailErrorsRepository emailErrorsRepository;
 
-    @Value("${miraklOperator.miraklOperatorEmail}")
-    private String bcc;
+    @Around("execution(* com.adyen.mirakl.service.MailService.sendEmail(String, String, String, boolean, boolean)) && args(to, subject, content, isMultipart, isHtml)")
+    public Object logAround(ProceedingJoinPoint joinPoint, String to, String subject, String content, boolean isMultipart, boolean isHtml) throws Throwable {
 
-    @Around("execution(* com.adyen.mirakl.service.MailService.sendEmail(String, String, String, String, boolean, boolean)) && args(to, bcc, subject, content, isMultipart, isHtml)")
-    public Object logAround(ProceedingJoinPoint joinPoint, String to, String bcc, String subject, String content, boolean isMultipart, boolean isHtml) throws Throwable {
-
-        String toHash = to + bcc + subject + content + isMultipart + isHtml;
+        String toHash = to + subject + content + isMultipart + isHtml;
         String emailIdentifier = MD5Util.computeMD5(toHash);
         final ProcessEmail email = processEmailRepository.findOneByEmailIdentifier(emailIdentifier)
             .orElseGet(() -> {
                 final ProcessEmail processEmail = new ProcessEmail();
                 processEmail.setEmailIdentifier(emailIdentifier);
                 processEmail.setTo(to);
-                processEmail.setBcc(bcc);
                 processEmail.setSubject(subject);
                 processEmail.setContent(content);
                 processEmail.setMultipart(isMultipart);

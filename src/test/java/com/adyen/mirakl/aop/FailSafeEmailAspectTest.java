@@ -43,14 +43,13 @@ public class FailSafeEmailAspectTest {
     private final String to = "to";
     private final String subject = "subject";
     private final String content = "content";
-    private final String bcc = "bcc";
     private final boolean isMultipart = false;
     private final boolean isHtml = false;
 
     @Test
     public void shouldSaveEmailSuccessfully() throws Throwable {
-        failSafeEmailAspect.logAround(joingPointMock, to, bcc, subject, content, isMultipart, isHtml);
-        String emailIdentifier = MD5Util.computeMD5(to + bcc + subject + content + isMultipart + isHtml);
+        failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);
+        String emailIdentifier = MD5Util.computeMD5(to + subject + content + isMultipart + isHtml);
         final ProcessEmail existing = processEmailRepository.findOneByEmailIdentifier(emailIdentifier).orElse(null);
         Assertions.assertThat(existing).isNotNull();
         Assertions.assertThat(existing.getTo()).isEqualTo(to);
@@ -70,10 +69,10 @@ public class FailSafeEmailAspectTest {
             .thenThrow(new IllegalStateException("error2"));
 
 
-        failSafeEmailAspect.logAround(joingPointMock, to, bcc, subject, content, isMultipart, isHtml);//error1
-        failSafeEmailAspect.logAround(joingPointMock, to, bcc, subject, content, isMultipart, isHtml);//error2
+        failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);//error1
+        failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);//error2
 
-        String emailIdentifier = MD5Util.computeMD5(to + bcc + subject + content + isMultipart + isHtml);
+        String emailIdentifier = MD5Util.computeMD5(to + subject + content + isMultipart + isHtml);
         final ProcessEmail existing = processEmailRepository.findOneByEmailIdentifier(emailIdentifier).orElse(null);
         Assertions.assertThat(existing).isNotNull();
         Assertions.assertThat(existing.getTo()).isEqualTo(to);
@@ -93,12 +92,12 @@ public class FailSafeEmailAspectTest {
     public void shouldSaveMultipleEmailsSuccessfully() throws Throwable {
         when(joingPointMock.proceed()).thenThrow(new IllegalStateException("error1")).thenReturn(null);
 
-        failSafeEmailAspect.logAround(joingPointMock, to, bcc, subject, content, isMultipart, isHtml);
-        failSafeEmailAspect.logAround(joingPointMock, "anotherPerson", bcc, subject, content, isMultipart, isHtml);
+        failSafeEmailAspect.logAround(joingPointMock, to, subject, content, isMultipart, isHtml);
+        failSafeEmailAspect.logAround(joingPointMock, "anotherPerson", subject, content, isMultipart, isHtml);
 
         System.out.println(processEmailRepository.findAll().size());
 
-        String emailIdentifier = MD5Util.computeMD5(to + bcc + subject + content + isMultipart + isHtml);
+        String emailIdentifier = MD5Util.computeMD5(to + subject + content + isMultipart + isHtml);
         final ProcessEmail existing = processEmailRepository.findOneByEmailIdentifier(emailIdentifier).orElse(null);
         Assertions.assertThat(existing).isNotNull();
         Assertions.assertThat(existing.getTo()).isEqualTo(to);
@@ -113,7 +112,7 @@ public class FailSafeEmailAspectTest {
         final List<String> errors = allErrors.stream().map(EmailError::getError).collect(Collectors.toList());
         Assertions.assertThat(errors).containsExactlyInAnyOrder("error1");
 
-        String emailIdentifier2 = MD5Util.computeMD5("anotherPerson" + bcc + subject + content + isMultipart + isHtml);
+        String emailIdentifier2 = MD5Util.computeMD5("anotherPerson" + subject + content + isMultipart + isHtml);
         final ProcessEmail existing2 = processEmailRepository.findOneByEmailIdentifier(emailIdentifier2).orElse(null);
         Assertions.assertThat(existing2).isNotNull();
         Assertions.assertThat(existing2.getTo()).isEqualTo("anotherPerson");
