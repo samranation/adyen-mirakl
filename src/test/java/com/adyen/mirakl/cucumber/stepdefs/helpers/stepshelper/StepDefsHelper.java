@@ -47,6 +47,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
@@ -241,7 +242,7 @@ public class StepDefsHelper {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
             ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
             final String response = responseBody.asString();
-            if(response.equalsIgnoreCase("{\"error\":\"Throttled\"}")){
+            if (response.equalsIgnoreCase("{\"error\":\"Throttled\"}")) {
                 log.warn("Mail throttled, will try again");
             }
             Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
@@ -283,7 +284,7 @@ public class StepDefsHelper {
         await().with().pollInterval(fibonacci()).untilAsserted(() -> {
                 ResponseBody responseBody = RestAssured.get(mailTrapConfiguration.mailTrapEndPoint()).thenReturn().body();
                 final String response = responseBody.asString();
-                if(response.equalsIgnoreCase("{\"error\":\"Throttled\"}")){
+                if (response.equalsIgnoreCase("{\"error\":\"Throttled\"}")) {
                     log.warn("Mail throttled, will try again");
                 }
                 Assertions.assertThat(response).isNotEqualToIgnoringCase("{\"error\":\"Throttled\"}");
@@ -316,35 +317,37 @@ public class StepDefsHelper {
         );
     }
 
-    protected ImmutableList<DocumentContext> assertOnMultipleVerificationNotifications(String eventType,
-                                                                                       String verificationType,
-                                                                                       String verificationStatus, MiraklShop shop) throws Exception {
+    protected ImmutableList<DocumentContext> assertOnMultipleVerificationNotifications(String eventType, String verificationType, String verificationStatus, MiraklShop shop) throws Exception {
         waitForNotification();
         // get shareholderCodes from Adyen
         GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
+
         List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
             .map(ShareholderContact::getShareholderCode)
             .collect(Collectors.toList());
 
         log.info("Shareholders found: [{}]", shareholderCodes.size());
-
-        ImmutableList.Builder<DocumentContext> shareHolderNotifications = new ImmutableList.Builder<>();
-        await().untilAsserted(() -> {
-            // get all ACCOUNT_HOLDER_VERIFICATION notifications
+        // get all ACCOUNT_HOLDER_VERIFICATION notifications
+        AtomicReference<ImmutableList<DocumentContext>> atomicReference = new AtomicReference<>();
+        await().untilAsserted(()->{
             List<DocumentContext> notifications = restAssuredAdyenApi
                 .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
-            shareHolderNotifications.addAll(restAssuredAdyenApi.extractShareHolderNotifications(notifications, shareholderCodes));
+            ImmutableList<DocumentContext> verificationNotifications = restAssuredAdyenApi.extractShareHolderNotifications(notifications, shareholderCodes);
             Assertions
-                .assertThat(shareHolderNotifications.build())
+                .assertThat(verificationNotifications)
                 .withFailMessage("Notification is empty.")
                 .isNotEmpty();
-            for (DocumentContext notification : shareHolderNotifications.build()) {
-                Assertions
-                    .assertThat(notification.read("content.verificationStatus").toString())
-                    .isEqualTo(verificationStatus);
-            }
 
+            Assertions
+                .assertThat(verificationNotifications.size())
+                .withFailMessage("Correct number of notifications were not found. Found: <%s>", verificationNotifications.size())
+                .isEqualTo(shareholderCodes.size());
+
+            verificationNotifications.forEach(notification-> Assertions
+                .assertThat(notification.read("content.verificationStatus").toString())
+                .isEqualTo(verificationStatus));
+            atomicReference.set(verificationNotifications);
         });
-        return shareHolderNotifications.build();
+        return atomicReference.get();
     }
 }

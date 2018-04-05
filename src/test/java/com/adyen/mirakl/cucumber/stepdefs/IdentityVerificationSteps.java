@@ -72,9 +72,8 @@ public class IdentityVerificationSteps extends StepDefsHelper{
     }
 
     @Then("^adyen will send multiple (.*) notifications with (.*) of status (.*)$")
-    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(
-        String eventType, String verificationType, String verificationStatus) throws Throwable {
-        notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, verificationStatus, this.shop);
+    public void adyenWillSendMultipleACCOUNT_HOLDER_VERIFICATIONNotificationWithIDENTITY_VERIFICATIONOfStatusDATA_PROVIDED(String eventType, String verificationType, String verificationStatus) throws Exception{
+        notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, verificationStatus, shop);
     }
 
     @Then("^adyen will send the (.*) notification with multiple (.*) of status (.*)")
@@ -83,7 +82,7 @@ public class IdentityVerificationSteps extends StepDefsHelper{
         waitForNotification();
         await().untilAsserted(() -> {
             Map<String, Object> adyenNotificationBody = restAssuredAdyenApi
-                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), this.shop.getId(), eventType, verificationType);
+                .getAdyenNotificationBody(startUpCucumberHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
             Assertions.assertThat(adyenNotificationBody).isNotEmpty();
             JSONArray shareholderJsonArray = JsonPath.parse(adyenNotificationBody).read("content.verification.shareholders.*");
             for (Object shareholder : shareholderJsonArray) {

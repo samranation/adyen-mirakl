@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,7 +48,7 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
 
     @Before
     public void setup() {
-        this.restAdyenNotificationMockMvc = MockMvcBuilders.standaloneSetup(adyenNotificationResource).build();
+        restAdyenNotificationMockMvc = MockMvcBuilders.standaloneSetup(adyenNotificationResource).build();
     }
 
     @Given("^a seller creates a shop as an (.*) with bank account information$")
@@ -55,14 +56,14 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi
             .createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
     }
 
     @Given("^a seller creates a (.*) shop$")
     public void waNewBusinessShopHasBeenCreatedInMiraklWithoutMandatoryShareholderInformation(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithMissingUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
     }
 
     @Given("^the seller created a (.*) shop with Invalid Data$")
@@ -74,7 +75,7 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
 
     @When("^a RETRY_LIMIT_REACHED verificationStatus has been sent to the Connector$")
     public void aRETRY_LIMIT_REACHEDVerificationStatusHasBeenSentToTheConnector(String notificationTemplate) throws Throwable {
-        String notification = notificationTemplate.replaceAll("\\$shopId\\$", this.shop.getId());
+        String notification = notificationTemplate.replaceAll("\\$shopId\\$", shop.getId());
         restAdyenNotificationMockMvc.perform(post("/api/adyen-notifications")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(notification))
@@ -83,15 +84,13 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
 
     @Then("^an (.*) email will be sent to the seller$")
     public void anAccountVerificationEmailWillBeSentToTheSeller(String title) {
-        String email = this.shop.getContactInformation().getEmail();
-        validationCheckOnReceivedEmail(title, email, this.shop);
+        String email = shop.getContactInformation().getEmail();
+        validationCheckOnReceivedEmail(title, email, shop);
     }
 
     @Then("^(.*) notifications with (.*) with status (.*) will be sent by Adyen$")
-    public void accountHolderVerificationNotificationsWithIDENTITYVERIFICATIONWithStatusAWAITINGDATAWillBeSentByAdyen(String eventType,
-                                                                                                                      String verificationType,
-                                                                                                                      String status) throws Throwable {
-        this.notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, status, this.shop);
+    public void accountHolderVerificationNotificationsWithIDENTITYVERIFICATIONWithStatusAWAITINGDATAWillBeSentByAdyen(String eventType, String verificationType, String status) {
+        await().untilAsserted(()-> notifications = assertOnMultipleVerificationNotifications(eventType, verificationType, status, shop));
     }
 
     @And("^the notifications are sent to Connector App$")
@@ -109,7 +108,7 @@ public class ConnectorAppAdyenSteps extends StepDefsHelper {
     public void theIDENTITY_VERIFICATIONNotificationsAreSentToTheConnector() throws Throwable {
         List<String> notifications = new LinkedList<>();
         URL url = Resources.getResource("adyenRequests/CUCUMBER_IDENTITY_VERIFICATION_INVALID_DATA.json");
-        GetAccountHolderResponse accountHolder = retrieveAccountHolderResponse(this.shop.getId());
+        GetAccountHolderResponse accountHolder = retrieveAccountHolderResponse(shop.getId());
         String accountHolderCode = accountHolder.getAccountHolderCode();
         List<String> shareholderCodes = accountHolder.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
             .map(ShareholderContact::getShareholderCode)
