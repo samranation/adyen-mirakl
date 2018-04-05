@@ -55,6 +55,7 @@ public class MailTemplateServiceTest {
     @Before
     public void setup() {
         mailTemplateService = new MailTemplateService(jHipsterProperties, mailServiceMock, templateEngine, messageSource);
+        mailTemplateService.setBcc("bcc");
     }
 
     @Test
@@ -66,6 +67,7 @@ public class MailTemplateServiceTest {
         mailTemplateService.sendMiraklShopEmailFromTemplate(miraklShop, Locale.UK, "testMiraklShopEmail", "email.test.title");
 
         verify(mailServiceMock).sendEmail("adyen-mirakl-cb966314-55c3-40e6-91f7-db6d8f0be825@mailinator.com",
+                                          "bcc",
                                           "test title",
                                           "<html>test title, http://127.0.0.1:8080, Mr, Ford, TestData, null/mmp/shop/account/shop/5073</html>\n",
                                           false,
@@ -87,7 +89,7 @@ public class MailTemplateServiceTest {
         errors.add("Error 1");
         errors.add("Error 2");
 
-        doNothing().when(mailServiceMock).sendEmail(isA(String.class), isA(String.class), contentCaptor.capture(), anyBoolean(), anyBoolean());
+        doNothing().when(mailServiceMock).sendEmail(isA(String.class), isA(String.class), isA(String.class), contentCaptor.capture(), anyBoolean(), anyBoolean());
 
         mailTemplateService.sendSellerEmailWithErrors(miraklShop, errors);
         final String content = contentCaptor.getValue();

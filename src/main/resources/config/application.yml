@@ -128,6 +128,7 @@ application:
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
+    miraklOperatorEmail: pleaseUpdateMe@miraklOperatorEmail.com
 
 adyenConfig:
     userName: ${ADYEN_USER_NAME}

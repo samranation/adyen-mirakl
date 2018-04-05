@@ -141,6 +141,7 @@ accounts:
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_OPERATOR_KEY}
+    miraklOperatorEmail: pleaseUpdateMe@miraklOperatorEmail.com
 miraklFront:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
     miraklApiKey: ${MIRAKL_API_FRONT_KEY}
@@ -200,7 +201,7 @@ mail.max.retries: 10
 
 mailtrapConfig:
     baseMailTrapUrl: https://mailtrap.io/api/v1/inboxes/
-    mailTrapInboxId: 356812
+    mailTrapInboxId: 352328
     apiToken: ${MAILTRAP_API_TOKEN}
 
 payoutService:

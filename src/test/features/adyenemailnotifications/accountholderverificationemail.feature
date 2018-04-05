@@ -10,4 +10,6 @@ Feature: Account Holder Created verification emails
             | 1   |
         And we process the data and push to Adyen
         Then an email will be sent to the seller
-
+        """
+        Account verification
+        """

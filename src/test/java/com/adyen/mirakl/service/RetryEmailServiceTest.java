@@ -42,32 +42,32 @@ public class RetryEmailServiceTest {
 
     @Test
     public void shouldRetryWithOnlyFailures(){
-        createProcessEmail("to1", "subject", "content", false, false, EmailState.PROCESSING);
-        createProcessEmail("to2", "subject", "content", false, false, EmailState.FAILED);
-        createProcessEmail("to3", "subject", "content", false, false, EmailState.SENT);
-        createProcessEmail("to4", "subject", "content", false, false, EmailState.FAILED);
+        createProcessEmail("to1", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false, EmailState.PROCESSING);
+        createProcessEmail("to2", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false, EmailState.FAILED);
+        createProcessEmail("to3", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false, EmailState.SENT);
+        createProcessEmail("to4", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false, EmailState.FAILED);
 
         retryEmailService.retryFailedEmails();
 
-        verify(mailService, never()).sendEmail("to1", "subject", "content", false, false);
-        verify(mailService).sendEmail("to2", "subject", "content", false, false);
-        verify(mailService, never()).sendEmail("to3", "subject", "content", false, false);
-        verify(mailService).sendEmail("to4", "subject", "content", false, false);
-        verify(mailService, never()).sendEmail("to5", "subject", "content", false, false);
+        verify(mailService, never()).sendEmail("to1", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false);
+        verify(mailService).sendEmail("to2", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false);
+        verify(mailService, never()).sendEmail("to3", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false);
+        verify(mailService).sendEmail("to4", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false);
+        verify(mailService, never()).sendEmail("to5", "pleaseUpdateMe@miraklOperatorEmail.com","subject", "content", false, false);
     }
 
     @Test
     public void shouldNotRetry(){
         retryEmailService.retryFailedEmails();
 
-        verify(mailService, never()).sendEmail(anyString(), anyString(), anyString(), anyBoolean(), anyBoolean());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), anyString(), anyString(), anyBoolean(), anyBoolean());
     }
 
     @Test
     public void shouldRemoveSentEmailsAndErrors(){
         String subject = "subject";
         String content = "content";
-        final ProcessEmail processEmail = createProcessEmail("to1", subject, content, false, false, EmailState.SENT);
+        final ProcessEmail processEmail = createProcessEmail("to1", "pleaseUpdateMe@miraklOperatorEmail.com", subject, content, false, false, EmailState.SENT);
 
         final EmailError emailError1 = new EmailError();
         final EmailError emailError2 = new EmailError();
@@ -84,7 +84,7 @@ public class RetryEmailServiceTest {
 
         processEmailRepository.saveAndFlush(processEmail);
 
-        final ProcessEmail processEmail2 = createProcessEmail("to2", subject, content, false, false, EmailState.FAILED);
+        final ProcessEmail processEmail2 = createProcessEmail("to2","pleaseUpdateMe@miraklOperatorEmail.com", subject, content, false, false, EmailState.FAILED);
         final EmailError emailError4 = new EmailError();
         emailError4.setError("error4");
 
@@ -92,8 +92,8 @@ public class RetryEmailServiceTest {
         emailErrorsRepository.saveAndFlush(emailError4);
         processEmailRepository.saveAndFlush(processEmail2);
 
-        createProcessEmail("to3", subject, content, false, false, EmailState.PROCESSING);
-        createProcessEmail("to4", subject, content, false, false, EmailState.SENT);
+        createProcessEmail("to3", "pleaseUpdateMe@miraklOperatorEmail.com", subject, content, false, false, EmailState.PROCESSING);
+        createProcessEmail("to4", "pleaseUpdateMe@miraklOperatorEmail.com", subject, content, false, false, EmailState.SENT);
 
         retryEmailService.removeSentEmails();
 
@@ -118,9 +118,10 @@ public class RetryEmailServiceTest {
     }
 
 
-    public ProcessEmail createProcessEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml, EmailState emailState){
+    public ProcessEmail createProcessEmail(String to, String bcc, String subject, String content, boolean isMultipart, boolean isHtml, EmailState emailState){
         final ProcessEmail processEmail = new ProcessEmail();
         processEmail.setTo(to);
+        processEmail.setBcc(bcc);
         processEmail.setSubject(subject);
         processEmail.setContent(content);
         processEmail.setMultipart(isMultipart);

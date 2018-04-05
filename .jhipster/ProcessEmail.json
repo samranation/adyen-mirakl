@@ -14,6 +14,10 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "bcc",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "subject",
             "fieldType": "String"
         },

@@ -30,6 +30,9 @@ public class ProcessEmail implements Serializable {
     @Column(name = "_to")
     private String to;
 
+    @Column(name = "bcc")
+    private String bcc;
+
     @Column(name = "subject")
     private String subject;
 
@@ -75,6 +78,19 @@ public class ProcessEmail implements Serializable {
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    public String getBcc() {
+        return bcc;
+    }
+
+    public ProcessEmail bcc(String bcc) {
+        this.bcc = bcc;
+        return this;
+    }
+
+    public void setBcc(String bcc) {
+        this.bcc = bcc;
     }
 
     public String getSubject() {
@@ -206,6 +222,7 @@ public class ProcessEmail implements Serializable {
         return "ProcessEmail{" +
             "id=" + getId() +
             ", to='" + getTo() + "'" +
+            ", bcc='" + getBcc() + "'" +
             ", subject='" + getSubject() + "'" +
             ", content='" + getContent() + "'" +
             ", multipart='" + isMultipart() + "'" +
