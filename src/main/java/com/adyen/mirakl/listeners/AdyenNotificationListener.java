@@ -9,6 +9,7 @@ import com.adyen.mirakl.service.RetryPayoutService;
 import com.adyen.model.marketpay.GetAccountHolderRequest;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.adyen.model.marketpay.ShareholderContact;
+import com.adyen.model.marketpay.notification.AccountHolderPayoutNotification;
 import com.adyen.model.marketpay.notification.AccountHolderStatusChangeNotification;
 import com.adyen.model.marketpay.notification.AccountHolderVerificationNotification;
 import com.adyen.model.marketpay.notification.GenericNotification;
@@ -48,26 +49,26 @@ public class AdyenNotificationListener {
         static {
             Map<String, Map<String, String>> builder = new HashMap<>();
             builder.put(CheckTypeEnum.IDENTITY_VERIFICATION.toString() + CheckStatusEnum.AWAITING_DATA.toString(),
-                ImmutableMap.of("accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title"));
+                        ImmutableMap.of("accountHolderAwaitingIdentityEmail", "email.account.verification.awaiting.id.title"));
             builder.put(CheckTypeEnum.PASSPORT_VERIFICATION.toString() + CheckStatusEnum.AWAITING_DATA.toString(),
-                ImmutableMap.of("accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title"));
+                        ImmutableMap.of("accountHolderAwaitingPassportEmail", "email.account.verification.awaiting.passport.title"));
             builder.put(CheckTypeEnum.COMPANY_VERIFICATION.toString() + CheckStatusEnum.AWAITING_DATA.toString(),
-                ImmutableMap.of("companyAwaitingIdData", "email.company.verification.awaiting.id.title"));
+                        ImmutableMap.of("companyAwaitingIdData", "email.company.verification.awaiting.id.title"));
             builder.put(CheckTypeEnum.IDENTITY_VERIFICATION.toString() + CheckStatusEnum.INVALID_DATA.toString(),
-                ImmutableMap.of("accountHolderInvalidIdentityEmail", "email.account.verification.invalid.id.title"));
+                        ImmutableMap.of("accountHolderInvalidIdentityEmail", "email.account.verification.invalid.id.title"));
             builder.put(CheckTypeEnum.PASSPORT_VERIFICATION.toString() + CheckStatusEnum.INVALID_DATA.toString(),
-                ImmutableMap.of("accountHolderInvalidPassportEmail", "email.account.verification.invalid.passport.title"));
+                        ImmutableMap.of("accountHolderInvalidPassportEmail", "email.account.verification.invalid.passport.title"));
             builder.put(CheckTypeEnum.COMPANY_VERIFICATION.toString() + CheckStatusEnum.INVALID_DATA.toString(),
-                ImmutableMap.of("companyInvalidIdData", "email.company.verification.invalid.id.title"));
+                        ImmutableMap.of("companyInvalidIdData", "email.company.verification.invalid.id.title"));
             keys = builder;
         }
 
         static String getTemplate(CheckTypeEnum type, CheckStatusEnum status) {
-            return keys.get(type.toString()+status.toString()).keySet().iterator().next();
+            return keys.get(type.toString() + status.toString()).keySet().iterator().next();
         }
 
         static String getSubject(CheckTypeEnum type, CheckStatusEnum status) {
-            return keys.get(type.toString()+status.toString()).values().iterator().next();
+            return keys.get(type.toString() + status.toString()).values().iterator().next();
         }
     }
 
@@ -120,6 +121,9 @@ public class AdyenNotificationListener {
         if (genericNotification instanceof AccountHolderStatusChangeNotification) {
             processAccountHolderStatusChangeNotification((AccountHolderStatusChangeNotification) genericNotification);
         }
+        if (genericNotification instanceof AccountHolderPayoutNotification) {
+            processAccountHolderPayout((AccountHolderPayoutNotification) genericNotification);
+        }
     }
 
     private void processAccountholderVerificationNotification(final AccountHolderVerificationNotification verificationNotification) throws Exception {
@@ -134,10 +138,18 @@ public class AdyenNotificationListener {
             getAccountHolderRequest.setAccountHolderCode(shopId);
             final GetAccountHolderResponse accountHolderResponse = adyenAccountService.getAccountHolder(getAccountHolderRequest);
             final String shareholderCode = verificationNotification.getContent().getShareholderCode();
-            final ShareholderContact shareholderContact = accountHolderResponse.getAccountHolderDetails().getBusinessDetails().getShareholders().stream()
-                .filter(x -> x.getShareholderCode().equals(shareholderCode))
-                .findAny().orElseThrow(() -> new IllegalStateException("Unable to find shareholder: " + shareholderCode));
-            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact, shopId, Locale.getDefault(), getTemplate(verificationType, verificationStatus), getSubject(verificationType, verificationStatus));
+            final ShareholderContact shareholderContact = accountHolderResponse.getAccountHolderDetails()
+                                                                               .getBusinessDetails()
+                                                                               .getShareholders()
+                                                                               .stream()
+                                                                               .filter(x -> x.getShareholderCode().equals(shareholderCode))
+                                                                               .findAny()
+                                                                               .orElseThrow(() -> new IllegalStateException("Unable to find shareholder: " + shareholderCode));
+            mailTemplateService.sendShareholderEmailFromTemplate(shareholderContact,
+                                                                 shopId,
+                                                                 Locale.getDefault(),
+                                                                 getTemplate(verificationType, verificationStatus),
+                                                                 getSubject(verificationType, verificationStatus));
         } else if (invalidOrAwaitingCompanyVerificationData(verificationStatus, verificationType)) {
             final MiraklShop shop = getShop(shopId);
             mailTemplateService.sendMiraklShopEmailFromTemplate(shop, Locale.getDefault(), getTemplate(verificationType, verificationStatus), getSubject(verificationType, verificationStatus));
@@ -152,16 +164,16 @@ public class AdyenNotificationListener {
     }
 
     private boolean invalidOrAwaitingCompanyVerificationData(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType) {
-        return CheckTypeEnum.COMPANY_VERIFICATION.equals(verificationType)
-            && (CheckStatusEnum.INVALID_DATA.equals(verificationStatus) || CheckStatusEnum.AWAITING_DATA.equals(verificationStatus));
+        return CheckTypeEnum.COMPANY_VERIFICATION.equals(verificationType) && (CheckStatusEnum.INVALID_DATA.equals(verificationStatus)
+            || CheckStatusEnum.AWAITING_DATA.equals(verificationStatus));
     }
 
     private boolean awaitingDataForIdentityOrPassport(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType) {
-        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.AWAITING_DATA, CheckTypeEnum.IDENTITY_VERIFICATION, CheckTypeEnum.PASSPORT_VERIFICATION);
+        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType,CheckStatusEnum.AWAITING_DATA,CheckTypeEnum.IDENTITY_VERIFICATION,CheckTypeEnum.PASSPORT_VERIFICATION);
     }
 
     private boolean invalidDataForIdentityOrPassport(final CheckStatusEnum verificationStatus, final CheckTypeEnum verificationType) {
-        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType, CheckStatusEnum.INVALID_DATA, CheckTypeEnum.IDENTITY_VERIFICATION, CheckTypeEnum.PASSPORT_VERIFICATION);
+        return dataProvidedForPassportOrIdentity(verificationStatus, verificationType,CheckStatusEnum.INVALID_DATA,CheckTypeEnum.IDENTITY_VERIFICATION,CheckTypeEnum.PASSPORT_VERIFICATION);
     }
 
     private MiraklShop getShop(String shopId) {
@@ -180,9 +192,15 @@ public class AdyenNotificationListener {
         final Boolean newPayoutState = accountHolderStatusChangeNotification.getContent().getNewStatus().getPayoutState().getAllowPayout();
 
         if (FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)) {
-            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.getDefault(), "nowPayable", "email.account.status.now.true.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()),
+                                                                Locale.getDefault(),
+                                                                "nowPayable",
+                                                                "email.account.status.now.true.title");
         } else if (TRUE.equals(oldPayoutState) && FALSE.equals(newPayoutState)) {
-            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()), Locale.getDefault(), "payoutRevoked", "email.account.status.now.false.title");
+            mailTemplateService.sendMiraklShopEmailFromTemplate(getShop(accountHolderStatusChangeNotification.getContent().getAccountHolderCode()),
+                                                                Locale.getDefault(),
+                                                                "payoutRevoked",
+                                                                "email.account.status.now.false.title");
         }
 
         if (FALSE.equals(oldPayoutState) && TRUE.equals(newPayoutState)) {
@@ -192,4 +210,9 @@ public class AdyenNotificationListener {
         }
     }
 
+    private void processAccountHolderPayout(final AccountHolderPayoutNotification accountHolderPayoutNotification) {
+        if (accountHolderPayoutNotification.getContent().getStatus().getStatusCode().equals("Failed")) {
+            mailTemplateService.sendOperatorEmailPayoutFailure(getShop(accountHolderPayoutNotification.getContent().getAccountHolderCode()), accountHolderPayoutNotification.getContent().getStatus().getMessage());
+        }
+    }
 }
