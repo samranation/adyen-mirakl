@@ -64,7 +64,7 @@ public class InvalidFieldsNotificationService {
 
         if (! operatorErrors.isEmpty()) {
             // notify operator
-            log.debug("Sending {} error(s) to Operator", operatorErrors.size());
+            log.debug("Sending {} error(s) to Operator, for shop: {}", operatorErrors.size(), shop.getId());
             mailTemplateService.sendOperatorEmailWithErrors(shop, operatorErrors);
         }
     }
