@@ -2,6 +2,7 @@ package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.config.Constants;
 import com.adyen.mirakl.config.MiraklOperatorConfiguration;
+import com.adyen.model.Amount;
 import com.adyen.model.marketpay.Message;
 import com.adyen.model.marketpay.ShareholderContact;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
@@ -26,6 +27,11 @@ public class MailTemplateService {
     private static final String ERRORS = "errors";
     private static final String SHAREHOLDER = "shareholder";
     private static final String PAYOUT_ERROR = "payoutError";
+    private static final String TRANSFER_FUNDS_AMOUNT = "transferFundsAmount";
+    private static final String TRANSFER_FUNDS_CODE = "transferFundsCode";
+    private static final String TRANSFER_FUNDS_ERROR = "transferFundsError";
+    private static final String MIRAKL_SHOP_SOURCE = "miraklShopSource";
+    private static final String MIRAKL_SHOP_DESTINATION = "miraklShopDestination";
 
 
     @Value("${miraklOperator.miraklEnvUrl}")
@@ -107,6 +113,22 @@ public class MailTemplateService {
         context.setVariable(PAYOUT_ERROR, "(" + message.getCode() + ") " + message.getText());
         String content = templateEngine.process("shopNotifications/operatorEmailPayoutFailed", context);
         String subject = messageSource.getMessage(Constants.Messages.EMAIL_ACCOUNT_HOLDER_PAYOUT_FAILED_TITLE, null, Locale.getDefault());
+        mailService.sendEmail(miraklOperatorConfiguration.getMiraklOperatorEmail(), subject, content, false, true);
+    }
+
+    @Async
+    public void sendOperatorEmailTransferFundsFailure(MiraklShop miraklShopSource, MiraklShop miraklShopDestination, Amount amount, String transferCode, Message message) {
+        Context context = new Context(Locale.getDefault());
+        context.setVariable(MIRAKL_SHOP_SOURCE, miraklShopSource);
+        context.setVariable(MIRAKL_SHOP_DESTINATION, miraklShopDestination);
+        context.setVariable(TRANSFER_FUNDS_AMOUNT, amount.getDecimalValue() + " " + amount.getCurrency());
+        context.setVariable(TRANSFER_FUNDS_CODE, transferCode);
+
+        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShopSource.getId()));
+        context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
+        context.setVariable(TRANSFER_FUNDS_ERROR, "(" + message.getCode() + ") " + message.getText());
+        String content = templateEngine.process("shopNotifications/operatorEmailTransferFundsFailed", context);
+        String subject = messageSource.getMessage(Constants.Messages.EMAIL_TRANSFER_FUND_FAILED_TITLE, null, Locale.getDefault());
         mailService.sendEmail(miraklOperatorConfiguration.getMiraklOperatorEmail(), subject, content, false, true);
     }
 
