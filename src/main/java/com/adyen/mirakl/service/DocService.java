@@ -1,13 +1,18 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.config.Constants;
+import com.adyen.mirakl.domain.DocError;
+import com.adyen.mirakl.domain.DocRetry;
 import com.adyen.mirakl.domain.ShareholderMapping;
+import com.adyen.mirakl.repository.DocErrorRepository;
+import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -16,6 +21,7 @@ import com.mirakl.client.mmp.request.shop.document.MiraklDownloadShopsDocumentsR
 import com.mirakl.client.mmp.request.shop.document.MiraklGetShopDocumentsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +55,12 @@ public class DocService {
     @Resource
     private ShareholderMappingRepository shareholderMappingRepository;
 
+    @Resource
+    private DocRetryRepository docRetryRepository;
+
+    @Resource
+    private DocErrorRepository docErrorRepository;
+
     /**
      * Calling S30, S31, GetAccountHolder and UploadDocument to upload bankproof documents to Adyen
      */
@@ -56,6 +68,11 @@ public class DocService {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
 
         List<MiraklShopDocument> miraklShopDocumentList = retrieveUpdatedDocs();
+        processDocs(miraklShopDocumentList);
+        deltaService.updateDocumentDelta(beforeProcessing);
+    }
+
+    private void processDocs(final List<MiraklShopDocument> miraklShopDocumentList) {
         for (MiraklShopDocument document : miraklShopDocumentList) {
             if (document.getTypeCode().equals(Constants.BANKPROOF)) {
                 updateDocument(document, DocumentDetail.DocumentTypeEnum.BANK_STATEMENT);
@@ -64,18 +81,59 @@ public class DocService {
         uboService.extractUboDocuments(miraklShopDocumentList).forEach(uboDocumentDTO -> {
             updateDocument(uboDocumentDTO.getMiraklShopDocument(), uboDocumentDTO.getDocumentTypeEnum(), uboDocumentDTO.getShareholderCode());
         });
-        deltaService.updateDocumentDelta(beforeProcessing);
+    }
+
+    @Async
+    public void retryDocumentsForShop(String shopId){
+        retryFailedDocuments(docRetryRepository.findByShopId(shopId));
+    }
+
+    @Async
+    public void retryFailedDocuments(){
+        retryFailedDocuments(docRetryRepository.findAll());
+    }
+
+    private void retryFailedDocuments(final List<DocRetry> docsToRetry){
+        final List<String> documentIds = docsToRetry.stream().map(DocRetry::getDocId).collect(Collectors.toList());
+        final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(documentIds));
+        processDocs(shopDocuments);
     }
 
     private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type, String shareholderCode) {
         FileWrapper fileWrapper = downloadSelectedDocument(document);
         try {
             uploadDocumentToAdyen(type, fileWrapper, document.getShopId(), shareholderCode);
+            docRetryRepository.findOneByDocId(document.getId()).ifPresent(docRetry -> {
+                docErrorRepository.delete(docRetry.getDocErrors());
+                docRetryRepository.delete(docRetry.getId());
+            });
         } catch (ApiException e) {
             log.error("MarketPay Api Exception: {}, {}. For the Shop: {}", e.getError(), e, document.getShopId());
+            storeDocumentForRetry(document.getId(), document.getShopId(), e);
         } catch (Exception e) {
             log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, document.getShopId());
+            storeDocumentForRetry(document.getId(), document.getShopId(), e);
         }
+    }
+
+    private void storeDocumentForRetry(String documentId, String shopId, Exception e){
+        DocRetry docRetry = docRetryRepository.findOneByDocId(documentId).orElse(null);
+        Integer timesFailed;
+        if(docRetry != null){
+            timesFailed = docRetry.getTimesFailed() + 1;
+        }else{
+            timesFailed = 1;
+            docRetry = new DocRetry();
+        }
+        final DocError docError = new DocError();
+        docError.setError(e.toString());
+        docError.setDocRetry(docRetry);
+        docRetry.setDocId(documentId);
+        docRetry.setDocErrors(ImmutableSet.of(docError));
+        docRetry.setShopId(shopId);
+        docRetry.setTimesFailed(timesFailed);
+        docRetryRepository.saveAndFlush(docRetry);
+        docErrorRepository.saveAndFlush(docError);
     }
 
     private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type) {

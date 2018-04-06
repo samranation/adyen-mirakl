@@ -119,6 +119,7 @@ application:
     emailRetryCron: "0 */10 * * * ?"
     removeSentEmailsCron: "0 0 2 * * ?"
     payoutRetryCron: "0 */10 * * * ?"
+    retryDocsCron: "0 */1 * * * ?"
     initialDeltaDaysBack: 0
     maxPayoutFailed: 10
     houseNumbersRegex:

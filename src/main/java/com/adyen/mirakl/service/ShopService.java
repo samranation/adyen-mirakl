@@ -59,6 +59,9 @@ public class ShopService {
     @Resource
     private Map<String, Pattern> houseNumberPatterns;
 
+    @Resource
+    private DocService docService;
+
 
     public void processUpdatedShops() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
@@ -79,7 +82,7 @@ public class ShopService {
                 log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, shop.getId());
             }
         }
-
+        shops.forEach(shop -> docService.retryDocumentsForShop(shop.getId()));
         deltaService.updateShopDelta(beforeProcessing);
     }
 

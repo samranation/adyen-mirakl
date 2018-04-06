@@ -43,6 +43,9 @@ import com.mirakl.client.mmp.domain.shop.MiraklShops;
 import com.mirakl.client.mmp.domain.shop.bank.MiraklIbanBankAccountInformation;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
 import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
+
+import javax.annotation.Resource;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
@@ -77,6 +80,8 @@ public class ShopServiceTest {
     private UboService uboService;
     @Mock
     private ShareholderContact shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4;
+    @Mock
+    private DocService docServiceMock;
 
     @Captor
     private ArgumentCaptor<CreateAccountHolderRequest> createAccountHolderRequestCaptor;
@@ -214,6 +219,7 @@ public class ShopServiceTest {
         UpdateAccountHolderRequest request = updateAccountHolderRequestCaptor.getValue();
         verify(adyenAccountServiceMock).updateAccountHolder(request);
         verify(shareholderMappingService).updateShareholderMapping(updateAccountHolderResponseMock);
+        verify(docServiceMock).retryDocumentsForShop("id");
         assertEquals("id", request.getAccountHolderCode());
         final List<ShareholderContact> shareholders = request.getAccountHolderDetails().getBusinessDetails().getShareholders();
         Assertions.assertThat(shareholders).containsExactlyInAnyOrder(shareHolderMock1, shareHolderMock2, shareHolderMock3, shareHolderMock4);

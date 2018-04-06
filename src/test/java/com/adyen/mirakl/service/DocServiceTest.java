@@ -1,7 +1,11 @@
 package com.adyen.mirakl.service;
 
 import com.adyen.mirakl.config.Constants;
+import com.adyen.mirakl.domain.DocError;
+import com.adyen.mirakl.domain.DocRetry;
 import com.adyen.mirakl.domain.ShareholderMapping;
+import com.adyen.mirakl.repository.DocErrorRepository;
+import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.model.marketpay.*;
@@ -61,12 +65,22 @@ public class DocServiceTest {
     private ShareholderMapping shareholderMappingMock;
     @Mock
     private MiraklShopDocument miraklShopDocumentMock1, miraklShopDocumentMock2, miraklShopDocumentMock3;
+    @Mock
+    private DocRetryRepository docRetryRepositoryMock;
+    @Mock
+    private DocErrorRepository docErrorRepositoryMock;
+    @Mock
+    private DocRetry docRetryMock1, docRetryMock2;
     @Captor
     private ArgumentCaptor<UploadDocumentRequest> uploadDocumentRequestCaptor;
     @Captor
     private ArgumentCaptor<MiraklGetShopDocumentsRequest> miraklGetShopDocumentsRequestCaptor;
     @Captor
     private ArgumentCaptor<MiraklDeleteShopDocumentRequest> miraklDeleteShopDocumentRequestCaptor;
+    @Captor
+    private ArgumentCaptor<DocRetry> docRetryCaptor;
+    @Captor
+    private ArgumentCaptor<DocError> docErrorCaptor;
 
 
     @Test
@@ -81,6 +95,7 @@ public class DocServiceTest {
         fakeDocument.setFileName(file.getName());
         fakeDocument.setTypeCode(Constants.BANKPROOF);
         fakeDocument.setShopId("1234");
+        fakeDocument.setId("docId");
         miraklShopDocumentList.add(fakeDocument);
 
         GetAccountHolderResponse getAccountHolderResponse = new GetAccountHolderResponse();
@@ -96,7 +111,8 @@ public class DocServiceTest {
         when(fileWrapper.getFile()).thenReturn(file);
         when(fileWrapper.getFilename()).thenReturn(file.getName());
         when(adyenAccountServiceMock.getAccountHolder(any())).thenReturn(getAccountHolderResponse);
-        when(adyenAccountServiceMock.uploadDocument(uploadDocumentRequestCaptor.capture())).thenReturn(null);
+        when(adyenAccountServiceMock.uploadDocument(uploadDocumentRequestCaptor.capture())).thenReturn(responseMock);
+        when(docRetryRepositoryMock.findOneByDocId("docId")).thenReturn(Optional.of(docRetryMock1));
 
         docService.processUpdatedDocuments();
 
@@ -127,6 +143,9 @@ public class DocServiceTest {
         when(fileWrapperMock.getFile()).thenReturn(file);
         when(fileWrapperMock.getFilename()).thenReturn("fileName");
         when(adyenAccountServiceMock.uploadDocument(any())).thenReturn(responseMock);
+
+        when(miraklShopDocumentMock.getId()).thenReturn("docId");
+        when(docRetryRepositoryMock.findOneByDocId("docId")).thenReturn(Optional.of(docRetryMock1));
 
         docService.processUpdatedDocuments();
 
@@ -166,5 +185,48 @@ public class DocServiceTest {
         Assertions.assertThat(deleteRequests.get(0).getDocumentId()).isEqualTo("ubo2DocId1");
         Assertions.assertThat(deleteRequests.get(1).getDocumentId()).isEqualTo("ubo2DocId2");
     }
+
+    @Test
+    public void saveNewFailedDocWhenDoesNotAlreadyExist(){
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));
+        when(miraklShopDocumentMock.getTypeCode()).thenReturn(Constants.BANKPROOF);
+        when(miraklShopDocumentMock.getId()).thenReturn("docId");
+        when(miraklShopDocumentMock.getShopId()).thenReturn("shopId");
+
+        when(docRetryRepositoryMock.findOneByDocId("docId")).thenReturn(Optional.empty());
+
+        docService.processUpdatedDocuments();
+
+        verify(docRetryRepositoryMock).saveAndFlush(docRetryCaptor.capture());
+        verify(docErrorRepositoryMock).saveAndFlush(docErrorCaptor.capture());
+
+        final DocRetry docRetry = docRetryCaptor.getValue();
+        final DocError docError = docErrorCaptor.getValue();
+
+        Assertions.assertThat(docRetry.getDocId()).isEqualTo("docId");
+        Assertions.assertThat(docRetry.getShopId()).isEqualTo("shopId");
+        Assertions.assertThat(docRetry.getDocErrors()).containsOnly(docError);
+        Assertions.assertThat(docRetry.getTimesFailed()).isOne();
+        Assertions.assertThat(docError.getError()).isEqualTo("java.lang.NullPointerException");
+        Assertions.assertThat(docError.getDocRetry()).isEqualTo(docRetry);
+    }
+
+    @Test
+    public void addToExistingDocError(){
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(any())).thenReturn(ImmutableList.of(miraklShopDocumentMock));
+        when(miraklShopDocumentMock.getTypeCode()).thenReturn(Constants.BANKPROOF);
+        when(miraklShopDocumentMock.getId()).thenReturn("docId");
+        when(miraklShopDocumentMock.getShopId()).thenReturn("shopId");
+
+        when(docRetryRepositoryMock.findOneByDocId("docId")).thenReturn(Optional.of(docRetryMock1));
+
+        docService.processUpdatedDocuments();
+
+        verify(docErrorRepositoryMock).saveAndFlush(docErrorCaptor.capture());
+        final DocError docError = docErrorCaptor.getValue();
+        Assertions.assertThat(docError.getError()).isEqualTo("java.lang.NullPointerException");
+        Assertions.assertThat(docError.getDocRetry()).isEqualTo(docRetryMock1);
+    }
+    
 
 }

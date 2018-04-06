@@ -23,7 +23,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="doc_id" type="varchar(255)">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
 
             <column name="shop_id" type="varchar(255)">
@@ -36,7 +36,13 @@
 
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here, do not remove-->
         </createTable>
-        
+
+        <createIndex indexName="idx_doc_id"
+                     tableName="doc_retry"
+                     unique="true">
+            <column name="doc_id" type="varchar(255)"/>
+        </createIndex>
+
     </changeSet>
     <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here, do not remove-->
 </databaseChangeLog>

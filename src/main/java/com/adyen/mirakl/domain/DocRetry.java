@@ -25,7 +25,7 @@ public class DocRetry implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "doc_id")
+    @Column(name = "doc_id", unique = true)
     private String docId;
 
     @Column(name = "shop_id")
@@ -34,7 +34,7 @@ public class DocRetry implements Serializable {
     @Column(name = "times_failed")
     private Integer timesFailed;
 
-    @OneToMany(mappedBy = "docRetry")
+    @OneToMany(mappedBy = "docRetry", fetch = FetchType.EAGER)
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DocError> docErrors = new HashSet<>();
