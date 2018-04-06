@@ -14,6 +14,7 @@ import com.adyen.model.Amount;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
 import com.adyen.service.Fund;
+import com.adyen.service.exception.ApiException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -94,6 +95,8 @@ public class StepDefsHelper {
 
     @Value("${payoutService.subscriptionTransferCode}")
     protected String subscriptionTransferCode;
+    @Value("${payoutService.transferCode}")
+    protected String transferCode;
     @Value("${payoutService.liableAccountCode}")
     protected String liableAccountCode;
 
@@ -157,7 +160,7 @@ public class StepDefsHelper {
         transferFundsRequest.setAmount(amount);
         transferFundsRequest.setSourceAccountCode(sourceAccountCode.toString());
         transferFundsRequest.setDestinationAccountCode(destinationAccountCode.toString());
-        transferFundsRequest.setTransferCode("TransferCode_1");
+        transferFundsRequest.setTransferCode(transferCode);
         return adyenFundService.transferFunds(transferFundsRequest);
     }
 
@@ -194,6 +197,19 @@ public class StepDefsHelper {
                 .isEqualTo(transferAmount);
         });
         log.info(String.format("\nAmount transferred successfully to [%s]", shop.getId()));
+    }
+
+    protected void transferAccountHolderBalanceFromAZeroBalanceAccount(List<Map<String, String>> cucumberTable, MiraklShop shop) {
+        try {
+            Long transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
+            GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
+            transferAmountFromZeroBalanceAccount(transferAmount, accountHolder);
+            AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
+            accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
+            adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
+        } catch (Exception e) {
+            log.info(e.getMessage());
+        }
     }
 
     protected void transferAccountHolderBalanceBeyondTier(List<Map<String, String>> cucumberTable, MiraklShop shop) throws Exception {
@@ -234,6 +250,26 @@ public class StepDefsHelper {
                 Assertions
                     .assertThat(response.getResultCode())
                     .isEqualTo("Received");
+            });
+    }
+
+    private void transferAmountFromZeroBalanceAccount(Long transferAmount, GetAccountHolderResponse accountHolder) {
+        accountHolder.getAccounts().stream()
+            .map(com.adyen.model.marketpay.Account::getAccountCode)
+            .findAny()
+            .ifPresent(accountCode -> {
+                Integer destinationAccountCode = Integer.valueOf(accountCode);
+                Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("zeroBalanceSourceAccountCode");
+
+                TransferFundsResponse response = null;
+                try {
+                    response = transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
+                } catch (ApiException e) {
+                    log.error(e.getError().getMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                assert response != null;
             });
     }
 
@@ -328,7 +364,7 @@ public class StepDefsHelper {
         log.info("Shareholders found: [{}]", shareholderCodes.size());
         // get all ACCOUNT_HOLDER_VERIFICATION notifications
         AtomicReference<ImmutableList<DocumentContext>> atomicReference = new AtomicReference<>();
-        await().untilAsserted(()->{
+        await().untilAsserted(() -> {
             List<DocumentContext> notifications = restAssuredAdyenApi
                 .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, verificationType);
             ImmutableList<DocumentContext> verificationNotifications = restAssuredAdyenApi.extractShareHolderNotifications(notifications, shareholderCodes);
@@ -342,11 +378,47 @@ public class StepDefsHelper {
                 .withFailMessage("Correct number of notifications were not found. Found: <%s>", verificationNotifications.size())
                 .isEqualTo(shareholderCodes.size());
 
-            verificationNotifications.forEach(notification-> Assertions
+            verificationNotifications.forEach(notification -> Assertions
                 .assertThat(notification.read("content.verificationStatus").toString())
                 .isEqualTo(verificationStatus));
             atomicReference.set(verificationNotifications);
         });
         return atomicReference.get();
+    }
+
+    protected DocumentContext retrieveAndExtractTransferNotifications(String eventType, String status, String accountCode, String transferCode) {
+        AtomicReference<DocumentContext> atomicDocContext = new AtomicReference<>();
+        await().untilAsserted(() -> {
+            DocumentContext transferNotification = null;
+            ImmutableList<DocumentContext> notificationBodies = restAssuredAdyenApi
+                .getMultipleAdyenTransferNotifications(startUpCucumberHook.getBaseRequestBinUrlPath(), eventType, transferCode);
+            Assertions.assertThat(notificationBodies).isNotEmpty();
+
+            if (notificationBodies.size() > 1){
+                for (DocumentContext notification : notificationBodies) {
+                    transferNotification = restAssuredAdyenApi
+                        .extractCorrectTransferNotification(notification, liableAccountCode, accountCode);
+                    if (transferNotification != null) {
+                        break;
+                    }
+                }
+            } else {
+                transferNotification = notificationBodies.get(0);
+            }
+            Assertions.assertThat(transferNotification).isNotNull();
+            Assertions
+                .assertThat(transferNotification.read("content.status.statusCode").toString())
+                .isEqualTo(status);
+            atomicDocContext.set(transferNotification);
+        });
+        return atomicDocContext.get();
+    }
+
+    protected String retrieveAdyenAccountCode(MiraklShop shop) throws Exception {
+        GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
+        return response.getAccounts().stream()
+            .map(com.adyen.model.marketpay.Account::getAccountCode)
+            .findAny()
+            .orElse(null);
     }
 }

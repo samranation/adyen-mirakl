@@ -137,6 +137,7 @@ accounts:
     accountCode:
         # alessioIndividualTestPayout2 (accountHolderCode) used for balance transfer for newly created shops for payout test scenarios
         sourceAccountCode: 131712554
+        zeroBalanceSourceAccountCode: 185335929
 
 miraklOperator:
     miraklEnvUrl: ${MIRAKL_ENV_URL}
@@ -206,4 +207,5 @@ mailtrapConfig:
 
 payoutService:
     subscriptionTransferCode: SUBSCRIPTION
+    transferCode: TransferCode_1
     liableAccountCode: ${ADYEN_LIABLE_ACCOUNT_CODE}
