@@ -72,9 +72,9 @@ public class DocService {
         try {
             uploadDocumentToAdyen(type, fileWrapper, document.getShopId(), shareholderCode);
         } catch (ApiException e) {
-            log.error("MarketPay Api Exception: {}", e.getError(), e);
+            log.error("MarketPay Api Exception: {}, {}. For the Shop: {}", e.getError(), e, document.getShopId());
         } catch (Exception e) {
-            log.error("Exception: {}", e.getMessage(), e);
+            log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, document.getShopId());
         }
     }
 
@@ -89,7 +89,7 @@ public class DocService {
         //To replace with MiraklGetShopDocumentsRequest when fixed
         GetShopDocumentsRequest request = new GetShopDocumentsRequest();
         request.setUpdatedSince(deltaService.getDocumentDelta());
-        log.debug("getShopDocuments request since: " + request.getUpdatedSince());
+        log.debug("getShopDocuments request since: {}", request.getUpdatedSince());
         return miraklMarketplacePlatformOperatorApiClient.getShopDocuments(request);
     }
 
@@ -133,10 +133,10 @@ public class DocService {
         documentDetail.setAccountHolderCode(shopId);
         request.setDocumentDetail(documentDetail);
         UploadDocumentResponse response = adyenAccountService.uploadDocument(request);
-        log.debug("Account holder code: " + shareholderCode);
-        log.debug("Shop ID: " + shopId);
-        log.debug("DocumentType: " + documentType);
-        log.debug("UploadDocumentResponse: ", response.toString());
+        log.debug("Account holder code: {}", shareholderCode);
+        log.debug("Shop ID: {}", shopId);
+        log.debug("DocumentType: {}", documentType);
+        log.debug("UploadDocumentResponse: {}", response.toString());
     }
 
     /**

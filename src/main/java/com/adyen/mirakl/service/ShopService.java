@@ -74,9 +74,9 @@ public class ShopService {
                     processCreateAccountHolder(shop);
                 }
             } catch (ApiException e) {
-                log.error("MarketPay Api Exception: {}", e.getError(), e);
+                log.error("MarketPay Api Exception: {}, {}. For the Shop: {}", e.getError(), e, shop.getId());
             } catch (Exception e) {
-                log.error("Exception: {}", e.getMessage(), e);
+                log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, shop.getId());
             }
         }
 
@@ -257,7 +257,7 @@ public class ShopService {
             }
         } catch (ApiException e) {
             // account does not exists yet
-            log.debug("MarketPay Api Exception: {}", e.getError());
+            log.debug("MarketPay Api Exception: {}. Shop ", e.getError());
         }
 
         return null;
@@ -353,7 +353,7 @@ public class ShopService {
 
     private BankAccountDetail createBankAccountDetail(MiraklShop shop) {
         if (! (shop.getPaymentInformation() instanceof MiraklIbanBankAccountInformation)) {
-            log.debug("No IBAN bank account details, not creating bank account detail");
+            log.debug("No IBAN bank account details, not creating bank account detail for shop: {}", shop.getId());
             return null;
         }
         MiraklIbanBankAccountInformation miraklIbanBankAccountInformation = (MiraklIbanBankAccountInformation) shop.getPaymentInformation();
