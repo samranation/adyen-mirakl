@@ -110,10 +110,10 @@ public class PayoutService {
             payoutAccountHolderResponse = adyenFundService.payoutAccountHolder(payoutAccountHolderRequest);
             log.info("Payout submitted for accountHolder: [{}] + Psp ref: [{}]", accountHolderCode, payoutAccountHolderResponse.getPspReference());
         } catch (ApiException e) {
-            log.error("MP exception: " + e.getError(), e);
+            log.error("MarketPay Api Exception: {}, {}. For the Shop: {}", e.getError(), e, accountHolderCode);
             storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse, transferFundsRequest);
         } catch (Exception e) {
-            log.error("MP exception: " + e.getMessage(), e);
+            log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, accountHolderCode);
             storeAdyenPayoutError(payoutAccountHolderRequest, payoutAccountHolderResponse, transferFundsRequest);
         }
 
