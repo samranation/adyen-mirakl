@@ -64,25 +64,25 @@ public class AccountPayoutSteps extends StepDefsHelper{
     public void aShopHasBeenCreatedInMiraklForAnIndividualWithMandatoryKYCData(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createShopForIndividualWithBankDetails(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
     }
 
     @And("^a passport has been uploaded to Adyen$")
     public void aPassportHasBeenUploadedToAdyen() throws Throwable {
-        uploadPassportToAdyen(this.shop);
+        uploadPassportToAdyen(shop);
     }
 
     @When("^the accountHolders balance is increased$")
     public void theAccountHoldersBalanceIsIncreased(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        this.accountHolderCode = this.shop.getId();
-        transferAccountHolderBalance(cucumberTable, this.shop);
+        accountHolderCode = shop.getId();
+        transferAccountHolderBalance(cucumberTable, shop);
     }
 
     @When("^the PayoutState allowPayout changes from false to true$")
     public void thePayoutStateAllowPayoutChangesFromFalseToTrue() {
         await().untilAsserted(() -> {
-            GetAccountHolderResponse account = getGetAccountHolderResponse(this.shop);
+            GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
             Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
             Assertions
                 .assertThat(allowPayout)
@@ -135,7 +135,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
         String paymentVoucher = cucumberTable.get(0).get("paymentVoucher");
         URL url = Resources.getResource("paymentvouchers/"+paymentVoucher);
         final String csvFile = Resources.toString(url, Charsets.UTF_8);
-        String csv = csvFile.replaceAll("\\$shopId\\$", this.shop.getId());
+        String csv = csvFile.replaceAll("\\$shopId\\$", shop.getId());
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", paymentVoucher, "text/plain", csv.getBytes());
         restUserMockMvc.perform(MockMvcRequestBuilders.fileUpload("/api/mirakl-notifications/payout")
             .file(mockMultipartFile))
@@ -147,7 +147,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         waitForNotification();
         await().untilAsserted(() -> {
-            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, this.accountHolderCode);
+            Map<String, Object> adyenNotificationBody = retrieveAdyenNotificationBody(notification, accountHolderCode);
             DocumentContext content = JsonPath.parse(adyenNotificationBody.get("content"));
             cucumberTable.forEach(row -> {
                 Assertions.assertThat(row.get("statusCode"))
@@ -179,12 +179,13 @@ public class AccountPayoutSteps extends StepDefsHelper{
                     .contains(message);
             }
             log.info(content.toString());
+            this.adyenNotificationBody = JsonPath.parse(adyenNotificationBody);
         });
     }
 
     @And("^the failed payout record is removed from the Connector database$")
-    public void theFailedPayoutRecordIsRemovedFromTheConnectorDatabase() throws Throwable {
-        List<AdyenPayoutError> byAccountHolderCode = adyenPayoutErrorRepository.findByAccountHolderCode(this.accountHolderCode);
+    public void theFailedPayoutRecordIsRemovedFromTheConnectorDatabase() {
+        List<AdyenPayoutError> byAccountHolderCode = adyenPayoutErrorRepository.findByAccountHolderCode(accountHolderCode);
         Assertions
             .assertThat(byAccountHolderCode)
             .isEmpty();
@@ -193,7 +194,7 @@ public class AccountPayoutSteps extends StepDefsHelper{
     @And("^the accountHolder receives balance$")
     public void theAccountHolderReceivesBalance(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        uploadPassportToAdyen(this.shop);
+        uploadPassportToAdyen(shop);
         transferAccountHolderBalance(cucumberTable, shop);
     }
 
@@ -235,9 +236,9 @@ public class AccountPayoutSteps extends StepDefsHelper{
     }
 
     @When("^the PayoutState allowPayout changes from true to false$")
-    public void thePayoutStateAllowPayoutChangesFromTrueToFalse() throws Throwable {
+    public void thePayoutStateAllowPayoutChangesFromTrueToFalse() {
         await().untilAsserted(() -> {
-            GetAccountHolderResponse account = getGetAccountHolderResponse(this.shop);
+            GetAccountHolderResponse account = getGetAccountHolderResponse(shop);
             Boolean allowPayout = account.getAccountHolderStatus().getPayoutState().getAllowPayout();
             Assertions
                 .assertThat(allowPayout)
@@ -249,6 +250,12 @@ public class AccountPayoutSteps extends StepDefsHelper{
     @Then("^a payout email will be sent to the seller$")
     public void aPayoutEmailWillBeSentToTheSeller(String title) {
         String email = shop.getContactInformation().getEmail();
-        validationCheckOnReceivedEmail(title, email, this.shop);
+        validationCheckOnReceivedEmail(title, email, shop);
+    }
+
+    @Then("^a payout email will be sent to the operator$")
+    public void aPayoutEmailWillBeSentToTheOperator(String title) {
+        log.info("Operator email: [{}]",miraklOperatorConfiguration.getMiraklOperatorEmail());
+        validationCheckOnReceivedEmail(title, miraklOperatorConfiguration.getMiraklOperatorEmail(), shop);
     }
 }
