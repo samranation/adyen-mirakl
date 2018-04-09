@@ -227,6 +227,30 @@ public class DocServiceTest {
         Assertions.assertThat(docError.getError()).isEqualTo("java.lang.NullPointerException");
         Assertions.assertThat(docError.getDocRetry()).isEqualTo(docRetryMock1);
     }
-    
+
+    @Test
+    public void shouldFilterShopDocsById(){
+
+        when(docRetryRepositoryMock.findAll()).thenReturn(ImmutableList.of(docRetryMock1));
+        when(docRetryMock1.getDocId()).thenReturn("docId1");
+        when(docRetryMock1.getShopId()).thenReturn("shopId1");
+
+        when(miraklMarketplacePlatformOperatorApiClientMock.getShopDocuments(miraklGetShopDocumentsRequestCaptor.capture())).thenReturn(ImmutableList.of(miraklShopDocumentMock1, miraklShopDocumentMock2));
+
+        when(miraklShopDocumentMock1.getId()).thenReturn("docId1");
+        when(miraklShopDocumentMock1.getShopId()).thenReturn("shopId1");
+        when(miraklShopDocumentMock2.getId()).thenReturn("docId2");
+        when(miraklShopDocumentMock2.getShopId()).thenReturn("shopId2");
+
+        when(docRetryRepositoryMock.findOneByDocId("docId1")).thenReturn(Optional.empty());
+
+        docService.retryFailedDocuments();
+
+        final MiraklGetShopDocumentsRequest requestToMirakl = miraklGetShopDocumentsRequestCaptor.getValue();
+        Assertions.assertThat(requestToMirakl.getShopIds()).containsOnly("shopId1");
+
+        verify(uboServiceMock).extractUboDocuments(ImmutableList.of(miraklShopDocumentMock1));
+    }
+
 
 }

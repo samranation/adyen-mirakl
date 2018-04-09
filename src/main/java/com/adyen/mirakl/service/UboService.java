@@ -159,17 +159,18 @@ public class UboService {
                                    final MiraklShopDocument miraklShopDocument,
                                    final int uboNumber,
                                    final Map<Boolean, DocumentDetail.DocumentTypeEnum> documentTypeEnum) {
-        final UboDocumentDTO uboDocumentDTO = new UboDocumentDTO();
-        uboDocumentDTO.setDocumentTypeEnum(documentTypeEnum.values().iterator().next());
-        uboDocumentDTO.setMiraklShopDocument(miraklShopDocument);
-        uboDocumentDTO.setShareholderCode(getShareholderCode(uboNumber, miraklShopDocument.getShopId()));
-        builder.add(uboDocumentDTO);
-    }
 
-    private String getShareholderCode(final int uboNumber, final String shopId) {
-        return shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(shopId, uboNumber)
-                                           .orElseThrow(() -> new IllegalStateException("No UBO mapping for " + shopId + uboNumber))
-                                           .getAdyenShareholderCode();
+        final Optional<ShareholderMapping> shareholderMapping = shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(miraklShopDocument.getShopId(), uboNumber);
+        if(shareholderMapping.isPresent()){
+            final UboDocumentDTO uboDocumentDTO = new UboDocumentDTO();
+            uboDocumentDTO.setDocumentTypeEnum(documentTypeEnum.values().iterator().next());
+            uboDocumentDTO.setMiraklShopDocument(miraklShopDocument);
+            uboDocumentDTO.setShareholderCode(shareholderMapping.get().getAdyenShareholderCode());
+            builder.add(uboDocumentDTO);
+        }else{
+            log.warn("No shareholder mapping found for ubo: [{}], shop: [{}], skipping uboDocument", uboNumber, miraklShopDocument.getShopId());
+        }
+
     }
 
     private Map<Boolean, DocumentDetail.DocumentTypeEnum> findCorrectEnum(final Map<String, String> internalMemoryForDocs,

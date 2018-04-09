@@ -7,12 +7,14 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.repository.DocErrorRepository;
 import com.adyen.mirakl.repository.DocRetryRepository;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
+import com.adyen.mirakl.service.dto.UboDocumentDTO;
 import com.adyen.mirakl.service.util.GetShopDocumentsRequest;
 import com.adyen.model.marketpay.*;
 import com.adyen.service.Account;
 import com.adyen.service.exception.ApiException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.mirakl.client.mmp.domain.common.FileWrapper;
 import com.mirakl.client.mmp.domain.shop.document.MiraklShopDocument;
 import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
@@ -30,6 +32,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.io.Files.toByteArray;
@@ -73,30 +76,46 @@ public class DocService {
     }
 
     private void processDocs(final List<MiraklShopDocument> miraklShopDocumentList) {
+        final ImmutableSet.Builder<MiraklShopDocument> unprocessed = ImmutableSet.builder();
         for (MiraklShopDocument document : miraklShopDocumentList) {
-            if (document.getTypeCode().equals(Constants.BANKPROOF)) {
+            if (Constants.BANKPROOF.equals(document.getTypeCode())) {
                 updateDocument(document, DocumentDetail.DocumentTypeEnum.BANK_STATEMENT);
+            }else{
+                unprocessed.add(document);
             }
         }
-        uboService.extractUboDocuments(miraklShopDocumentList).forEach(uboDocumentDTO -> {
-            updateDocument(uboDocumentDTO.getMiraklShopDocument(), uboDocumentDTO.getDocumentTypeEnum(), uboDocumentDTO.getShareholderCode());
-        });
+        final List<UboDocumentDTO> uboDocumentDTOS = uboService.extractUboDocuments(miraklShopDocumentList);
+        markMissingDocsAsFailed(uboDocumentDTOS.stream().map(UboDocumentDTO::getMiraklShopDocument).collect(Collectors.toSet()), unprocessed.build());
+        uboDocumentDTOS.forEach(uboDocumentDTO -> updateDocument(uboDocumentDTO.getMiraklShopDocument(), uboDocumentDTO.getDocumentTypeEnum(), uboDocumentDTO.getShareholderCode()));
+    }
+
+    private void markMissingDocsAsFailed(final Set<MiraklShopDocument> uboDocsFound, final Set<MiraklShopDocument> unProcessedMiraklShopDocs) {
+        final ImmutableSet<MiraklShopDocument> miraklShopDocumentsFailed = Sets.difference(unProcessedMiraklShopDocs, uboDocsFound).immutableCopy();
+        miraklShopDocumentsFailed.forEach(failed -> storeDocumentForRetry(failed.getId(), failed.getShopId(), "Unable to extract UBO document DTO, check shareholder mapping exists"));
     }
 
     @Async
     public void retryDocumentsForShop(String shopId){
-        retryFailedDocuments(docRetryRepository.findByShopId(shopId));
+        final List<DocRetry> retryDocsByShopId = docRetryRepository.findByShopId(shopId);
+        if(retryDocsByShopId.size() > 0){
+            retryFailedDocuments(retryDocsByShopId);
+        }
     }
 
     @Async
     public void retryFailedDocuments(){
-        retryFailedDocuments(docRetryRepository.findAll());
+        final List<DocRetry> docRetries = docRetryRepository.findAll();
+        if(docRetries.size()>0){
+            retryFailedDocuments(docRetries);
+        }
     }
 
     private void retryFailedDocuments(final List<DocRetry> docsToRetry){
-        final List<String> documentIds = docsToRetry.stream().map(DocRetry::getDocId).collect(Collectors.toList());
-        final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(documentIds));
-        processDocs(shopDocuments);
+        final Set<String> shopIds = docsToRetry.stream().map(DocRetry::getShopId).collect(Collectors.toSet());
+        final Set<String> docIds = docsToRetry.stream().map(DocRetry::getDocId).collect(Collectors.toSet());
+        final List<MiraklShopDocument> shopDocuments = miraklMarketplacePlatformOperatorApiClient.getShopDocuments(new MiraklGetShopDocumentsRequest(shopIds));
+        final List<MiraklShopDocument> filteredShopDocuments = shopDocuments.stream().filter(shopDocument -> docIds.contains(shopDocument.getId())).collect(Collectors.toList());
+        processDocs(filteredShopDocuments);
     }
 
     private void updateDocument(final MiraklShopDocument document, DocumentDetail.DocumentTypeEnum type, String shareholderCode) {
@@ -109,14 +128,14 @@ public class DocService {
             });
         } catch (ApiException e) {
             log.error("MarketPay Api Exception: {}, {}. For the Shop: {}", e.getError(), e, document.getShopId());
-            storeDocumentForRetry(document.getId(), document.getShopId(), e);
+            storeDocumentForRetry(document.getId(), document.getShopId(), e.toString());
         } catch (Exception e) {
             log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, document.getShopId());
-            storeDocumentForRetry(document.getId(), document.getShopId(), e);
+            storeDocumentForRetry(document.getId(), document.getShopId(), e.toString());
         }
     }
 
-    private void storeDocumentForRetry(String documentId, String shopId, Exception e){
+    private void storeDocumentForRetry(String documentId, String shopId, String error){
         DocRetry docRetry = docRetryRepository.findOneByDocId(documentId).orElse(null);
         Integer timesFailed;
         if(docRetry != null){
@@ -126,10 +145,10 @@ public class DocService {
             docRetry = new DocRetry();
         }
         final DocError docError = new DocError();
-        docError.setError(e.toString());
+        docError.setError(error);
         docError.setDocRetry(docRetry);
         docRetry.setDocId(documentId);
-        docRetry.setDocErrors(ImmutableSet.of(docError));
+        docRetry.addDocError(docError);
         docRetry.setShopId(shopId);
         docRetry.setTimesFailed(timesFailed);
         docRetryRepository.saveAndFlush(docRetry);
