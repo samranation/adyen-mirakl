@@ -5,10 +5,8 @@ import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.adyen.mirakl.web.rest.TestUtil;
-import com.adyen.model.marketpay.Account;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -208,14 +206,14 @@ public class AccountPayoutSteps extends StepDefsHelper{
     public void TRANSFER_FUNDSNotificationWillBeSentByAdyen(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        retrieveAndExtractTransferNotifications(eventType, status, accountCode, subscriptionTransferCode);
+        retrieveAndExtractTransferNotifications(eventType, status, liableAccountCode, accountCode, subscriptionTransferCode);
     }
 
     @Then("^adyen will send the (.*) notification using the transferCode$")
     public void adyenWillSendTheTRANSFER_FUNDSNotificationUsingTheTransferCode(String eventType, String status) throws Throwable {
         waitForNotification();
         String accountCode = retrieveAdyenAccountCode(shop);
-        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, accountCode, transferCode);
+        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, transferCode);
     }
 
     @When("^the accountHolders balance is increased beyond the tier level$")

@@ -99,6 +99,8 @@ public class StepDefsHelper {
     protected String transferCode;
     @Value("${payoutService.liableAccountCode}")
     protected String liableAccountCode;
+    @Value("${accounts.accountCode.zeroBalanceSourceAccountCode}")
+    protected String zeroBalanceSourceAccountCode;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -386,7 +388,7 @@ public class StepDefsHelper {
         return atomicReference.get();
     }
 
-    protected DocumentContext retrieveAndExtractTransferNotifications(String eventType, String status, String accountCode, String transferCode) {
+    protected DocumentContext retrieveAndExtractTransferNotifications(String eventType, String status, String sourceAccountCode, String destinationAccountCode, String transferCode) {
         AtomicReference<DocumentContext> atomicDocContext = new AtomicReference<>();
         await().untilAsserted(() -> {
             DocumentContext transferNotification = null;
@@ -397,7 +399,7 @@ public class StepDefsHelper {
             if (notificationBodies.size() > 1){
                 for (DocumentContext notification : notificationBodies) {
                     transferNotification = restAssuredAdyenApi
-                        .extractCorrectTransferNotification(notification, liableAccountCode, accountCode);
+                        .extractCorrectTransferNotification(notification, sourceAccountCode, destinationAccountCode);
                     if (transferNotification != null) {
                         break;
                     }
