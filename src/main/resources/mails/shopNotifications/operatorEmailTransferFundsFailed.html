@@ -8,15 +8,12 @@
 <body>
 <p th:text="'Dear operator,'">
 </p>
-<p th:text="|The transfer funds from shop ${miraklShopSource.contactInformation.civility} ${miraklShopSource.contactInformation.firstname} ${miraklShopSource.contactInformation.lastname} to ${miraklShopDestination.contactInformation.civility} ${miraklShopDestination.contactInformation.firstname} ${miraklShopDestination.contactInformation.lastname} has failed!|">
+<p th:text="|The transfer funds from shop ${source} to ${destination} has failed!|">
 </p>
 
 <p th:text="|The transfer funds with amount ${transferFundsAmount} and transferCode ${transferFundsCode} failed because of the following error: ${transferFundsError}|"></p>
 
-<p>
-    <a th:href="|${miraklCallBackShopUrl}|"
-       th:text="|${miraklCallBackShopUrl}|"></a>
-</p>
+
 <p th:text="'Kind Regards'">
 </p>
 </body>

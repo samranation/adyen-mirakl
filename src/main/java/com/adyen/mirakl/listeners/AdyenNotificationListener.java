@@ -233,8 +233,11 @@ public class AdyenNotificationListener {
             getAccountHolderDestinationRequest.setAccountCode(transferFundsNotification.getContent().getDestinationAccountCode());
             final GetAccountHolderResponse accountHolderDestinationResponse = adyenAccountService.getAccountHolder(getAccountHolderDestinationRequest);
 
-            mailTemplateService.sendOperatorEmailTransferFundsFailure(getShop(accountHolderSourceResponse.getAccountHolderCode()),
-                                                                      getShop(accountHolderDestinationResponse.getAccountHolderCode()),
+
+
+
+            mailTemplateService.sendOperatorEmailTransferFundsFailure(accountHolderSourceResponse.getAccountHolderCode(),
+                                                                      accountHolderDestinationResponse.getAccountHolderCode(),
                                                                       transferFundsNotification.getContent().getAmount(),
                                                                       transferFundsNotification.getContent().getTransferCode(),
                                                                       transferFundsNotification.getContent().getStatus().getMessage());

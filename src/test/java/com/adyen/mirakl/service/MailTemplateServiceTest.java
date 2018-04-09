@@ -164,7 +164,10 @@ public class MailTemplateServiceTest {
         message.setCode(code);
         message.setText(text);
 
-        mailTemplateService.sendOperatorEmailTransferFundsFailure(miraklShopSource, miraklShopDestination, amount, transferCode, message);
+        String sourceAccountHolderCodeNotExisting = "1000";
+        String destinationAccountHolderCodeNotExisting = "2000";
+
+        mailTemplateService.sendOperatorEmailTransferFundsFailure(sourceAccountHolderCodeNotExisting, destinationAccountHolderCodeNotExisting, amount, transferCode, message);
 
         final String content = contentCaptor.getValue();
 
@@ -173,5 +176,7 @@ public class MailTemplateServiceTest {
         Assertions.assertThat(content).contains(text);
         Assertions.assertThat(content).contains(transferCode);
         Assertions.assertThat(content).contains(amount.getDecimalValue() + " " + amount.getCurrency());
+        Assertions.assertThat(content).contains(sourceAccountHolderCodeNotExisting);
+        Assertions.assertThat(content).contains(destinationAccountHolderCodeNotExisting);
     }
 }

@@ -5,12 +5,18 @@ import com.adyen.mirakl.config.MiraklOperatorConfiguration;
 import com.adyen.model.Amount;
 import com.adyen.model.marketpay.Message;
 import com.adyen.model.marketpay.ShareholderContact;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.mirakl.client.mmp.domain.shop.MiraklShop;
+import com.mirakl.client.mmp.domain.shop.MiraklShops;
+import com.mirakl.client.mmp.operator.core.MiraklMarketplacePlatformOperatorApiClient;
+import com.mirakl.client.mmp.request.shop.MiraklGetShopsRequest;
 import io.github.jhipster.config.JHipsterProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 
@@ -30,12 +36,15 @@ public class MailTemplateService {
     private static final String TRANSFER_FUNDS_AMOUNT = "transferFundsAmount";
     private static final String TRANSFER_FUNDS_CODE = "transferFundsCode";
     private static final String TRANSFER_FUNDS_ERROR = "transferFundsError";
-    private static final String MIRAKL_SHOP_SOURCE = "miraklShopSource";
-    private static final String MIRAKL_SHOP_DESTINATION = "miraklShopDestination";
+    private static final String SOURCE = "source";
+    private static final String DESTINATION = "destination";
 
 
     @Value("${miraklOperator.miraklEnvUrl}")
     private String miraklEnvUrl;
+
+    @Value("${payoutService.liableAccountCode}")
+    private String liableAccountCode;
 
 
     private final JHipsterProperties jHipsterProperties;
@@ -45,6 +54,9 @@ public class MailTemplateService {
 
     @Resource
     private MiraklOperatorConfiguration miraklOperatorConfiguration;
+
+    @Resource
+    private MiraklMarketplacePlatformOperatorApiClient miraklMarketplacePlatformOperatorApiClient;
 
     public MailTemplateService(final JHipsterProperties jHipsterProperties,
                                MailService mailService,
@@ -117,19 +129,57 @@ public class MailTemplateService {
     }
 
     @Async
-    public void sendOperatorEmailTransferFundsFailure(MiraklShop miraklShopSource, MiraklShop miraklShopDestination, Amount amount, String transferCode, Message message) {
+    public void sendOperatorEmailTransferFundsFailure(String sourceAccountHolderCode, String destinationAccountHolderCode, Amount amount, String transferCode, Message message) {
         Context context = new Context(Locale.getDefault());
-        context.setVariable(MIRAKL_SHOP_SOURCE, miraklShopSource);
-        context.setVariable(MIRAKL_SHOP_DESTINATION, miraklShopDestination);
+
+        context.setVariable(SOURCE, getText(sourceAccountHolderCode));
+        context.setVariable(DESTINATION, getText(destinationAccountHolderCode));
+
         context.setVariable(TRANSFER_FUNDS_AMOUNT, amount.getDecimalValue() + " " + amount.getCurrency());
         context.setVariable(TRANSFER_FUNDS_CODE, transferCode);
 
-        context.setVariable(MIRAKL_CALL_BACK_SHOP_URL, getMiraklShopUrl(miraklShopSource.getId()));
         context.setVariable(BASE_URL, jHipsterProperties.getMail().getBaseUrl());
         context.setVariable(TRANSFER_FUNDS_ERROR, "(" + message.getCode() + ") " + message.getText());
         String content = templateEngine.process("shopNotifications/operatorEmailTransferFundsFailed", context);
         String subject = messageSource.getMessage(Constants.Messages.EMAIL_TRANSFER_FUND_FAILED_TITLE, null, Locale.getDefault());
         mailService.sendEmail(miraklOperatorConfiguration.getMiraklOperatorEmail(), subject, content, false, true);
+    }
+
+    /**
+     * Try to find shop for accountCode could be there is not if it is the liableAccount
+     */
+    private String getText(String accountCode) {
+        String text;
+        try {
+            if (accountCode.equals(liableAccountCode)) {
+                text = "LiableAccountHolder";
+            } else {
+                MiraklShop sourceShop = getShop(accountCode);
+                text = "("
+                    + sourceShop.getId()
+                    + ") "
+                    + sourceShop.getContactInformation().getCivility()
+                    + " "
+                    + sourceShop.getContactInformation().getFirstname()
+                    + " "
+                    + sourceShop.getContactInformation().getLastname();
+            }
+        } catch (Exception e) {
+            text = accountCode;
+        }
+        return text;
+    }
+
+    private MiraklShop getShop(String shopId) {
+        MiraklGetShopsRequest request = new MiraklGetShopsRequest();
+        request.setShopIds(ImmutableList.of(shopId));
+        MiraklShops shops = miraklMarketplacePlatformOperatorApiClient.getShops(request);
+
+        if (CollectionUtils.isEmpty(shops.getShops())) {
+            throw new IllegalStateException("Cannot find shop: " + shopId);
+        }
+
+        return shops.getShops().iterator().next();
     }
 
     private String getMiraklShopUrl(String miraklShopId) {
