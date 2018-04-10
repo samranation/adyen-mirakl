@@ -89,7 +89,7 @@ public class ShopService {
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
-        shareholderMappingService.updateShareholderMapping(response);
+        shareholderMappingService.updateShareholderMapping(response, shop);
         log.debug("CreateAccountHolderResponse: {}", response);
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
@@ -102,7 +102,7 @@ public class ShopService {
         UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
 
         UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
-        shareholderMappingService.updateShareholderMapping(response);
+        shareholderMappingService.updateShareholderMapping(response, shop);
         log.debug("UpdateAccountHolderResponse: {}", response);
 
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
