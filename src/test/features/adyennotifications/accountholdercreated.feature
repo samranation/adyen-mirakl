@@ -45,6 +45,22 @@ Feature: Seller Account Management
         When the connector processes the data and pushes to Adyen
         Then no account holder is created in Adyen
 
+    @ADY-116
+    Scenario: Shareholder mapping table handles UBOs created in non-sequential order
+        Given shop is created as a Business where UBO is entered in non-sequential order
+            | UBO | lastName |
+            | 2   | TestData |
+        And the connector processes the data and pushes to Adyen
+        When the Mirakl Shop is updated by adding more shareholder data
+            | UBO |
+            | 1   |
+            | 3   |
+            | 4   |
+        And the connector processes the data and pushes to Adyen
+        And the shop data is correctly mapped to the Adyen Business Account
+            | maxUbos |
+            | 4       |
+
     @ADY-70
     Scenario: The connector will strip out the house name or number for Netherlands addresses
         Given a Netherlands seller creates a Business shop in Mirakl with UBO data and a bankAccount
