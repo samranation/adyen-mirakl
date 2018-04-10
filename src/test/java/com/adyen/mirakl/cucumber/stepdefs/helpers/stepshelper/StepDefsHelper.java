@@ -263,15 +263,15 @@ public class StepDefsHelper {
                 Integer destinationAccountCode = Integer.valueOf(accountCode);
                 Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("zeroBalanceSourceAccountCode");
 
-                TransferFundsResponse response = null;
                 try {
-                    response = transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
+                    transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
                 } catch (ApiException e) {
-                    log.error(e.getError().getMessage());
+                    log.error(e.getError().getMessage(), e);
+                    throw new IllegalStateException(e);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage(), e);
+                    throw new IllegalStateException(e);
                 }
-                assert response != null;
             });
     }
 
