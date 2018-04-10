@@ -17,8 +17,8 @@ Feature: Account Holder Updated notification upon Mirakl shop changes
     @ADY-11
     Scenario: ACCOUNT_HOLDER_UPDATED will not be invoked if no data has been changed
         Given a shop exists in Mirakl with the following fields
-            | seller             | firstName | lastName | postCode | city   |
-            | Samras Supermarket | Test      | Data     | SE1 9BG  | London |
+            | seller       | firstName | lastName | postCode | city       |
+            | UpdateShop01 | John      | Smith    | SE1 9GB  | Manchester |
         When the Mirakl Shop Details have been updated as the same as before
             | firstName | lastName | postCode | city   |
             | Test      | Data     | SE1 9BG  | London |
