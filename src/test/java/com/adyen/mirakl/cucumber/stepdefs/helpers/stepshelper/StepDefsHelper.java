@@ -154,11 +154,16 @@ public class StepDefsHelper {
         return adyenConfiguration.adyenAccountService().getAccountHolder(request);
     }
 
-    private TransferFundsResponse transferFundsAndRetrieveResponse(Long transferAmount, Integer sourceAccountCode, Integer destinationAccountCode) throws Exception {
+    private TransferFundsResponse transferFundsAndRetrieveResponse(Long transferAmount, String currency, Integer sourceAccountCode, Integer destinationAccountCode) throws Exception {
         TransferFundsRequest transferFundsRequest = new TransferFundsRequest();
         Amount amount = new Amount();
         amount.setValue(transferAmount);
-        amount.setCurrency("EUR");
+        if(currency != null) {
+            amount.setCurrency(currency);
+        }
+        else {
+            amount.setCurrency("EUR");
+        }
         transferFundsRequest.setAmount(amount);
         transferFundsRequest.setSourceAccountCode(sourceAccountCode.toString());
         transferFundsRequest.setDestinationAccountCode(destinationAccountCode.toString());
@@ -183,8 +188,12 @@ public class StepDefsHelper {
 
     protected void transferAccountHolderBalance(List<Map<String, String>> cucumberTable, MiraklShop shop) throws Exception {
         Long transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
+        String currency;
+        if (cucumberTable.get(0).get("currency") != null) {
+            currency = cucumberTable.get(0).get("currency");
+        }
         GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
-        transferAmountAndAssert(transferAmount, accountHolder);
+        transferAmountAndAssert(transferAmount, currency, accountHolder);
 
         await().untilAsserted(() -> {
             AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
@@ -217,7 +226,11 @@ public class StepDefsHelper {
     protected void transferAccountHolderBalanceBeyondTier(List<Map<String, String>> cucumberTable, MiraklShop shop) throws Exception {
         Long transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
         GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
-        transferAmountAndAssert(transferAmount, accountHolder);
+        String currency = null;
+        if (cucumberTable.get(0).get("currency") != null) {
+            currency = cucumberTable.get(0).get("currency");
+        }
+        transferAmountAndAssert(transferAmount, currency, accountHolder);
 
         await().untilAsserted(() -> {
             AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
@@ -234,7 +247,7 @@ public class StepDefsHelper {
         log.info(String.format("\nAmount transferred successfully to [%s]", shop.getId()));
     }
 
-    private void transferAmountAndAssert(Long transferAmount, GetAccountHolderResponse accountHolder) {
+    private void transferAmountAndAssert(Long transferAmount, String currency, GetAccountHolderResponse accountHolder) {
         accountHolder.getAccounts().stream()
             .map(com.adyen.model.marketpay.Account::getAccountCode)
             .findAny()
@@ -244,7 +257,7 @@ public class StepDefsHelper {
 
                 TransferFundsResponse response = null;
                 try {
-                    response = transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
+                    response = transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
