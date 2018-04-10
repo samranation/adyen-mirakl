@@ -44,8 +44,11 @@ public class ShareholderMappingService {
         final Iterator<String> shareholderCodes = accountHolderDetails.getBusinessDetails().getShareholders().stream()
             .map(ShareholderContact::getShareholderCode).collect(Collectors.toList()).iterator();
         for (Integer uboNumber : uboService.extractUboNumbersFromShop(miraklShop)) {
+            if(noShareholderCodesLeft(shareholderCodes)){
+                continue;
+            }
             final String adyenShareholderCode = shareholderCodes.next();
-            if(mappingAlreadyExists(shopCode, uboNumber, adyenShareholderCode) || noShareholderCodesLeft(shareholderCodes)){
+            if(mappingAlreadyExists(shopCode, uboNumber, adyenShareholderCode)){
                 continue;
             }
             ShareholderMapping shareholderMapping = new ShareholderMapping();

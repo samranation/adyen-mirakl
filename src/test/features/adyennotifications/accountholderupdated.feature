@@ -24,4 +24,3 @@ Feature: Account Holder Updated notification upon Mirakl shop changes
             | Test      | Data     | SE1 9BG  | London |
         And the connector processes the data and pushes to Adyen
         Then a notification of ACCOUNT_HOLDER_UPDATED will not be sent
-addUBOToMiraklShop
