@@ -44,24 +44,24 @@ public class ShareholderMappingService {
         final Iterator<String> shareholderCodes = accountHolderDetails.getBusinessDetails().getShareholders().stream()
             .map(ShareholderContact::getShareholderCode).collect(Collectors.toList()).iterator();
         for (Integer uboNumber : uboService.extractUboNumbersFromShop(miraklShop)) {
-            if(mappingAlreadyExists(shopCode, uboNumber) || noShareholderCodesLeft(shareholderCodes)){
+            final String adyenShareholderCode = shareholderCodes.next();
+            if(mappingAlreadyExists(shopCode, uboNumber, adyenShareholderCode) || noShareholderCodesLeft(shareholderCodes)){
                 continue;
             }
             ShareholderMapping shareholderMapping = new ShareholderMapping();
             shareholderMapping.setMiraklUboNumber(uboNumber);
-            shareholderMapping.setAdyenShareholderCode(shareholderCodes.next());
+            shareholderMapping.setAdyenShareholderCode(adyenShareholderCode);
             shareholderMapping.setMiraklShopId(shopCode);
-            shareholderMappingRepository.save(shareholderMapping);
+            shareholderMappingRepository.saveAndFlush(shareholderMapping);
         }
-        shareholderMappingRepository.flush();
     }
 
     private boolean noShareholderCodesLeft(final Iterator<String> shareholderCodes) {
         return !shareholderCodes.hasNext();
     }
 
-    private boolean mappingAlreadyExists(final String shopCode, final Integer uboNumber) {
-        return shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(shopCode, uboNumber).isPresent();
+    private boolean mappingAlreadyExists(final String shopCode, final Integer uboNumber, final String shareholderCode) {
+        return shareholderMappingRepository.findOneByMiraklShopIdAndMiraklUboNumber(shopCode, uboNumber).isPresent() || shareholderMappingRepository.findOneByAdyenShareholderCode(shareholderCode).isPresent();
     }
 
     private boolean shareholdersDoNotExist(AccountHolderDetails accountHolderDetails) {

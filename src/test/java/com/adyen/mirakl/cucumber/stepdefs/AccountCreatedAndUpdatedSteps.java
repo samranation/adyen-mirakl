@@ -157,6 +157,6 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
     @When("^the Mirakl Shop is updated by adding more shareholder data$")
     public void theMiraklShopIsUpdatedByAddingMoreShareholderData(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        miraklUpdateShopApi.addSpecificUBOWithData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
+        shop = miraklUpdateShopApi.addSpecificUBOWithData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
     }
 }

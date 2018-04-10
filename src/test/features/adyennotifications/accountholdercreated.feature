@@ -57,7 +57,8 @@ Feature: Seller Account Management
             | 3   |
             | 4   |
         And the connector processes the data and pushes to Adyen
-        And the shop data is correctly mapped to the Adyen Business Account
+        And a notification will be sent pertaining to ACCOUNT_HOLDER_UPDATED
+        Then the shop data is correctly mapped to the Adyen Business Account
             | maxUbos |
             | 4       |
 
