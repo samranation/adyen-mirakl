@@ -51,6 +51,9 @@ public class CacheConfiguration {
             cm.createCache(com.adyen.mirakl.domain.ShareholderMapping.class.getName(), jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.AdyenPayoutError.class.getName(), jcacheConfiguration);
             cm.createCache(com.adyen.mirakl.domain.MiraklVoucherEntry.class.getName(), jcacheConfiguration);
+            cm.createCache(com.adyen.mirakl.domain.DocRetry.class.getName(), jcacheConfiguration);
+            cm.createCache(com.adyen.mirakl.domain.DocError.class.getName(), jcacheConfiguration);
+            cm.createCache(com.adyen.mirakl.domain.DocRetry.class.getName() + ".docErrors", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
         };
     }

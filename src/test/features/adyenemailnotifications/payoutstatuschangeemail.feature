@@ -9,10 +9,9 @@ Feature: As an Operator I would like to be notified when a Seller Payout Status 
         And the accountHolder receives balance
             | transfer amount |
             | 1000            |
-        And the PayoutState allowPayout changes from false to true
-        And a notification will be sent in relation to the balance change
-            | eventType                    | reason              | previousPayoutState |
-            | ACCOUNT_HOLDER_STATUS_CHANGE | Description: Passed | false               |
+        And a notification will be sent in relation to the payout state change
+            | eventType                    | oldPayoutState | newPayoutState |
+            | ACCOUNT_HOLDER_STATUS_CHANGE | false          | true           |
         And the notification is sent to the Connector
         Then a payout email will be sent to the seller
         """
@@ -21,10 +20,9 @@ Feature: As an Operator I would like to be notified when a Seller Payout Status 
         When the accountHolders balance is increased beyond the tier level
             | transfer amount |
             | 60000           |
-        And the PayoutState allowPayout changes from true to false
-        And a notification will be sent in relation to the balance change
-            | eventType                    | reason                   | previousPayoutState |
-            | ACCOUNT_HOLDER_STATUS_CHANGE | transfer has been booked | true                |
+        And a notification will be sent in relation to the payout state change
+            | eventType                    | oldPayoutState | newPayoutState |
+            | ACCOUNT_HOLDER_STATUS_CHANGE | true           | false          |
         And the notification is sent to the Connector
         Then a payout email will be sent to the seller
         """

@@ -41,6 +41,15 @@ public class MiraklShopApi extends MiraklShopProperties {
         return createMiraklShopRequest(client, miraklCreateShopBuilder);
     }
 
+    // Business shop is created with 1 UBO created in non-sequential order
+    public MiraklCreatedShops createBusinessShopWithNonSequentialUBO(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
+        MiraklCreateShop miraklCreateShop = new MiraklCreateShop();
+        miraklCreateShop = populateMiraklShop(rows, legalEntity, miraklCreateShop);
+        populateShareholderInNonSequentialOrder(legalEntity, rows, miraklCreateShop);
+        ImmutableList.Builder<MiraklCreateShop> miraklCreateShopBuilder = miraklShopCreateBuilder(miraklCreateShop);
+        return createMiraklShopRequest(client, miraklCreateShopBuilder);
+    }
+
     // Business with UBOs populated, amount of UBOs come from Cucumber tables, full UBO data is provided in this method
     public MiraklCreatedShops createBusinessShopWithFullUboInfo(MiraklMarketplacePlatformOperatorApiClient client, List<Map<String, String>> rows, String legalEntity) {
         MiraklCreateShop miraklCreateShop = new MiraklCreateShop();

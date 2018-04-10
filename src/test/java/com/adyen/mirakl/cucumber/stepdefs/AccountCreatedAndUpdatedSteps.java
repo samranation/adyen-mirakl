@@ -33,39 +33,46 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
     public void aSellerCreatesANewShopAsAnIndividual(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createShopForIndividual(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
+    }
+
+    @Given("^shop is created as a (.*) where UBO is entered in non-sequential order$")
+    public void shopIsCreatedAsABusinessWhereUBOIsEnteredInNonSequentialOrder(String legalEntity, DataTable table) {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithNonSequentialUBO(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
+        shop = retrieveCreatedShop(shops);
     }
 
     @When("^a seller creates a shop as a (.*) and provides full UBO data")
     public void aSellerCreatesAShopAsABusinessAndProvidesFullUBOData(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithFullUboInfo(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
     }
 
     @When("^a seller creates a new shop as a (.*) and does not provide any UBO data")
     public void aSellerCreatesANewShopAsABusinessAndDoesNotProvideAnyUBOData(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopWithNoUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
     }
 
     @Given("^a Netherlands seller creates a (.*) shop in Mirakl with UBO data and a bankAccount$")
     public void aNetherlandsSellerCreatedABusinessShopInMiraklWithUBODataAndABankAccount(String legalEntity, DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         MiraklCreatedShops shops = miraklShopApi.createBusinessShopForNetherlandsWithUBOs(miraklMarketplacePlatformOperatorApiClient, cucumberTable, legalEntity);
-        this.shop = retrieveCreatedShop(shops);
+        shop = retrieveCreatedShop(shops);
     }
 
     @When("^we update the shop by adding more shareholder data$")
     public void weUpdateTheShopByAddingMoreShareholderData(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
-        this.shop = miraklUpdateShopApi
+        shop = miraklUpdateShopApi
             .addMoreUbosToShop(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
     }
 
     @And("^an AccountHolder will be created in Adyen with status Active$")
-    public void anAccountHolderWillBeCreatedInAdyenWithStatusActive() throws Throwable {
+    public void anAccountHolderWillBeCreatedInAdyenWithStatusActive() {
         GetAccountHolderRequest accountHolderRequest = new GetAccountHolderRequest();
         accountHolderRequest.setAccountHolderCode(shop.getId());
         await().untilAsserted(() -> {
@@ -142,8 +149,14 @@ public class AccountCreatedAndUpdatedSteps extends StepDefsHelper {
     public void theMiraklShopDetailsHaveBeenUpdated(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         cucumberTable.forEach(row ->
-            this.shop = miraklUpdateShopApi
+            shop = miraklUpdateShopApi
                 .updateExistingShopsContactInfoWithTableData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, row)
         );
+    }
+
+    @When("^the Mirakl Shop is updated by adding more shareholder data$")
+    public void theMiraklShopIsUpdatedByAddingMoreShareholderData(DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        shop = miraklUpdateShopApi.addSpecificUBOWithData(shop, shop.getId(), miraklMarketplacePlatformOperatorApiClient, cucumberTable);
     }
 }

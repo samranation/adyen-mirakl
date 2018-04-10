@@ -34,6 +34,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -91,32 +92,26 @@ public class AccountPayoutSteps extends StepDefsHelper{
         });
     }
 
-    @And("^a notification will be sent in relation to the balance change$")
+    @And("^a notification will be sent in relation to the payout state change$")
     public void aNotficationWillBeSentInRelationToTheBalanceChange(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         String eventType = cucumberTable.get(0).get("eventType");
-        String reason = cucumberTable.get(0).get("reason");
-        String allowPayout = cucumberTable.get(0).get("previousPayoutState");
+        String newPayoutState = cucumberTable.get(0).get("newPayoutState");
+        String oldPayoutState = cucumberTable.get(0).get("oldPayoutState");
 
         waitForNotification();
         await().untilAsserted(() -> {
             notifications = restAssuredAdyenApi
                 .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
 
-            Assertions.assertThat(notifications).isNotEmpty();
-            boolean foundReason = notifications.stream()
-                .anyMatch(notification -> notification.read("content.reason").toString().contains(reason) &&
-                    notification.read("content.oldStatus.payoutState.allowPayout").equals(allowPayout));
-            Assertions.assertThat(foundReason).isTrue();
+            final Optional<DocumentContext> notification = notifications.stream()
+                .filter(x -> x.read("content.oldStatus.payoutState.allowPayout").equals(oldPayoutState))
+                .filter(x -> x.read("content.newStatus.payoutState.allowPayout").equals(newPayoutState))
+                .findAny();
+            Assertions.assertThat(notification.isPresent()).isTrue();
 
-            for (DocumentContext notification : notifications) {
-                String notificationReason = notification.read("content.reason").toString();
-                if (notificationReason.contains(reason) &&
-                    notification.read("content.oldStatus.payoutState.allowPayout").equals(allowPayout)) {
-                    adyenNotificationBody = notification;
-                    break;
-                }
-            }
+            adyenNotificationBody = notification.get();
+
         });
     }
 

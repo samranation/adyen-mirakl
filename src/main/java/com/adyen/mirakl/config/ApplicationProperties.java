@@ -20,6 +20,7 @@ public class ApplicationProperties {
     private String emailRetryCron;
     private String removeSentEmailsCron;
     private String payoutRetryCron;
+    private String retryDocsCron;
     private Integer initialDeltaDaysBack;
     private Integer maxPayoutFailed;
     private Map<String, String> houseNumbersRegex;
@@ -103,5 +104,13 @@ public class ApplicationProperties {
 
     public void setBasicPassword(String basicPassword) {
         this.basicPassword = basicPassword;
+    }
+
+    public String getRetryDocsCron() {
+        return retryDocsCron;
+    }
+
+    public void setRetryDocsCron(final String retryDocsCron) {
+        this.retryDocsCron = retryDocsCron;
     }
 }
