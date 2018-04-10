@@ -7,10 +7,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-
-import com.adyen.mirakl.service.util.IsoUtil;
 import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +18,7 @@ import com.adyen.mirakl.domain.ShareholderMapping;
 import com.adyen.mirakl.domain.StreetDetails;
 import com.adyen.mirakl.repository.ShareholderMappingRepository;
 import com.adyen.mirakl.service.dto.UboDocumentDTO;
+import com.adyen.mirakl.service.util.IsoUtil;
 import com.adyen.model.Address;
 import com.adyen.model.Name;
 import com.adyen.model.marketpay.DocumentDetail;
@@ -115,7 +113,8 @@ public class UboService {
                 addShareholderCode(shop, uboNumber, shareholderContact, existingAccountHolder);
                 addMandatoryData(civility, firstName, lastName, email, shareholderContact);
                 addPersonalData(uboNumber, dateOfBirth, nationality, idNumber, shareholderContact);
-                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact, shop.getContactInformation().getCountry());
+                String shopCountry = shop.getContactInformation().getCountry();
+                addAddressData(uboNumber, houseNumberOrName, street, city, postalCode, country, shareholderContact, shopCountry);
                 addPhoneData(uboNumber, phoneCountryCode, phoneType, phoneNumber, shareholderContact);
                 builder.add(shareholderContact);
             }
@@ -266,7 +265,8 @@ public class UboService {
                                 final String city,
                                 final String postalCode,
                                 final String country,
-                                final ShareholderContact shareholderContact, final String contactCountry) {
+                                final ShareholderContact shareholderContact,
+                                final String contactCountry) {
         if (country != null || street != null || houseNumberOrName != null || city != null || postalCode != null) {
             final Address address = new Address();
 
