@@ -129,8 +129,6 @@ application:
 
 shops:
     shopIds:
-        Cottons Shop: 2000
-        Samras Supermarket: 2001
         UpdateShop01: 7492
         UpdateShop02: 7695
 
@@ -207,6 +205,5 @@ payoutService:
 
 accounts:
     accountCode:
-        # alessioIndividualTestPayout2 (accountHolderCode) used for balance transfer for newly created shops for payout test scenarios
         sourceAccountCode: 131712554
         zeroBalanceSourceAccountCode: 185335929
