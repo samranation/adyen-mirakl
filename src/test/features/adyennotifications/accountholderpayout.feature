@@ -84,7 +84,7 @@ Feature: Payout notifications for seller payout
         And the PayoutState allowPayout changes from false to true
         When a payment voucher is sent to the Connector
             | paymentVoucher                  |
-            | PaymentVoucher_PayoutShopUSD.csv |
+            | PaymentVoucher_PayoutShopGBP.csv |
         Then adyen will send the ACCOUNT_HOLDER_PAYOUT notification
             | currency | amount | statusCode | iban                   |
             | GBP      | 2914.0 | Initiated  | GB26TEST40051512347366 |

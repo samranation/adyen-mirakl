@@ -188,10 +188,8 @@ public class StepDefsHelper {
 
     protected void transferAccountHolderBalance(List<Map<String, String>> cucumberTable, MiraklShop shop) throws Exception {
         Long transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
-        String currency;
-        if (cucumberTable.get(0).get("currency") != null) {
-            currency = cucumberTable.get(0).get("currency");
-        }
+
+        String currency = cucumberTable.get(0).get("currency");
         GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
         transferAmountAndAssert(transferAmount, currency, accountHolder);
 
