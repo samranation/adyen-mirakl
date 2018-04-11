@@ -72,6 +72,9 @@ public class ShopService {
     @Resource
     private Map<String, Pattern> houseNumberPatterns;
 
+    @Resource
+    private DocService docService;
+
 
     public void processUpdatedShops() {
         final ZonedDateTime beforeProcessing = ZonedDateTime.now();
@@ -92,14 +95,14 @@ public class ShopService {
                 log.error("Exception: {}, {}. For the Shop: {}", e.getMessage(), e, shop.getId());
             }
         }
-
+        shops.forEach(shop -> docService.retryDocumentsForShop(shop.getId()));
         deltaService.updateShopDelta(beforeProcessing);
     }
 
     private void processCreateAccountHolder(final MiraklShop shop) throws Exception {
         CreateAccountHolderRequest createAccountHolderRequest = createAccountHolderRequestFromShop(shop);
         CreateAccountHolderResponse response = adyenAccountService.createAccountHolder(createAccountHolderRequest);
-        shareholderMappingService.updateShareholderMapping(response);
+        shareholderMappingService.updateShareholderMapping(response, shop);
         log.debug("CreateAccountHolderResponse: {}", response);
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {
             final String invalidFields = response.getInvalidFields().stream().map(ErrorFieldType::toString).collect(Collectors.joining(","));
@@ -112,7 +115,7 @@ public class ShopService {
         UpdateAccountHolderRequest updateAccountHolderRequest = updateAccountHolderRequestFromShop(shop, getAccountHolderResponse);
 
         UpdateAccountHolderResponse response = adyenAccountService.updateAccountHolder(updateAccountHolderRequest);
-        shareholderMappingService.updateShareholderMapping(response);
+        shareholderMappingService.updateShareholderMapping(response, shop);
         log.debug("UpdateAccountHolderResponse: {}", response);
 
         if (! CollectionUtils.isEmpty(response.getInvalidFields())) {

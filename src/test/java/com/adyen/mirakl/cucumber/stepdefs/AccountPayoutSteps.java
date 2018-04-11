@@ -5,10 +5,8 @@ import com.adyen.mirakl.domain.AdyenPayoutError;
 import com.adyen.mirakl.web.rest.AdyenNotificationResource;
 import com.adyen.mirakl.web.rest.MiraklNotificationsResource;
 import com.adyen.mirakl.web.rest.TestUtil;
-import com.adyen.model.marketpay.Account;
 import com.adyen.model.marketpay.GetAccountHolderResponse;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -34,6 +32,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -91,32 +90,26 @@ public class AccountPayoutSteps extends StepDefsHelper{
         });
     }
 
-    @And("^a notification will be sent in relation to the balance change$")
+    @And("^a notification will be sent in relation to the payout state change$")
     public void aNotficationWillBeSentInRelationToTheBalanceChange(DataTable table) {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
         String eventType = cucumberTable.get(0).get("eventType");
-        String reason = cucumberTable.get(0).get("reason");
-        String allowPayout = cucumberTable.get(0).get("previousPayoutState");
+        String newPayoutState = cucumberTable.get(0).get("newPayoutState");
+        String oldPayoutState = cucumberTable.get(0).get("oldPayoutState");
 
         waitForNotification();
         await().untilAsserted(() -> {
             notifications = restAssuredAdyenApi
                 .getMultipleAdyenNotificationBodies(startUpTestingHook.getBaseRequestBinUrlPath(), shop.getId(), eventType, null);
 
-            Assertions.assertThat(notifications).isNotEmpty();
-            boolean foundReason = notifications.stream()
-                .anyMatch(notification -> notification.read("content.reason").toString().contains(reason) &&
-                    notification.read("content.oldStatus.payoutState.allowPayout").equals(allowPayout));
-            Assertions.assertThat(foundReason).isTrue();
+            final Optional<DocumentContext> notification = notifications.stream()
+                .filter(x -> x.read("content.oldStatus.payoutState.allowPayout").equals(oldPayoutState))
+                .filter(x -> x.read("content.newStatus.payoutState.allowPayout").equals(newPayoutState))
+                .findAny();
+            Assertions.assertThat(notification.isPresent()).isTrue();
 
-            for (DocumentContext notification : notifications) {
-                String notificationReason = notification.read("content.reason").toString();
-                if (notificationReason.contains(reason) &&
-                    notification.read("content.oldStatus.payoutState.allowPayout").equals(allowPayout)) {
-                    adyenNotificationBody = notification;
-                    break;
-                }
-            }
+            adyenNotificationBody = notification.get();
+
         });
     }
 
@@ -191,6 +184,12 @@ public class AccountPayoutSteps extends StepDefsHelper{
             .isEmpty();
     }
 
+    @And("^balance is transferred from a zero balance account$")
+    public void balanceIsTransferredToANonPayoutAccountHolder(DataTable table) throws Throwable {
+        List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
+        transferAccountHolderBalanceFromAZeroBalanceAccount(cucumberTable, shop);
+    }
+
     @And("^the accountHolder receives balance$")
     public void theAccountHolderReceivesBalance(DataTable table) throws Throwable {
         List<Map<String, String>> cucumberTable = table.getTableConverter().toMaps(table, String.class, String.class);
@@ -201,31 +200,15 @@ public class AccountPayoutSteps extends StepDefsHelper{
     @Then("^(.*) notification will be sent by Adyen$")
     public void TRANSFER_FUNDSNotificationWillBeSentByAdyen(String eventType, String status) throws Throwable {
         waitForNotification();
-        GetAccountHolderResponse response = getGetAccountHolderResponse(shop);
-        String accountCode = response.getAccounts().stream()
-            .map(Account::getAccountCode)
-            .findAny()
-            .orElse(null);
+        String accountCode = retrieveAdyenAccountCode(shop);
+        retrieveAndExtractTransferNotifications(eventType, status, liableAccountCode, accountCode, subscriptionTransferCode);
+    }
 
-        await().untilAsserted(() -> {
-            ImmutableList<DocumentContext> notificationBodies = restAssuredAdyenApi
-                .getMultipleAdyenTransferNotifications(startUpCucumberHook.getBaseRequestBinUrlPath(), eventType, subscriptionTransferCode);
-
-            Assertions.assertThat(notificationBodies).isNotEmpty();
-
-            DocumentContext transferNotification = null;
-            for (DocumentContext notification : notificationBodies) {
-                transferNotification = restAssuredAdyenApi
-                    .extractCorrectTransferNotification(notification, liableAccountCode, accountCode);
-                if (transferNotification != null) {
-                    break;
-                }
-            }
-            Assertions.assertThat(transferNotification).isNotNull();
-            Assertions
-                .assertThat(transferNotification.read("content.status.statusCode").toString())
-                .isEqualTo(status);
-        });
+    @Then("^adyen will send the (.*) notification using the transferCode$")
+    public void adyenWillSendTheTRANSFER_FUNDSNotificationUsingTheTransferCode(String eventType, String status) throws Throwable {
+        waitForNotification();
+        String accountCode = retrieveAdyenAccountCode(shop);
+        adyenNotificationBody = retrieveAndExtractTransferNotifications(eventType, status, zeroBalanceSourceAccountCode, accountCode, transferCode);
     }
 
     @When("^the accountHolders balance is increased beyond the tier level$")
