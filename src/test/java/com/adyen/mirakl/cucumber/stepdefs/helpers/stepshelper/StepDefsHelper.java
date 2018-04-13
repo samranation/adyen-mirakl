@@ -211,8 +211,12 @@ public class StepDefsHelper {
     protected void transferAccountHolderBalanceFromAZeroBalanceAccount(List<Map<String, String>> cucumberTable, MiraklShop shop) {
         try {
             Long transferAmount = Long.valueOf(cucumberTable.get(0).get("transfer amount"));
+            String currency = null;
+            if (cucumberTable.get(0).get("currency") != null) {
+                currency = cucumberTable.get(0).get("currency");
+            }
             GetAccountHolderResponse accountHolder = getGetAccountHolderResponse(shop);
-            transferAmountFromZeroBalanceAccount(transferAmount, accountHolder);
+            transferAmountFromZeroBalanceAccount(transferAmount, currency, accountHolder);
             AccountHolderBalanceRequest accountHolderBalanceRequest = new AccountHolderBalanceRequest();
             accountHolderBalanceRequest.setAccountHolderCode(shop.getId());
             adyenFundService.AccountHolderBalance(accountHolderBalanceRequest);
@@ -266,7 +270,7 @@ public class StepDefsHelper {
             });
     }
 
-    private void transferAmountFromZeroBalanceAccount(Long transferAmount, GetAccountHolderResponse accountHolder) {
+    private void transferAmountFromZeroBalanceAccount(Long transferAmount,  String currency,  GetAccountHolderResponse accountHolder) {
         accountHolder.getAccounts().stream()
             .map(com.adyen.model.marketpay.Account::getAccountCode)
             .findAny()
@@ -275,7 +279,7 @@ public class StepDefsHelper {
                 Integer sourceAccountCode = adyenAccountConfiguration.getAccountCode().get("zeroBalanceSourceAccountCode");
 
                 try {
-                    transferFundsAndRetrieveResponse(transferAmount, sourceAccountCode, destinationAccountCode);
+                    transferFundsAndRetrieveResponse(transferAmount, currency, sourceAccountCode, destinationAccountCode);
                 } catch (ApiException e) {
                     log.error(e.getError().getMessage(), e);
                     throw new IllegalStateException(e);
